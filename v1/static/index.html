@@ -620,7 +620,10 @@
             };
 
             function updateJsonView() {
-                if (currentJsonLd && currentJsonLd.dataExample) {
+                // Obtener los datos del CSV actual
+                const activeData = Array.from(csvDataMap.values())[0]; // Por ahora tomamos el primer CSV
+                
+                if (activeData) {
                     let simpleJson;
                     
                     if (selectedPrimaryKeyColumns.size > 0) {
@@ -628,24 +631,25 @@
                         const groupedData = {};
                         
                         selectedPrimaryKeyColumns.forEach((columnName, nodeId) => {
-                            groupedData[nodeId] = {};
-                            currentJsonLd.dataExample.forEach(row => {
-                                const keyField = columnName.toLowerCase().replace(/\s+/g, '_');
-                                const keyValue = row[keyField];
-                                
-                                if (keyValue) {
-                                    groupedData[nodeId][keyValue] = row[keyField];
-                                }
-                            });
+                            const nodeData = Array.from(csvDataMap.values()).find(csv => 
+                                csv.fileName === document.getElementById(nodeId).querySelector('.node-header span').textContent
+                            );
+                            
+                            if (nodeData) {
+                                groupedData[nodeId] = {};
+                                nodeData.data.forEach(row => {
+                                    const keyValue = row[columnName];
+                                    if (keyValue) {
+                                        groupedData[nodeId][keyValue] = row;
+                                    }
+                                });
+                            }
                         });
                         
                         simpleJson = groupedData;
                     } else {
-                        // Si no hay llave primaria, mostrar como array normal
-                        simpleJson = currentJsonLd.dataExample.map(row => {
-                            const { '@type': _, ...cleanRow } = row;
-                            return cleanRow;
-                        });
+                        // Si no hay llave primaria, mostrar los datos sin procesar
+                        simpleJson = activeData.data;
                     }
                     
                     document.getElementById('json-preview').textContent = 
