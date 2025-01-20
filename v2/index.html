@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector CSV</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .left-panel {
+            flex: 1;
+            padding: 30px;
+            background-color: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 30px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .container {
+            max-width: 100%;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .upload-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-upload-label:hover {
+            background-color: #2980b9;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+        }
+
+        .clear-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .table-wrapper {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-header h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .delete-btn {
+            background-color: #ff4444;
+            color: white;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="container">
+                <h2>Lector de archivos CSV</h2>
+                <div class="upload-section">
+                    <label for="csvFile" class="file-upload-label">Seleccionar archivos CSV</label>
+                    <input type="file" id="csvFile" accept=".csv" multiple onchange="handleFileUpload()">
+                    <button class="clear-btn" onclick="clearData()">Eliminar todos</button>
+                </div>
+                <div id="tablesContainer"></div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <!-- Aquí puedes agregar el contenido del panel derecho -->
+        </div>
+    </div>
+
+    <script>
+        function handleFileUpload() {
+            const fileInput = document.getElementById('csvFile');
+            const files = fileInput.files;
+            
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const text = e.target.result;
+                        const data = parseCSV(text);
+                        displayData(data, file.name);
+                    };
+                    
+                    reader.readAsText(file);
+                });
+            } else {
+                alert('Por favor selecciona al menos un archivo CSV');
+            }
+        }
+
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            return lines.map(line => line.split(',').map(item => item.trim()));
+        }
+
+        function displayData(data, fileName) {
+            if (data.length === 0) return;
+
+            const tablesContainer = document.getElementById('tablesContainer');
+            
+            // Crear contenedor para esta tabla
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'table-wrapper';
+            
+            // Crear header con título y botón de eliminar
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'table-header';
+            
+            const fileTitle = document.createElement('h3');
+            fileTitle.textContent = fileName;
+            
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.className = 'delete-btn';
+            deleteButton.onclick = function() {
+                tableDiv.remove();
+                // Verificar si no quedan tablas
+                if (tablesContainer.children.length === 0) {
+                    resetFileInput();
+                }
+            };
+            
+            headerDiv.appendChild(fileTitle);
+            headerDiv.appendChild(deleteButton);
+            tableDiv.appendChild(headerDiv);
+            
+            // Crear tabla
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+            const headerRow = document.createElement('tr');
+            
+            // Crear encabezados
+            data[0].forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Crear filas de datos
+            for (let i = 1; i < data.length; i++) {
+                if (data[i].length === 1 && data[i][0] === '') continue;
+                
+                const row = document.createElement('tr');
+                data[i].forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            }
+            
+            table.appendChild(tbody);
+            tableDiv.appendChild(table);
+            tablesContainer.appendChild(tableDiv);
+        }
+
+        function resetFileInput() {
+            const oldInput = document.getElementById('csvFile');
+            const newInput = document.createElement('input');
+            
+            // Copiar todos los atributos importantes
+            newInput.type = 'file';
+            newInput.id = 'csvFile';
+            newInput.accept = '.csv';
+            newInput.multiple = true;
+            newInput.className = oldInput.className;
+            newInput.style.display = 'none';
+            
+            // Agregar el evento change
+            newInput.addEventListener('change', handleFileUpload);
+            
+            // Reemplazar el input
+            oldInput.parentNode.replaceChild(newInput, oldInput);
+        }
+
+        function clearData() {
+            // Limpiar las tablas
+            document.getElementById('tablesContainer').innerHTML = '';
+            // Resetear el input
+            resetFileInput();
+        }
+    </script>
+</body>
+</html>

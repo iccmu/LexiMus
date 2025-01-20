@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Node Editor</title>
+    <!-- Blueprint.js Core -->
+    <link href="https://unpkg.com/@blueprintjs/core@4/lib/css/blueprint.css" rel="stylesheet" />
+    <link href="https://unpkg.com/@blueprintjs/icons@4/lib/css/blueprint-icons.css" rel="stylesheet" />
+    <!-- jsPlumb Toolkit Community Edition -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.js"></script>
+    <!-- Asegurarse de que jsPlumb esté cargado -->
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof jsPlumb === 'undefined') {
+                console.error('jsPlumb no está cargado correctamente');
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/jsonld@5.2.0/dist/jsonld.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/n3@1.16.2/browser/n3.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #293742;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .content-container {
+            display: flex;
+            flex: 1;
+            position: relative;
+            min-height: 500px;
+            min-width: 500px;
+        }
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 250px;
+            padding: 20px;
+            background-color: #30404d;
+            color: white;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        .canvas {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            padding: 20px;
+            min-height: 500px;
+            min-width: 500px;
+            background-color: #293742;
+        }
+        .metadata-panel {
+            height: 200px;
+            background-color: #30404d;
+            padding: 15px;
+            border-top: 1px solid #5c7080;
+            color: white;
+            display: flex;
+            gap: 15px;
+        }
+        .metadata-list {
+            width: 300px;
+            min-width: 300px;
+            max-width: 300px;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        .metadata-item {
+            background-color: #394b59;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #5c7080;
+            margin-bottom: 8px;
+        }
+        .metadata-label {
+            color: #bfccd6;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .metadata-value {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .preview-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .preview-header {
+            margin-bottom: 10px;
+        }
+        .preview-content {
+            flex: 1;
+            background-color: #394b59;
+            border-radius: 3px;
+            border: 1px solid #5c7080;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre;
+            margin: 0;
+        }
+        /* Estilo para la barra de scroll */
+        .metadata-list::-webkit-scrollbar,
+        .preview-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .metadata-list::-webkit-scrollbar-track,
+        .preview-content::-webkit-scrollbar-track {
+            background: #293742;
+        }
+        .metadata-list::-webkit-scrollbar-thumb,
+        .preview-content::-webkit-scrollbar-thumb {
+            background: #5c7080;
+            border-radius: 4px;
+        }
+        .node {
+            z-index: 4;
+            position: absolute;
+            background-color: #394b59;
+            border: 1px solid #5c7080;
+            border-radius: 3px;
+            padding: 15px;
+            width: 300px;
+            min-height: 100px;
+            color: white;
+            cursor: move;
+        }
+        .node-header {
+            border-bottom: 1px solid #5c7080;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .column-item {
+            position: relative;
+            padding: 8px;
+            margin: 4px 0;
+            border-bottom: 1px solid #5c7080;
+            height: 30px;
+            display: flex;
+            align-items: center;
+        }
+        .column-name {
+            flex-grow: 1;
+        }
+        .primary-key {
+            color: #FFD700 !important; /* Amarillo dorado */
+        }
+        .endpoint {
+            display: none; /* Ya no necesitamos este elemento */
+        }
+        .jtk-endpoint {
+            z-index: 3;
+            cursor: pointer;
+        }
+        
+        .jtk-connector {
+            z-index: 2;
+        }
+        .jtk-overlay {
+            z-index: 5;
+        }
+        /* Estilo específico para el ícono de llave cuando está seleccionado */
+        .bp4-button.primary-key .bp4-icon-key::before {
+            color: #FFD700 !important;
+        }
+        
+        /* Estilo para el botón completo cuando está seleccionado */
+        .bp4-button.primary-key {
+            background-color: rgba(255, 215, 0, 0.2) !important;
+        }
+        .resizable-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            height: 200px;
+            background-color: #30404d;
+            border: 1px solid #5c7080;
+            border-radius: 3px;
+            overflow: hidden;
+            resize: both;
+            z-index: 1000;
+        }
+
+        .resizable-panel-header {
+            padding: 8px;
+            background-color: #394b59;
+            border-bottom: 1px solid #5c7080;
+            cursor: move;
+            user-select: none;
+        }
+
+        .resizable-panel-content {
+            width: 100%;
+            height: calc(100% - 33px); /* Altura total menos el header */
+            overflow: auto;
+            padding: 10px;
+        }
+
+        /* Estilo para el controlador de redimensionamiento */
+        .resizable-panel::-webkit-resizer {
+            background-color: #5c7080;
+            border: 2px solid #30404d;
+        }
+
+        /* Asegurar que el contenedor tenga posición relativa */
+        .columns-container {
+            position: relative;
+        }
+        .file-list {
+            margin-top: 15px;
+            border-top: 1px solid #5c7080;
+            padding-top: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #394b59;
+            border-radius: 3px;
+            border: 1px solid #5c7080;
+        }
+
+        .file-name {
+            flex-grow: 1;
+            margin-right: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-remove {
+            color: #ff7373;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .file-remove:hover {
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body class="bp4-dark">
+    <div class="main-container">
+        <div class="content-container">
+            <div class="sidebar">
+                <h3 class="bp4-heading">CSV Node Editor</h3>
+                <label class="bp4-file-input">
+                    <input id="csvFile" type="file" accept=".csv"/>
+                    <span class="bp4-file-upload-input">Seleccionar CSV...</span>
+                </label>
+                <div id="fileName" class="bp4-text-muted" style="margin-top: 10px;"></div>
+                <div class="file-list" id="fileList">
+                    <!-- Aquí se mostrarán los archivos -->
+                </div>
+            </div>
+            <div id="canvas" class="canvas"></div>
+            <div class="resizable-panel" id="graphPanel">
+                <div class="resizable-panel-header">
+                    Gráfico de ejemplo
+                </div>
+                <div class="resizable-panel-content" id="graphContent">
+                    <!-- Aquí irá el gráfico -->
+                </div>
+            </div>
+        </div>
+        <div class="metadata-panel">
+            <div class="metadata-list">
+                <div class="metadata-item">
+                    <div class="metadata-label">Nombre del archivo</div>
+                    <div class="metadata-value" id="meta-filename">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Número de columnas</div>
+                    <div class="metadata-value" id="meta-columns">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Número de filas</div>
+                    <div class="metadata-value" id="meta-rows">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Tamaño del archivo</div>
+                    <div class="metadata-value" id="meta-size">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Última modificación</div>
+                    <div class="metadata-value" id="meta-modified">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Tipo de archivo</div>
+                    <div class="metadata-value" id="meta-type">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Codificación</div>
+                    <div class="metadata-value" id="meta-encoding">UTF-8</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Delimitador</div>
+                    <div class="metadata-value" id="meta-delimiter">,</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Tiene encabezados</div>
+                    <div class="metadata-value" id="meta-headers">Sí</div>
+                </div>
+            </div>
+            <div class="preview-container">
+                <div class="preview-header">
+                    <div class="bp4-button-group">
+                        <button class="bp4-button bp4-small" id="showJsonLd">JSON-LD</button>
+                        <button class="bp4-button bp4-small" id="showRdf">RDF (Turtle)</button>
+                        <button class="bp4-button bp4-small" id="showJson">JSON</button>
+                    </div>
+                </div>
+                <pre id="json-preview" class="preview-content"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Añadir función para generar UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Estructura para mantener los datos de cada CSV
+        let csvDataMap = new Map(); // Mapa para almacenar los datos de cada CSV
+
+        // Actualizar las variables globales
+        let currentJsonLd = null;
+        let selectedPrimaryKeyColumns = new Map();
+        let uploadedFiles = new Map();
+        let nodesMap = new Map();
+        let jsPlumbInstance = null; // Mover la instancia a variable global
+
+        // Función para esperar a que el DOM se actualice
+        const waitForDOM = () => new Promise(resolve => setTimeout(resolve, 100));
+
+        // Función para verificar y registrar la asociación de datos
+        function verifyEndpointData(nodeId, columnName, endpoint) {
+            if (endpoint) {
+                // Almacenar los datos de la columna en el endpoint
+                endpoint.columnData = {
+                    nodeId: nodeId,
+                    columnName: columnName
+                };
+                console.log(`Endpoint data for ${nodeId}:`, endpoint.columnData);
+                return true;
+            }
+            return false;
+        }
+
+        async function initializeNodeEndpoints(nodeId, columns) {
+            console.log(`Initializing endpoints for node ${nodeId} with columns:`, columns); // Debug log
+            
+            await waitForDOM();
+
+            // Hacer el nodo draggable
+            jsPlumbInstance.draggable(nodeId, {
+                grid: [10, 10],
+                containment: true,
+                handle: '.node-header'
+            });
+
+            // Añadir endpoints para cada columna
+            columns.forEach((column, index) => {
+                const columnId = `${nodeId}-column-${index}`;
+                console.log(`Creating endpoint for ${columnId} with column name: ${column}`); // Debug log
+                
+                try {
+                    const endpoint = jsPlumbInstance.addEndpoint(columnId, {
+                        anchor: "Right",
+                        isSource: true,
+                        isTarget: true,
+                        maxConnections: 1,
+                        endpoint: ["Dot", { radius: 5 }],
+                        paintStyle: { 
+                            fill: "#2b95d6",
+                            stroke: "#2b95d6" 
+                        },
+                        parameters: {
+                            columnName: column,
+                            nodeId: nodeId
+                        }
+                    });
+
+                    if (endpoint) {
+                        console.log(`Successfully created endpoint for ${column}`);
+                    }
+                } catch (error) {
+                    console.error(`Error creating endpoint for ${column}:`, error);
+                }
+            });
+        }
+
+        async function createTableNode(columns, fileName, uuid) {
+            const nodeId = `node-${uuid}`;
+            console.log(`Creating node ${nodeId} for file ${fileName} with columns:`, columns); // Debug log
+
+            const node = document.createElement('div');
+            node.className = 'node';
+            node.id = nodeId;
+            
+            node.style.left = `${50 + (Math.random() * 200)}px`;
+            node.style.top = `${50 + (Math.random() * 200)}px`;
+
+            let columnsHtml = `
+                <div class="node-header">
+                    <span>${fileName}</span>
+                    <span style="font-size: 0.8em; color: #8a9ba8;">(${uuid.slice(0,8)})</span>
+                </div>
+                <div class="columns-container">
+            `;
+
+            // Usar las columnas pasadas como parámetro
+            columns.forEach((column, index) => {
+                columnsHtml += `
+                    <div class="column-item" id="${nodeId}-column-${index}" data-column-name="${column}">
+                        <span class="column-name">${column}</span>
+                        <button class="bp4-button bp4-minimal bp4-small bp4-icon-key" 
+                                onclick="togglePrimaryKey('${nodeId}', this)" 
+                                title="Marcar como Primary Key"></button>
+                    </div>
+                `;
+            });
+
+            columnsHtml += '</div>';
+            node.innerHTML = columnsHtml;
+            document.getElementById('canvas').appendChild(node);
+
+            // Inicializar endpoints con las columnas específicas
+            await initializeNodeEndpoints(nodeId, columns);
+            
+            return nodeId;
+        }
+
+        window.addEventListener('load', async function() {
+            jsPlumbInstance = jsPlumb.getInstance({
+                container: document.getElementById("canvas"),
+                // Configuración básica de jsPlumb
+                Endpoint: ["Dot", { radius: 5 }],
+                Connector: ["Flowchart", {
+                    stub: [30, 30],
+                    gap: 0,
+                    cornerRadius: 5,
+                    alwaysRespectStubs: true
+                }],
+                ConnectionsDetachable: false,
+                PaintStyle: { 
+                    strokeWidth: 2, 
+                    stroke: "#5c7080"
+                },
+                EndpointStyle: { 
+                    fill: "#2b95d6", 
+                    stroke: "#2b95d6" 
+                },
+                DragOptions: {
+                    containment: true,
+                    grid: [10, 10]
+                },
+                // Añadir manejo de grupos
+                Groups: {
+                    useGhostProxy: true
+                }
+            });
+
+            // Asegurarse de que jsPlumb esté listo
+            jsPlumbInstance.bind("ready", function() {
+                console.log("jsPlumb is ready");
+            });
+
+            // Asegurarse de que el contenedor tenga dimensiones
+            const canvas = document.getElementById("canvas");
+            if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                canvas.style.minWidth = "500px";
+                canvas.style.minHeight = "500px";
+            }
+
+            // Actualizar el manejador del archivo
+            function parseCSV(text) {
+                const result = [];
+                let row = [];
+                let entry = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    
+                    if (char === '"') {
+                        if (inQuotes && text[i + 1] === '"') {
+                            entry += '"';
+                            i++;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                        continue;
+                    }
+                    
+                    if (char === ',' && !inQuotes) {
+                        row.push(entry.trim());
+                        entry = '';
+                        continue;
+                    }
+                    
+                    if (char === '\n' && !inQuotes) {
+                        row.push(entry.trim());
+                        result.push(row);
+                        row = [];
+                        entry = '';
+                        continue;
+                    }
+                    
+                    entry += char;
+                }
+                
+                if (entry) {
+                    row.push(entry.trim());
+                }
+                if (row.length) {
+                    result.push(row);
+                }
+                
+                return result;
+            }
+
+            document.getElementById('csvFile').addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    try {
+                        const uuid = generateUUID();
+                        const reader = new FileReader();
+                        
+                        reader.onload = async function(e) {
+                            const csvData = e.target.result;
+                            const parsedData = parseCSV(csvData);
+                            const headers = parsedData[0].map(h => h.trim());
+                            
+                            console.log('CSV Headers:', headers); // Debug log
+                            
+                            // Almacenar los datos del CSV
+                            csvDataMap.set(uuid, {
+                                headers: headers,
+                                data: parsedData.slice(1).map(row => {
+                                    return headers.reduce((obj, header, index) => {
+                                        obj[header] = row[index] || '';
+                                        return obj;
+                                    }, {});
+                                }),
+                                fileName: file.name
+                            });
+
+                            // Crear el nodo usando los headers específicos de este CSV
+                            const nodeId = await createTableNode(headers, file.name, uuid);
+                            
+                            // Añadir a la lista de archivos
+                            addFileToList(file, csvData, nodeId, uuid);
+
+                            // Actualizar metadatos
+                            document.getElementById('meta-filename').textContent = file.name;
+                            document.getElementById('meta-columns').textContent = headers.length;
+                            document.getElementById('meta-rows').textContent = parsedData.length - 1;
+                        };
+
+                        reader.readAsText(file);
+
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                    }
+                    this.value = '';
+                }
+            });
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            window.togglePrimaryKey = function(nodeId, button) {
+                const columnItem = button.closest('.column-item');
+                const columnName = columnItem.querySelector('.column-name').textContent;
+                
+                if (button.classList.contains('primary-key')) {
+                    button.classList.remove('primary-key');
+                    selectedPrimaryKeyColumns.delete(nodeId);
+                } else {
+                    // Quitar selección previa solo en el nodo actual
+                    columnItem.closest('.node').querySelectorAll('.bp4-icon-key').forEach(btn => {
+                        btn.classList.remove('primary-key');
+                    });
+                    
+                    button.classList.add('primary-key');
+                    selectedPrimaryKeyColumns.set(nodeId, columnName);
+                }
+
+                updateJsonView();
+            };
+
+            function updateJsonView() {
+                if (currentJsonLd && currentJsonLd.dataExample) {
+                    let simpleJson;
+                    
+                    if (selectedPrimaryKeyColumns.size > 0) {
+                        // Crear un objeto agrupado por la llave primaria
+                        const groupedData = {};
+                        
+                        selectedPrimaryKeyColumns.forEach((columnName, nodeId) => {
+                            groupedData[nodeId] = {};
+                            currentJsonLd.dataExample.forEach(row => {
+                                const keyField = columnName.toLowerCase().replace(/\s+/g, '_');
+                                const keyValue = row[keyField];
+                                
+                                if (keyValue) {
+                                    groupedData[nodeId][keyValue] = row[keyField];
+                                }
+                            });
+                        });
+                        
+                        simpleJson = groupedData;
+                    } else {
+                        // Si no hay llave primaria, mostrar como array normal
+                        simpleJson = currentJsonLd.dataExample.map(row => {
+                            const { '@type': _, ...cleanRow } = row;
+                            return cleanRow;
+                        });
+                    }
+                    
+                    document.getElementById('json-preview').textContent = 
+                        JSON.stringify(simpleJson, null, 2);
+                }
+            }
+
+            // Manejadores para los botones de formato
+            document.getElementById('showJsonLd').addEventListener('click', function() {
+                // Implementa la lógica para mostrar JSON-LD
+            });
+
+            document.getElementById('showRdf').addEventListener('click', async function() {
+                // Implementa la lógica para convertir a RDF
+            });
+
+            document.getElementById('showJson').addEventListener('click', function() {
+                updateJsonView();
+            });
+
+            async function convertJsonLdToRdf(jsonLd) {
+                // Implementa la lógica para convertir JSON-LD a RDF
+            }
+
+            // Funcionalidad para arrastrar el panel
+            const graphPanel = document.getElementById('graphPanel');
+            const graphHeader = graphPanel.querySelector('.resizable-panel-header');
+
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+
+            graphHeader.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                initialX = e.clientX - graphPanel.offsetLeft;
+                initialY = e.clientY - graphPanel.offsetTop;
+                
+                if (e.target === graphHeader) {
+                    isDragging = true;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    // Limitar el movimiento dentro de la ventana
+                    currentX = Math.max(0, Math.min(currentX, window.innerWidth - graphPanel.offsetWidth));
+                    currentY = Math.max(0, Math.min(currentY, window.innerHeight - graphPanel.offsetHeight));
+
+                    graphPanel.style.left = currentX + "px";
+                    graphPanel.style.top = currentY + "px";
+                }
+            }
+
+            function dragEnd() {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+
+            function createHierarchicalGraph() {
+                // Implementa la lógica para crear el gráfico jerárquico
+            }
+            
+            // Reemplazar la función anterior de createExampleGraph
+            createHierarchicalGraph();
+            
+            // Actualizar el observer para usar la nueva función
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    const panel = entry.target;
+                    const rect = panel.getBoundingClientRect();
+                    
+                    if (rect.right > window.innerWidth) {
+                        panel.style.width = (window.innerWidth - rect.left - 20) + 'px';
+                    }
+                    if (rect.bottom > window.innerHeight) {
+                        panel.style.height = (window.innerHeight - rect.top - 20) + 'px';
+                    }
+                    
+                    createHierarchicalGraph();
+                }
+            });
+            
+            resizeObserver.observe(graphPanel);
+
+            // Añadir evento para monitorear las conexiones
+            jsPlumbInstance.bind("connection", function(info) {
+                const sourceEndpoint = info.sourceEndpoint;
+                const targetEndpoint = info.targetEndpoint;
+                
+                console.log("New connection created:");
+                console.log("Source:", sourceEndpoint.columnData);
+                console.log("Target:", targetEndpoint.columnData);
+            });
+        });
+
+        function addFileToList(file, csvData, nodeId, uuid) {
+            // Crear elemento en la lista de archivos
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <span class="file-name" title="${file.name}">${file.name}</span>
+                <button class="bp4-button bp4-minimal bp4-small bp4-icon-cross file-remove" 
+                        onclick="removeFile('${uuid}')" 
+                        title="Eliminar archivo"></button>
+            `;
+
+            // Almacenar la información del archivo
+            uploadedFiles.set(uuid, {
+                element: fileItem,
+                data: csvData,
+                nodeId: nodeId
+            });
+
+            // Añadir a la lista de archivos
+            document.getElementById('fileList').appendChild(fileItem);
+            nodesMap.set(uuid, nodeId);
+        }
+
+        function removeFile(uuid) {
+            const fileInfo = uploadedFiles.get(uuid);
+            if (fileInfo) {
+                const nodeId = nodesMap.get(uuid);
+                const node = document.getElementById(nodeId);
+                if (node) {
+                    try {
+                        // Eliminar todas las conexiones específicas de este nodo
+                        jsPlumbInstance.selectEndpoints({source: nodeId}).delete();
+                        jsPlumbInstance.selectEndpoints({target: nodeId}).delete();
+                        
+                        // Eliminar el nodo y sus endpoints
+                        jsPlumbInstance.remove(nodeId, true);
+                        
+                        // Por si acaso, eliminar también del DOM
+                        if (node.parentNode) {
+                            node.parentNode.removeChild(node);
+                        }
+                    } catch (error) {
+                        console.error(`Error removing node ${nodeId}:`, error);
+                    }
+                }
+                
+                selectedPrimaryKeyColumns.delete(nodeId);
+                fileInfo.element.remove();
+                uploadedFiles.delete(uuid);
+                nodesMap.delete(uuid);
+                
+                if (uploadedFiles.size === 0) {
+                    document.getElementById('json-preview').textContent = '';
+                    resetMetadata();
+                }
+
+                // Repintar solo lo necesario
+                jsPlumbInstance.repaintEverything();
+
+                // Limpiar los datos del CSV
+                csvDataMap.delete(uuid);
+            }
+        }
+
+        function resetMetadata() {
+            // Resetear todos los campos de metadatos
+            document.getElementById('meta-filename').textContent = '-';
+            document.getElementById('meta-size').textContent = '-';
+            document.getElementById('meta-type').textContent = '-';
+            document.getElementById('meta-modified').textContent = '-';
+            document.getElementById('meta-columns').textContent = '-';
+            document.getElementById('meta-rows').textContent = '-';
+        }
+    </script>
+</body>
+</html>
