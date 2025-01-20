@@ -68,6 +68,8 @@
         }
         .metadata-list {
             width: 300px;
+            min-width: 300px;
+            max-width: 300px;
             overflow-y: auto;
             padding-right: 15px;
         }
@@ -152,7 +154,7 @@
             flex-grow: 1;
         }
         .primary-key {
-            color: #2b95d6;
+            color: #FFD700 !important; /* Amarillo dorado */
         }
         .endpoint {
             position: absolute;
@@ -174,6 +176,15 @@
         }
         .jtk-overlay {
             z-index: 5;
+        }
+        /* Estilo específico para el ícono de llave cuando está seleccionado */
+        .bp4-button.primary-key .bp4-icon-key::before {
+            color: #FFD700 !important;
+        }
+        
+        /* Estilo para el botón completo cuando está seleccionado */
+        .bp4-button.primary-key {
+            background-color: rgba(255, 215, 0, 0.2) !important;
         }
     </style>
 </head>
@@ -234,6 +245,7 @@
                     <div class="bp4-button-group">
                         <button class="bp4-button bp4-small" id="showJsonLd">JSON-LD</button>
                         <button class="bp4-button bp4-small" id="showRdf">RDF (Turtle)</button>
+                        <button class="bp4-button bp4-small" id="showJson">JSON</button>
                     </div>
                 </div>
                 <pre id="json-preview" class="preview-content"></pre>
@@ -420,15 +432,23 @@
             }
 
             window.togglePrimaryKey = function(button) {
-                if (currentPrimaryKey) {
-                    currentPrimaryKey.classList.remove('primary-key');
-                }
-                if (currentPrimaryKey !== button) {
-                    button.classList.add('primary-key');
-                    currentPrimaryKey = button;
-                } else {
+                // Si el botón actual ya está seleccionado, lo deseleccionamos
+                if (button.classList.contains('primary-key')) {
+                    button.classList.remove('primary-key');
                     currentPrimaryKey = null;
+                    console.log('Primary key removed');
+                    return;
                 }
+
+                // Si no, quitamos la selección de cualquier otro botón
+                document.querySelectorAll('.bp4-icon-key').forEach(btn => {
+                    btn.classList.remove('primary-key');
+                });
+                
+                // Y seleccionamos el nuevo botón
+                button.classList.add('primary-key');
+                currentPrimaryKey = button;
+                console.log('Primary key set:', button);
             };
 
             // Manejadores para los botones de formato
@@ -443,6 +463,20 @@
                 if (currentJsonLd) {
                     const rdf = await convertJsonLdToRdf(currentJsonLd);
                     document.getElementById('json-preview').textContent = rdf;
+                }
+            });
+
+            document.getElementById('showJson').addEventListener('click', function() {
+                if (currentJsonLd) {
+                    // Solo tomamos los datos de ejemplo del CSV
+                    const simpleJson = currentJsonLd.dataExample.map(row => {
+                        // Eliminamos el @type que viene del JSON-LD
+                        const { '@type': _, ...cleanRow } = row;
+                        return cleanRow;
+                    });
+                    
+                    document.getElementById('json-preview').textContent = 
+                        JSON.stringify(simpleJson, null, 2);
                 }
             });
 
