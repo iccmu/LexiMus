@@ -281,6 +281,7 @@
 
             let currentPrimaryKey = null;
             let currentJsonLd = null;
+            let selectedPrimaryKeyColumn = null;
 
             document.getElementById('csvFile').addEventListener('change', function(e) {
                 const file = e.target.files[0];
@@ -432,24 +433,70 @@
             }
 
             window.togglePrimaryKey = function(button) {
+                const columnItem = button.closest('.column-item');
+                const columnName = columnItem.querySelector('.column-name').textContent;
+                
                 // Si el botón actual ya está seleccionado, lo deseleccionamos
                 if (button.classList.contains('primary-key')) {
                     button.classList.remove('primary-key');
                     currentPrimaryKey = null;
+                    selectedPrimaryKeyColumn = null;
                     console.log('Primary key removed');
-                    return;
+                } else {
+                    // Si no, quitamos la selección de cualquier otro botón
+                    document.querySelectorAll('.bp4-icon-key').forEach(btn => {
+                        btn.classList.remove('primary-key');
+                    });
+                    
+                    // Y seleccionamos el nuevo botón
+                    button.classList.add('primary-key');
+                    currentPrimaryKey = button;
+                    selectedPrimaryKeyColumn = columnName;
+                    console.log('Primary key set:', columnName);
                 }
 
-                // Si no, quitamos la selección de cualquier otro botón
-                document.querySelectorAll('.bp4-icon-key').forEach(btn => {
-                    btn.classList.remove('primary-key');
-                });
-                
-                // Y seleccionamos el nuevo botón
-                button.classList.add('primary-key');
-                currentPrimaryKey = button;
-                console.log('Primary key set:', button);
+                // Actualizar el JSON automáticamente si está en vista JSON
+                if (document.getElementById('showJson').classList.contains('bp4-active')) {
+                    updateJsonView();
+                } else {
+                    // Si no está en vista JSON, cambiar a vista JSON y actualizar
+                    document.getElementById('showJson').click();
+                }
             };
+
+            // Función separada para actualizar la vista JSON
+            function updateJsonView() {
+                if (currentJsonLd) {
+                    let simpleJson;
+                    
+                    if (selectedPrimaryKeyColumn) {
+                        // Crear un objeto agrupado por la llave primaria
+                        const groupedData = {};
+                        
+                        currentJsonLd.dataExample.forEach(row => {
+                            const { '@type': _, ...cleanRow } = row;
+                            const keyValue = cleanRow[selectedPrimaryKeyColumn.toLowerCase().replace(/\s+/g, '_')];
+                            
+                            if (keyValue) {
+                                // Eliminar la propiedad de la llave primaria del objeto interno
+                                const { [selectedPrimaryKeyColumn.toLowerCase().replace(/\s+/g, '_')]: __, ...rest } = cleanRow;
+                                groupedData[keyValue] = rest;
+                            }
+                        });
+                        
+                        simpleJson = groupedData;
+                    } else {
+                        // Si no hay llave primaria, mostrar como array normal
+                        simpleJson = currentJsonLd.dataExample.map(row => {
+                            const { '@type': _, ...cleanRow } = row;
+                            return cleanRow;
+                        });
+                    }
+                    
+                    document.getElementById('json-preview').textContent = 
+                        JSON.stringify(simpleJson, null, 2);
+                }
+            }
 
             // Manejadores para los botones de formato
             document.getElementById('showJsonLd').addEventListener('click', function() {
@@ -466,19 +513,7 @@
                 }
             });
 
-            document.getElementById('showJson').addEventListener('click', function() {
-                if (currentJsonLd) {
-                    // Solo tomamos los datos de ejemplo del CSV
-                    const simpleJson = currentJsonLd.dataExample.map(row => {
-                        // Eliminamos el @type que viene del JSON-LD
-                        const { '@type': _, ...cleanRow } = row;
-                        return cleanRow;
-                    });
-                    
-                    document.getElementById('json-preview').textContent = 
-                        JSON.stringify(simpleJson, null, 2);
-                }
-            });
+            document.getElementById('showJson').addEventListener('click', updateJsonView);
 
             async function convertJsonLdToRdf(jsonLd) {
                 try {
