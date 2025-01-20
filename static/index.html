@@ -19,6 +19,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/jsonld@5.2.0/dist/jsonld.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/n3@1.16.2/browser/n3.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -36,6 +37,8 @@
             display: flex;
             flex: 1;
             position: relative;
+            min-height: 500px;
+            min-width: 500px;
         }
         .sidebar {
             position: absolute;
@@ -55,6 +58,7 @@
             overflow: auto;
             padding: 20px;
             min-height: 500px;
+            min-width: 500px;
             background-color: #293742;
         }
         .metadata-panel {
@@ -157,15 +161,9 @@
             color: #FFD700 !important; /* Amarillo dorado */
         }
         .endpoint {
-            position: absolute;
-            right: -5px;
-            top: 50%;
-            transform: translateY(-50%);
             width: 10px;
             height: 10px;
-            background-color: #2b95d6;
-            border-radius: 50%;
-            cursor: pointer;
+            margin-left: 5px;
         }
         .jtk-endpoint {
             z-index: 3;
@@ -186,6 +184,45 @@
         .bp4-button.primary-key {
             background-color: rgba(255, 215, 0, 0.2) !important;
         }
+        .resizable-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            height: 200px;
+            background-color: #30404d;
+            border: 1px solid #5c7080;
+            border-radius: 3px;
+            overflow: hidden;
+            resize: both;
+            z-index: 1000;
+        }
+
+        .resizable-panel-header {
+            padding: 8px;
+            background-color: #394b59;
+            border-bottom: 1px solid #5c7080;
+            cursor: move;
+            user-select: none;
+        }
+
+        .resizable-panel-content {
+            width: 100%;
+            height: calc(100% - 33px); /* Altura total menos el header */
+            overflow: auto;
+            padding: 10px;
+        }
+
+        /* Estilo para el controlador de redimensionamiento */
+        .resizable-panel::-webkit-resizer {
+            background-color: #5c7080;
+            border: 2px solid #30404d;
+        }
+
+        /* Asegurar que el contenedor tenga posición relativa */
+        .columns-container {
+            position: relative;
+        }
     </style>
 </head>
 <body class="bp4-dark">
@@ -200,6 +237,14 @@
                 <div id="fileName" class="bp4-text-muted" style="margin-top: 10px;"></div>
             </div>
             <div id="canvas" class="canvas"></div>
+            <div class="resizable-panel" id="graphPanel">
+                <div class="resizable-panel-header">
+                    Gráfico de ejemplo
+                </div>
+                <div class="resizable-panel-content" id="graphContent">
+                    <!-- Aquí irá el gráfico -->
+                </div>
+            </div>
         </div>
         <div class="metadata-panel">
             <div class="metadata-list">
@@ -256,27 +301,42 @@
     <script>
         // Esperar a que jsPlumb esté disponible
         window.addEventListener('load', function() {
-            // Inicializar jsPlumb
             const jsPlumbInstance = jsPlumb.getInstance({
                 container: document.getElementById("canvas"),
-                connector: ["Flowchart", { cornerRadius: 5 }],
-                paintStyle: { 
-                    stroke: "#5c7080", 
-                    strokeWidth: 2,
-                    outlineStroke: "transparent",
-                    outlineWidth: 4
+                // Configuración simplificada
+                Endpoint: ["Dot", { radius: 5 }],
+                Connector: ["Flowchart", {
+                    stub: [30, 30],
+                    gap: 0,
+                    cornerRadius: 5,
+                    alwaysRespectStubs: true
+                }],
+                ConnectionsDetachable: false,
+                PaintStyle: { 
+                    strokeWidth: 2, 
+                    stroke: "#5c7080"
                 },
-                endpointStyle: { 
+                EndpointStyle: { 
                     fill: "#2b95d6", 
-                    radius: 5,
-                    strokeWidth: 0
+                    stroke: "#2b95d6" 
                 },
-                hoverPaintStyle: { stroke: "#2b95d6" },
-                endpointHoverStyle: { fill: "#48AFF0" },
-                dragOptions: {
-                    cursor: 'move',
-                    grid: [10, 10]
+                // Añadir restricciones de arrastre
+                DragOptions: {
+                    containment: true,  // Restringir al contenedor
+                    grid: [10, 10]      // Snap to grid
                 }
+            });
+
+            // Asegurarse de que el contenedor tenga dimensiones antes de inicializar
+            const canvas = document.getElementById("canvas");
+            if (!canvas.offsetWidth || !canvas.offsetHeight) {
+                canvas.style.minWidth = "500px";
+                canvas.style.minHeight = "500px";
+            }
+
+            // Manejar el redimensionamiento de la ventana
+            window.addEventListener('resize', function() {
+                jsPlumbInstance.repaintEverything();
             });
 
             let currentPrimaryKey = null;
@@ -403,7 +463,7 @@
                             <button class="bp4-button bp4-minimal bp4-small bp4-icon-key" 
                                     onclick="togglePrimaryKey(this)" 
                                     title="Marcar como Primary Key"></button>
-                            <div class="endpoint" id="ep-${index}"></div>
+                            <span class="endpoint" id="ep-${index}"></span>
                         </div>
                     `;
                 });
@@ -412,24 +472,25 @@
                 node.innerHTML = columnsHtml;
                 document.getElementById('canvas').appendChild(node);
 
-                // Hacer el nodo arrastrable
                 plumbInstance.draggable(node);
 
-                // Configurar endpoints
-                columns.forEach((_, index) => {
-                    plumbInstance.addEndpoint(`ep-${index}`, {
-                        anchor: ["Right", [1, 0.5, 0, 0]],
-                        isSource: true,
-                        isTarget: true,
-                        maxConnections: -1,
-                        connector: ["Flowchart", { cornerRadius: 5 }]
-                    });
-                });
-
-                // Forzar un repintado después de que todo esté configurado
+                // Esperar a que el DOM se actualice
                 setTimeout(() => {
+                    columns.forEach((_, index) => {
+                        plumbInstance.addEndpoint(`column-${index}`, {
+                            anchor: ["Right", {x: 1, y: 0.5}],
+                            isSource: true,
+                            isTarget: true,
+                            maxConnections: 1,
+                            endpoint: ["Dot", { radius: 5 }],
+                            paintStyle: { 
+                                fill: "#2b95d6",
+                                stroke: "#2b95d6" 
+                            }
+                        });
+                    });
                     plumbInstance.repaintEverything();
-                }, 50);
+                }, 100);
             }
 
             window.togglePrimaryKey = function(button) {
@@ -496,6 +557,9 @@
                     document.getElementById('json-preview').textContent = 
                         JSON.stringify(simpleJson, null, 2);
                 }
+
+                // Actualizar el gráfico después de cambiar el JSON
+                createHierarchicalGraph();
             }
 
             // Manejadores para los botones de formato
@@ -544,6 +608,167 @@
                     return 'Error converting to RDF: ' + error.message;
                 }
             }
+
+            // Funcionalidad para arrastrar el panel
+            const graphPanel = document.getElementById('graphPanel');
+            const graphHeader = graphPanel.querySelector('.resizable-panel-header');
+
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+
+            graphHeader.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                initialX = e.clientX - graphPanel.offsetLeft;
+                initialY = e.clientY - graphPanel.offsetTop;
+                
+                if (e.target === graphHeader) {
+                    isDragging = true;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    // Limitar el movimiento dentro de la ventana
+                    currentX = Math.max(0, Math.min(currentX, window.innerWidth - graphPanel.offsetWidth));
+                    currentY = Math.max(0, Math.min(currentY, window.innerHeight - graphPanel.offsetHeight));
+
+                    graphPanel.style.left = currentX + "px";
+                    graphPanel.style.top = currentY + "px";
+                }
+            }
+
+            function dragEnd() {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+
+            function createHierarchicalGraph() {
+                // Limpiar el contenido anterior
+                d3.select("#graphContent").html("");
+                
+                const width = document.getElementById('graphContent').clientWidth;
+                const height = document.getElementById('graphContent').clientHeight;
+                
+                const svg = d3.select("#graphContent")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+                    
+                // Crear datos basados en la estructura actual del JSON
+                let nodes = [];
+                let links = [];
+                
+                if (selectedPrimaryKeyColumn) {
+                    // Caso cuando hay una llave primaria seleccionada
+                    nodes.push({ id: "root", label: selectedPrimaryKeyColumn, x: width/2, y: 50 });
+                    
+                    // Obtener las columnas del primer objeto
+                    if (currentJsonLd && currentJsonLd.dataExample.length > 0) {
+                        const { '@type': _, ...firstRow } = currentJsonLd.dataExample[0];
+                        const columns = Object.keys(firstRow).filter(
+                            col => col.toLowerCase() !== selectedPrimaryKeyColumn.toLowerCase().replace(/\s+/g, '_')
+                        );
+                        
+                        // Distribuir los nodos de las columnas en semicírculo
+                        const radius = Math.min(height - 100, width/2 - 50);
+                        columns.forEach((col, index) => {
+                            const angle = (Math.PI / (columns.length - 1)) * index;
+                            const x = width/2 + radius * Math.cos(angle);
+                            const y = height - 50 - radius * Math.sin(angle);
+                            
+                            nodes.push({ id: col, label: col, x, y });
+                            links.push({ source: "root", target: col });
+                        });
+                    }
+                } else {
+                    // Caso cuando no hay llave primaria (estructura plana)
+                    nodes.push({ id: "root", label: "CSV Data", x: width/2, y: 50 });
+                    
+                    if (currentJsonLd && currentJsonLd.dataExample.length > 0) {
+                        const { '@type': _, ...firstRow } = currentJsonLd.dataExample[0];
+                        const columns = Object.keys(firstRow);
+                        
+                        // Distribuir los nodos en semicírculo
+                        const radius = Math.min(height - 100, width/2 - 50);
+                        columns.forEach((col, index) => {
+                            const angle = (Math.PI / (columns.length - 1)) * index;
+                            const x = width/2 + radius * Math.cos(angle);
+                            const y = height - 50 - radius * Math.sin(angle);
+                            
+                            nodes.push({ id: col, label: col, x, y });
+                            links.push({ source: "root", target: col });
+                        });
+                    }
+                }
+                
+                // Dibujar las conexiones
+                svg.selectAll("line")
+                    .data(links)
+                    .enter()
+                    .append("line")
+                    .style("stroke", "#5c7080")
+                    .style("stroke-width", 2)
+                    .attr("x1", d => nodes.find(n => n.id === d.source).x)
+                    .attr("y1", d => nodes.find(n => n.id === d.source).y)
+                    .attr("x2", d => nodes.find(n => n.id === d.target).x)
+                    .attr("y2", d => nodes.find(n => n.id === d.target).y);
+                    
+                // Dibujar los nodos
+                const nodeGroups = svg.selectAll("g")
+                    .data(nodes)
+                    .enter()
+                    .append("g")
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+                    
+                // Círculos para los nodos
+                nodeGroups.append("circle")
+                    .attr("r", d => d.id === "root" ? 25 : 20)
+                    .style("fill", d => d.id === "root" ? "#2B95D6" : "#394b59")
+                    .style("stroke", "#5c7080")
+                    .style("stroke-width", 2);
+                    
+                // Texto para los nodos
+                nodeGroups.append("text")
+                    .text(d => d.label)
+                    .attr("text-anchor", "middle")
+                    .attr("dy", ".35em")
+                    .style("fill", "white")
+                    .style("font-size", "11px");
+            }
+            
+            // Reemplazar la función anterior de createExampleGraph
+            createHierarchicalGraph();
+            
+            // Actualizar el observer para usar la nueva función
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    const panel = entry.target;
+                    const rect = panel.getBoundingClientRect();
+                    
+                    if (rect.right > window.innerWidth) {
+                        panel.style.width = (window.innerWidth - rect.left - 20) + 'px';
+                    }
+                    if (rect.bottom > window.innerHeight) {
+                        panel.style.height = (window.innerHeight - rect.top - 20) + 'px';
+                    }
+                    
+                    createHierarchicalGraph();
+                }
+            });
+            
+            resizeObserver.observe(graphPanel);
         });
     </script>
 </body>
