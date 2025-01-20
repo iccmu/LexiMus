@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Node Editor</title>
+    <!-- Blueprint.js Core -->
+    <link href="https://unpkg.com/@blueprintjs/core@4/lib/css/blueprint.css" rel="stylesheet" />
+    <link href="https://unpkg.com/@blueprintjs/icons@4/lib/css/blueprint-icons.css" rel="stylesheet" />
+    <!-- jsPlumb Toolkit Community Edition -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.js"></script>
+    <!-- Asegurarse de que jsPlumb esté cargado -->
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof jsPlumb === 'undefined') {
+                console.error('jsPlumb no está cargado correctamente');
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/jsonld@5.2.0/dist/jsonld.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/n3@1.16.2/browser/n3.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #293742;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .content-container {
+            display: flex;
+            flex: 1;
+            position: relative;
+        }
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 250px;
+            padding: 20px;
+            background-color: #30404d;
+            color: white;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        .canvas {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            padding: 20px;
+            min-height: 500px;
+            background-color: #293742;
+        }
+        .metadata-panel {
+            height: 200px;
+            background-color: #30404d;
+            padding: 15px;
+            border-top: 1px solid #5c7080;
+            color: white;
+            display: flex;
+            gap: 15px;
+        }
+        .metadata-list {
+            width: 300px;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+        .metadata-item {
+            background-color: #394b59;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #5c7080;
+            margin-bottom: 8px;
+        }
+        .metadata-label {
+            color: #bfccd6;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .metadata-value {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .preview-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .preview-header {
+            margin-bottom: 10px;
+        }
+        .preview-content {
+            flex: 1;
+            background-color: #394b59;
+            border-radius: 3px;
+            border: 1px solid #5c7080;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre;
+            margin: 0;
+        }
+        /* Estilo para la barra de scroll */
+        .metadata-list::-webkit-scrollbar,
+        .preview-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .metadata-list::-webkit-scrollbar-track,
+        .preview-content::-webkit-scrollbar-track {
+            background: #293742;
+        }
+        .metadata-list::-webkit-scrollbar-thumb,
+        .preview-content::-webkit-scrollbar-thumb {
+            background: #5c7080;
+            border-radius: 4px;
+        }
+        .node {
+            z-index: 4;
+            position: absolute;
+            background-color: #394b59;
+            border: 1px solid #5c7080;
+            border-radius: 3px;
+            padding: 15px;
+            width: 300px;
+            min-height: 100px;
+            color: white;
+            cursor: move;
+        }
+        .node-header {
+            border-bottom: 1px solid #5c7080;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .column-item {
+            position: relative;
+            padding: 8px;
+            margin: 4px 0;
+            border-bottom: 1px solid #5c7080;
+            height: 30px;
+            display: flex;
+            align-items: center;
+        }
+        .column-name {
+            flex-grow: 1;
+        }
+        .primary-key {
+            color: #2b95d6;
+        }
+        .endpoint {
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            background-color: #2b95d6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .jtk-endpoint {
+            z-index: 3;
+        }
+        
+        .jtk-connector {
+            z-index: 2;
+        }
+        .jtk-overlay {
+            z-index: 5;
+        }
+    </style>
+</head>
+<body class="bp4-dark">
+    <div class="main-container">
+        <div class="content-container">
+            <div class="sidebar">
+                <h3 class="bp4-heading">CSV Node Editor</h3>
+                <label class="bp4-file-input">
+                    <input id="csvFile" type="file" accept=".csv"/>
+                    <span class="bp4-file-upload-input">Seleccionar CSV...</span>
+                </label>
+                <div id="fileName" class="bp4-text-muted" style="margin-top: 10px;"></div>
+            </div>
+            <div id="canvas" class="canvas"></div>
+        </div>
+        <div class="metadata-panel">
+            <div class="metadata-list">
+                <div class="metadata-item">
+                    <div class="metadata-label">Nombre del archivo</div>
+                    <div class="metadata-value" id="meta-filename">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Número de columnas</div>
+                    <div class="metadata-value" id="meta-columns">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Número de filas</div>
+                    <div class="metadata-value" id="meta-rows">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Tamaño del archivo</div>
+                    <div class="metadata-value" id="meta-size">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Última modificación</div>
+                    <div class="metadata-value" id="meta-modified">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Tipo de archivo</div>
+                    <div class="metadata-value" id="meta-type">-</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Codificación</div>
+                    <div class="metadata-value" id="meta-encoding">UTF-8</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Delimitador</div>
+                    <div class="metadata-value" id="meta-delimiter">,</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Tiene encabezados</div>
+                    <div class="metadata-value" id="meta-headers">Sí</div>
+                </div>
+            </div>
+            <div class="preview-container">
+                <div class="preview-header">
+                    <div class="bp4-button-group">
+                        <button class="bp4-button bp4-small" id="showJsonLd">JSON-LD</button>
+                        <button class="bp4-button bp4-small" id="showRdf">RDF (Turtle)</button>
+                    </div>
+                </div>
+                <pre id="json-preview" class="preview-content"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Esperar a que jsPlumb esté disponible
+        window.addEventListener('load', function() {
+            // Inicializar jsPlumb
+            const jsPlumbInstance = jsPlumb.getInstance({
+                container: document.getElementById("canvas"),
+                connector: ["Flowchart", { cornerRadius: 5 }],
+                paintStyle: { 
+                    stroke: "#5c7080", 
+                    strokeWidth: 2,
+                    outlineStroke: "transparent",
+                    outlineWidth: 4
+                },
+                endpointStyle: { 
+                    fill: "#2b95d6", 
+                    radius: 5,
+                    strokeWidth: 0
+                },
+                hoverPaintStyle: { stroke: "#2b95d6" },
+                endpointHoverStyle: { fill: "#48AFF0" },
+                dragOptions: {
+                    cursor: 'move',
+                    grid: [10, 10]
+                }
+            });
+
+            let currentPrimaryKey = null;
+            let currentJsonLd = null;
+
+            document.getElementById('csvFile').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Actualizar metadatos básicos
+                    document.getElementById('meta-filename').textContent = file.name;
+                    document.getElementById('meta-size').textContent = formatFileSize(file.size);
+                    document.getElementById('meta-type').textContent = file.type || 'text/csv';
+                    document.getElementById('meta-modified').textContent = new Date(file.lastModified).toLocaleString();
+
+                    const reader = new FileReader();
+                    reader.onload = async function(event) {
+                        const csvData = event.target.result;
+                        const rows = csvData.split('\n').filter(row => row.trim());
+                        const headers = rows[0].split(',').map(h => h.trim());
+                        
+                        // Actualizar metadatos adicionales
+                        document.getElementById('meta-columns').textContent = headers.length;
+                        document.getElementById('meta-rows').textContent = rows.length - 1;
+
+                        // Crear JSON-LD
+                        if (rows.length > 1) {
+                            const exampleData = rows.slice(1, 4).map(row => {
+                                const values = row.split(',').map(v => v.trim());
+                                const rowObject = {};
+                                headers.forEach((header, index) => {
+                                    rowObject[header] = values[index] || '';
+                                });
+                                return rowObject;
+                            });
+
+                            const jsonLd = {
+                                "@context": {
+                                    "@vocab": "http://schema.org/",
+                                    "csvw": "http://www.w3.org/ns/csvw#",
+                                    "dc": "http://purl.org/dc/terms/",
+                                    "columns": "csvw:columns",
+                                    "rowCount": "csvw:rowCount",
+                                    "encoding": "csvw:encoding",
+                                    "delimiter": "csvw:delimiter",
+                                    "headerRow": "csvw:headerRow",
+                                    "dataExample": "csvw:sample"
+                                },
+                                "@type": "Dataset",
+                                "name": file.name,
+                                "dateModified": new Date(file.lastModified).toISOString(),
+                                "encodingFormat": "text/csv",
+                                "size": file.size,
+                                "csvw:encoding": "UTF-8",
+                                "csvw:delimiter": ",",
+                                "csvw:headerRow": true,
+                                "csvw:columns": headers.map(header => ({
+                                    "@type": "PropertyValue",
+                                    "name": header,
+                                    "identifier": header.toLowerCase().replace(/\s+/g, '_')
+                                })),
+                                "csvw:rowCount": rows.length - 1,
+                                "dataExample": exampleData.map(row => ({
+                                    "@type": "DataRow",
+                                    ...Object.fromEntries(
+                                        Object.entries(row).map(([key, value]) => [
+                                            key.toLowerCase().replace(/\s+/g, '_'),
+                                            value
+                                        ])
+                                    )
+                                })),
+                                "distribution": {
+                                    "@type": "DataDownload",
+                                    "encodingFormat": "text/csv",
+                                    "contentSize": formatFileSize(file.size)
+                                },
+                                "creator": {
+                                    "@type": "SoftwareApplication",
+                                    "name": "CSV Node Editor",
+                                    "applicationCategory": "Data Tool"
+                                }
+                            };
+
+                            currentJsonLd = jsonLd;
+                            document.getElementById('json-preview').textContent = 
+                                JSON.stringify(jsonLd, null, 2);
+                        }
+                        
+                        jsPlumbInstance.reset();
+                        document.getElementById('canvas').innerHTML = '';
+                        createTableNode(headers, jsPlumbInstance);
+                    };
+
+                    reader.readAsText(file);
+                }
+            });
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function createTableNode(columns, plumbInstance) {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.id = 'csvNode';
+                node.style.left = '50px';
+                node.style.top = '50px';
+
+                let columnsHtml = `
+                    <div class="node-header">
+                        <span>Tabla CSV</span>
+                    </div>
+                    <div class="columns-container">
+                `;
+
+                columns.forEach((column, index) => {
+                    columnsHtml += `
+                        <div class="column-item" id="column-${index}">
+                            <span class="column-name">${column}</span>
+                            <button class="bp4-button bp4-minimal bp4-small bp4-icon-key" 
+                                    onclick="togglePrimaryKey(this)" 
+                                    title="Marcar como Primary Key"></button>
+                            <div class="endpoint" id="ep-${index}"></div>
+                        </div>
+                    `;
+                });
+
+                columnsHtml += '</div>';
+                node.innerHTML = columnsHtml;
+                document.getElementById('canvas').appendChild(node);
+
+                // Hacer el nodo arrastrable
+                plumbInstance.draggable(node);
+
+                // Configurar endpoints
+                columns.forEach((_, index) => {
+                    plumbInstance.addEndpoint(`ep-${index}`, {
+                        anchor: ["Right", [1, 0.5, 0, 0]],
+                        isSource: true,
+                        isTarget: true,
+                        maxConnections: -1,
+                        connector: ["Flowchart", { cornerRadius: 5 }]
+                    });
+                });
+
+                // Forzar un repintado después de que todo esté configurado
+                setTimeout(() => {
+                    plumbInstance.repaintEverything();
+                }, 50);
+            }
+
+            window.togglePrimaryKey = function(button) {
+                if (currentPrimaryKey) {
+                    currentPrimaryKey.classList.remove('primary-key');
+                }
+                if (currentPrimaryKey !== button) {
+                    button.classList.add('primary-key');
+                    currentPrimaryKey = button;
+                } else {
+                    currentPrimaryKey = null;
+                }
+            };
+
+            // Manejadores para los botones de formato
+            document.getElementById('showJsonLd').addEventListener('click', function() {
+                if (currentJsonLd) {
+                    document.getElementById('json-preview').textContent = 
+                        JSON.stringify(currentJsonLd, null, 2);
+                }
+            });
+
+            document.getElementById('showRdf').addEventListener('click', async function() {
+                if (currentJsonLd) {
+                    const rdf = await convertJsonLdToRdf(currentJsonLd);
+                    document.getElementById('json-preview').textContent = rdf;
+                }
+            });
+
+            async function convertJsonLdToRdf(jsonLd) {
+                try {
+                    // Primero normalizar el JSON-LD
+                    const normalized = await jsonld.normalize(jsonLd, {
+                        algorithm: 'URDNA2015',
+                        format: 'application/n-quads'
+                    });
+
+                    // Convertir N-Quads a Turtle usando N3.js
+                    const parser = new N3.Parser({ format: 'N-Quads' });
+                    const writer = new N3.Writer({ prefixes: {
+                        schema: 'http://schema.org/',
+                        csvw: 'http://www.w3.org/ns/csvw#',
+                        dc: 'http://purl.org/dc/terms/',
+                        xsd: 'http://www.w3.org/2001/XMLSchema#'
+                    }});
+
+                    return new Promise((resolve, reject) => {
+                        parser.parse(normalized, (error, quad) => {
+                            if (error) reject(error);
+                            if (quad) writer.addQuad(quad);
+                            else writer.end((error, result) => error ? reject(error) : resolve(result));
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error converting to RDF:', error);
+                    return 'Error converting to RDF: ' + error.message;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
