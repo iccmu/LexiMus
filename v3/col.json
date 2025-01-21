@@ -1,0 +1,237 @@
+{
+    "abaritonado": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "adj.",
+                "acepciones": [
+                    {
+                        "numero": 1,
+                        "uuid": "",
+                        "marcas": "",
+                        "definiciones": "Dicho de la voz: Parecida a la del barítono.",
+                        "clase gramatical": "Adjetivo",
+                        "primera división": "Música",
+                        "nodo básico": "Modificadores",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "∅",
+                        "último nodo": "cualidades timbre",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    },
+                    {
+                        "numero": 2,
+                        "uuid": "",
+                        "marcas": "",
+                        "definiciones": "Dicho de un instrumento: Que tiene un sonido de timbre semejante al de la voz del barítono.",
+                        "clase gramatical": "Adjetivo",
+                        "primera división": "Música",
+                        "nodo básico": "Modificadores",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "∅",
+                        "último nodo": "cualidades timbre",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "abemolar": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "tr.",
+                "acepciones": [
+                    {
+                        "numero": 2,
+                        "uuid": "",
+                        "marcas": "Mús.",
+                        "definiciones": "Poner bemoles.",
+                        "clase gramatical": "Verbo",
+                        "primera división": "Música",
+                        "nodo básico": "Actividad",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "[evento]",
+                        "último nodo": "verbos de acción musical (específicos)",
+                        "última referencia atestiguada": "DRAE 1959 (Manual)",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "acabe": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "m.",
+                "acepciones": [
+                    {
+                        "numero": 1,
+                        "uuid": "",
+                        "marcas": "P. Rico",
+                        "definiciones": "Fiesta con baile que los recolectores y demás peonajesde las haciendas de café celebran después de terminada larecolección del grano.",
+                        "clase gramatical": "Sustantivo",
+                        "primera división": "Baile/Danza",
+                        "nodo básico": "Producto",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "Continentes",
+                        "último nodo": "unidades no coreografiadas",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "accidental": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "m.",
+                "acepciones": [
+                    {
+                        "numero": 6,
+                        "uuid": "",
+                        "marcas": "Mús.",
+                        "definiciones": "accidente (‖ signo para alterar un sonido).",
+                        "clase gramatical": "Sustantivo",
+                        "primera división": "Música",
+                        "nodo básico": "Producto",
+                        "nodo LexiMus": "Símbolos",
+                        "nodo intermedio": "Dimensión espacial",
+                        "último nodo": "alturas",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "accidente": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "m.",
+                "acepciones": [
+                    {
+                        "numero": 9,
+                        "uuid": "",
+                        "marcas": "Mús.",
+                        "definiciones": "Cada uno de los tres signos, el sostenido, el bemol y el becuadro, con que se altera la tonalidad de un sonido.",
+                        "clase gramatical": "Sustantivo",
+                        "primera división": "Música",
+                        "nodo básico": "Producto",
+                        "nodo LexiMus": "Símbolos",
+                        "nodo intermedio": "Dimensión espacial",
+                        "último nodo": "alturas",
+                        "última referencia atestiguada": "DRAE 1914",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "acción": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "f.",
+                "acepciones": [
+                    {
+                        "numero": 4,
+                        "uuid": "",
+                        "marcas": "",
+                        "definiciones": "En el orador, el cantante y el actor, conjunto de actitudes, movimientos y gestos que acompañan la elocución o el canto.",
+                        "clase gramatical": "Sustantivo",
+                        "primera división": "Música",
+                        "nodo básico": "Modificadores",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "∅",
+                        "último nodo": "cualidades instrumentistas",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "acid": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "adj.",
+                "acepciones": [
+                    {
+                        "numero": 1,
+                        "uuid": "",
+                        "marcas": "",
+                        "definiciones": "Perteneciente o relativo al acid house. Ritmo acid.",
+                        "clase gramatical": "Adjetivo",
+                        "primera división": "Música",
+                        "nodo básico": "Modificadores",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "∅",
+                        "último nodo": "cualidades polivalentes",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    },
+                    {
+                        "numero": 2,
+                        "uuid": "",
+                        "marcas": "",
+                        "definiciones": "acid house.",
+                        "clase gramatical": "Sustantivo",
+                        "primera división": "Música",
+                        "nodo básico": "Producto",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "∅",
+                        "último nodo": "estilos",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "acid house": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "m.",
+                "acepciones": [
+                    {
+                        "numero": 1,
+                        "uuid": "",
+                        "marcas": "",
+                        "definiciones": "Estilo de música que surgió a finales de la década de 1980, caracterizado por su ritmo rápido y repetitivo y por el empleo de sintetizadores.",
+                        "clase gramatical": "Sustantivo",
+                        "primera división": "Música",
+                        "nodo básico": "Producto",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "∅",
+                        "último nodo": "estilos",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    },
+    "acid jazz": {
+        "entrada": {
+            "subentrada": {
+                "tipo": "m.",
+                "acepciones": [
+                    {
+                        "numero": 1,
+                        "uuid": "",
+                        "marcas": "",
+                        "definiciones": "Estilo de música que aúna el ritmo de jazz con el empleo de sintetizadores.",
+                        "clase gramatical": "Sustantivo",
+                        "primera división": "Música",
+                        "nodo básico": "Producto",
+                        "nodo LexiMus": "Conceptos",
+                        "nodo intermedio": "∅",
+                        "último nodo": "estilos",
+                        "última referencia atestiguada": "",
+                        "Primera referencia lexicográfica": ""
+                    }
+                ]
+            }
+        }
+    }
+}

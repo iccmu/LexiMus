@@ -1,0 +1,46 @@
+{
+    "node-fb379350-7269-4183-8bfc-56ac0f1261b4": {
+      "Solfeo": {
+        "uno": "Solfeo",
+        "dos": "Método de enseñanza musical que permite aprender a leer y entonar una partitura",
+        "tres": "Do-Re-Mi-Fa-Sol-La-Si-Do",
+        "cuatro": "técnica musical",
+        "": ""
+      },
+      "Compás": {
+        "uno": "Compás",
+        "dos": "División regular del tiempo en la música mediante acentos",
+        "tres": "4/4 o compás común",
+        "cuatro": "concepto teórico",
+        "": ""
+      },
+      "Pentagrama": {
+        "uno": "Pentagrama",
+        "dos": "Conjunto de cinco líneas horizontales paralelas donde se escriben las notas musicales",
+        "tres": "Las notas se colocan en líneas y espacios",
+        "cuatro": "notación musical",
+        "": ""
+      },
+      "Acorde": {
+        "uno": "Acorde",
+        "dos": "Conjunto de tres o más notas que suenan simultáneamente",
+        "tres": "Acorde de Do mayor: Do-Mi-Sol",
+        "cuatro": "elemento armónico",
+        "": ""
+      },
+      "Ritmo": {
+        "uno": "Ritmo",
+        "dos": "Patrón de sonidos y silencios en el tiempo",
+        "tres": "Patrón de vals: 1-2-3, 1-2-3",
+        "cuatro": "elemento musical",
+        "": ""
+      },
+      "Melodía": {
+        "uno": "Melodía",
+        "dos": "Sucesión coherente de sonidos y silencios que forman una idea musical completa",
+        "tres": "La melodía de 'Cumpleaños Feliz'",
+        "cuatro": "elemento musical",
+        "": ""
+      }
+    }
+  }

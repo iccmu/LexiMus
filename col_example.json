@@ -1,0 +1,37 @@
+{
+    "entrada": {
+        "subentrada": {
+            "tipo": "",
+            "acepciones": [
+                {
+                    "numero": "",
+                    "uuid": "",
+                    "marcas": "",
+                    "definiciones": "",
+                    "clase gramatical": "",
+                    "primera división": "",
+                    "nodo básico": "", 
+                    "nodo LexiMus": "",
+                    "nodo intermedio": "",
+                    "último nodo": "",
+                    "última referencia atestiguada": "",
+                    "Primera referencia lexicográfica": ""
+                },
+                {
+                    "numero": 2,
+                    "uuid": "",
+                    "marcas": "",
+                    "definiciones": "",
+                    "clase gramatical": "",
+                    "primera división": "",
+                    "nodo básico": "", 
+                    "nodo LexiMus": "",
+                    "nodo intermedio": "",
+                    "último nodo": "",
+                    "última referencia atestiguada": "",
+                    "Primera referencia lexicográfica": ""
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Grafo de Términos Musicales</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        #sidebar {
+            width: 70px;
+            background: #2d2d2d;
+            padding: 15px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .letter-btn {
+            width: 45px;
+            height: 45px;
+            margin: 2px auto;
+            border: none;
+            border-radius: 12px;
+            background: #3d3d3d;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .letter-btn:hover {
+            background: #4a4a4a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .letter-btn.active {
+            background: #007AFF;
+            box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
+        }
+
+        #graph-container {
+            flex-grow: 1;
+            background: #1a1a1a;
+        }
+
+        .links line {
+            stroke: #3d3d3d;
+            stroke-opacity: 0.4;
+            stroke-width: 1.5px;
+            transition: all 0.3s ease;
+        }
+
+        .nodes circle {
+            stroke: #1a1a1a;
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .nodes circle:hover {
+            stroke: #007AFF;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 8px rgba(0, 122, 255, 0.4));
+        }
+
+        .node-label {
+            font-family: 'Segoe UI', sans-serif;
+            fill: #fff;
+            font-size: 16px;
+            pointer-events: none;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(45, 45, 45, 0.95);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid #3d3d3d;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        /* Scrollbar personalizado para el sidebar */
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #sidebar::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #3d3d3d;
+            border-radius: 3px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb:hover {
+            background: #4a4a4a;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <button class="letter-btn" data-letter="all">★</button>
+    </div>
+    <div id="graph-container">
+        <svg></svg>
+    </div>
+    <script>
+        // Ajustar el SVG al tamaño de la ventana
+        function updateSvgSize() {
+            const container = document.getElementById('graph-container');
+            const svg = container.querySelector('svg');
+            svg.setAttribute('width', container.clientWidth);
+            svg.setAttribute('height', container.clientHeight);
+        }
+
+        // Actualizar tamaño inicial y en resize
+        updateSvgSize();
+        window.addEventListener('resize', updateSvgSize);
+
+        // Crear botones del alfabeto
+        const alphabet = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
+        alphabet.forEach(letter => {
+            const btn = document.createElement('button');
+            btn.textContent = letter;
+            btn.className = 'letter-btn';
+            btn.setAttribute('data-letter', letter.toLowerCase());
+            document.getElementById('sidebar').appendChild(btn);
+        });
+
+        let originalGraphData = null;
+        let simulation;
+
+        fetch('./col_DLEH.json')
+            .then(response => response.json())
+            .then(data => {
+                const graphData = processData(data);
+                originalGraphData = graphData;
+                renderGraph(graphData);
+
+                document.querySelectorAll('.letter-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.letter-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        const selectedLetter = btn.getAttribute('data-letter');
+                        let filteredData;
+
+                        if (selectedLetter === 'all') {
+                            // Para "Todos", solo mostrar las letras
+                            filteredData = {
+                                nodes: [
+                                    { id: "Términos Musicales", group: 0 },
+                                    ...alphabet.map(letter => ({ id: letter, group: 1 }))
+                                ],
+                                links: alphabet.map(letter => ({
+                                    source: "Términos Musicales",
+                                    target: letter,
+                                    tipo: "letra"
+                                }))
+                            };
+                        } else {
+                            // Para una letra específica, mostrar los términos de esa letra
+                            const filteredTerms = Object.keys(data).filter(term => {
+                                const normalizedFirstChar = normalizeChar(term[0]);
+                                return normalizedFirstChar === selectedLetter.toUpperCase();
+                            });
+
+                            const filteredNodes = [
+                                { id: "Términos Musicales", group: 0 },
+                                { id: selectedLetter.toUpperCase(), group: 1 },
+                                ...filteredTerms.map(term => ({ id: term, group: 2 }))
+                            ];
+
+                            const filteredLinks = [
+                                { 
+                                    source: "Términos Musicales", 
+                                    target: selectedLetter.toUpperCase(),
+                                    tipo: "letra"
+                                },
+                                ...filteredTerms.map(term => ({
+                                    source: selectedLetter.toUpperCase(),
+                                    target: term,
+                                    tipo: "término"
+                                }))
+                            ];
+
+                            filteredData = {
+                                nodes: filteredNodes,
+                                links: filteredLinks
+                            };
+                        }
+
+                        d3.select("svg").selectAll("*").remove();
+                        renderGraph(filteredData);
+                    });
+                });
+            })
+            .catch(error => console.error('Error:', error));
+
+        function renderGraph(graphData) {
+            const svg = d3.select("svg");
+            const width = +svg.attr("width");
+            const height = +svg.attr("height");
+            
+            // Crear un grupo central
+            const g = svg.append("g")
+                .attr("transform", `translate(${width/2},${height/2})`);
+
+            // Configurar la simulación con físicas consistentes
+            const simulation = d3.forceSimulation(graphData.nodes)
+                .force("link", d3.forceLink(graphData.links)
+                    .id(d => d.id)
+                    .distance(d => {
+                        // Distancia más corta para enlaces letra-término
+                        if (d.tipo === "término") return 100;
+                        // Distancia más larga para enlaces centro-letra
+                        return 200;
+                    })
+                    .strength(0.5))
+                .force("charge", d3.forceManyBody()
+                    .strength(d => {
+                        switch(d.group) {
+                            case 0: return -1000;  // Más repulsión para el nodo central
+                            case 1: return -500;   // Repulsión media para letras
+                            case 2: return -300;   // Menos repulsión para términos
+                            default: return -300;
+                        }
+                    }))
+                .force("center", d3.forceCenter(0, 0))
+                .force("collide", d3.forceCollide()
+                    .radius(d => {
+                        switch(d.group) {
+                            case 0: return 100;  // Radio más grande para el nodo central
+                            case 1: return 50;   // Radio medio para las letras
+                            case 2: return 40;   // Radio para términos
+                            default: return 40;
+                        }
+                    })
+                    .strength(1)    // Fuerza máxima de colisión
+                    .iterations(3)) // Más iteraciones para mejor detección
+                .force("radial", d3.forceRadial(
+                    d => {
+                        if (d.group === 0) return 0;        // Centro
+                        if (d.group === 1) return 200;      // Letras
+                        return 350;                         // Términos más alejados
+                    },
+                    0,
+                    0
+                ).strength(0.8));  // Fuerza radial más fuerte
+
+            // Fuerzas adicionales para mejor distribución
+            simulation.force("x", d3.forceX()
+                .strength(0.1))
+            .force("y", d3.forceY()
+                .strength(0.1));
+
+            // Ajustes de la simulación
+            simulation
+                .alphaDecay(0.01)     // Decay más lento para mejor distribución
+                .velocityDecay(0.3)    // Amortiguación para movimientos más suaves
+                .alpha(1)             // Comenzar con energía máxima
+                .alphaTarget(0);      // Objetivo final de energía
+
+            // Crear enlaces
+            const link = g.append("g")
+                .selectAll("line")
+                .data(graphData.links)
+                .join("line")
+                .attr("stroke", "#3d3d3d")
+                .attr("stroke-opacity", 0.4)
+                .attr("stroke-width", 1.5);
+
+            // Crear nodos
+            const node = g.append("g")
+                .selectAll("circle")
+                .data(graphData.nodes)
+                .join("circle")
+                .attr("r", d => d.group === 0 ? 12 : 8)
+                .attr("fill", d => {
+                    switch(d.group) {
+                        case 0: return "#007AFF";  // Nodo central - Azul
+                        case 1: return "#FF9500";  // Letras - Naranja
+                        case 2: return "#32D74B";  // Términos - Verde
+                        default: return "#5856D6"; // Otros - Púrpura
+                    }
+                })
+                .call(drag(simulation));
+
+            // Crear etiquetas
+            const label = g.append("g")
+                .selectAll("text")
+                .data(graphData.nodes)
+                .join("text")
+                .attr("class", "node-label")
+                .text(d => d.id)
+                .style("font-size", d => {
+                    switch(d.group) {
+                        case 0: return "24px";  // Nodo central
+                        case 1: return "20px";  // Letras
+                        case 2: return "16px";  // Términos
+                        default: return "16px";
+                    }
+                })
+                .style("font-weight", d => d.group === 0 ? "bold" : "normal")
+                .attr("dy", ".35em")
+                .attr("dx", d => d.group === 0 ? 20 : 15);
+
+            // Función de actualización
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                label
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+
+            // Función para el arrastre de nodos
+            function drag(simulation) {
+                function dragstarted(event) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    event.subject.fx = event.subject.x;
+                    event.subject.fy = event.subject.y;
+                }
+
+                function dragged(event) {
+                    event.subject.fx = event.x;
+                    event.subject.fy = event.y;
+                }
+
+                function dragended(event) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+
+                return d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended);
+            }
+
+            // Mantener el tooltip
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+            node.on("mouseover", function(event, d) {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("r", d.group === 0 ? 14 : 10)
+                    .style("filter", "drop-shadow(0 0 8px rgba(0,122,255,0.4))");
+
+                // Resaltar enlaces conectados
+                link.style("stroke-opacity", l => 
+                    (l.source === d || l.target === d) ? 0.8 : 0.1
+                );
+
+                // Mostrar tooltip
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", 1);
+                tooltip.html(`
+                    <strong>${d.id}</strong>
+                    ${d.group === 2 ? '<br>Término musical' : ''}
+                `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(event, d) {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("r", d.group === 0 ? 12 : 8)
+                    .style("filter", "drop-shadow(0 0 3px rgba(0,0,0,0.3))");
+
+                // Restaurar opacidad de enlaces
+                link.style("stroke-opacity", 0.4);
+
+                // Ocultar tooltip
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+        }
+
+        // Función auxiliar para normalizar caracteres
+        function normalizeChar(char) {
+            return char.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        }
+
+        function processData(data) {
+            const nodes = [];
+            const links = [];
+            const nodeSet = new Set();
+
+            // Añadir nodo central
+            nodes.push({ id: "Términos Musicales", group: 0 });
+            nodeSet.add("Términos Musicales");
+
+            // Añadir solo los nodos de las letras
+            alphabet.forEach(letter => {
+                nodes.push({ id: letter, group: 1 });
+                nodeSet.add(letter);
+                links.push({ 
+                    source: "Términos Musicales", 
+                    target: letter,
+                    tipo: "letra"
+                });
+            });
+
+            return { nodes, links };
+        }
+    </script>
+</body>
+</html>
