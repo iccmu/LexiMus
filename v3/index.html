@@ -105,7 +105,8 @@
             font-size: 14px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 12px;
         }
 
         .selected-item .remove-btn {
@@ -116,6 +117,7 @@
             padding: 4px 8px;
             border-radius: 4px;
             transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
         .selected-item .remove-btn:hover {
@@ -249,6 +251,57 @@
 
         #nodes-list::-webkit-scrollbar-thumb:hover {
             background: #4a4a4a;
+        }
+
+        .node-label-tag {
+            background-color: #FF9500;
+            color: #1a1a1a;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+            white-space: nowrap;
+            margin-left: 8px;
+        }
+
+        .definitions-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .definition-wrapper {
+            position: relative;
+        }
+
+        .editable-definition {
+            font-size: 0.9em;
+            color: #ccc;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 4px 8px;
+            min-height: 24px;
+            transition: all 0.2s ease;
+            cursor: text;
+            outline: none;
+        }
+
+        .editable-definition:hover {
+            border-color: #4a4a4a;
+        }
+
+        .editable-definition.editing {
+            background: #2d2d2d;
+            border-color: #007AFF;
+            color: #fff;
+        }
+
+        .editable-definition:focus {
+            background: #2d2d2d;
+            border-color: #007AFF;
+            color: #fff;
         }
     </style>
 </head>
@@ -651,30 +704,97 @@
                 selectedItem.className = 'selected-item';
                 selectedItem.id = `selected-${nodeId}`;
                 
-                const textSpan = document.createElement('span');
-                textSpan.textContent = nodeId;
+                // Crear contenedor para el texto
+                const textContainer = document.createElement('div');
+                textContainer.style.flex = '1';
+                
+                // Crear contenedor para el título y la etiqueta
+                const headerContainer = document.createElement('div');
+                headerContainer.style.display = 'flex';
+                headerContainer.style.justifyContent = 'space-between';
+                headerContainer.style.alignItems = 'center';
+                headerContainer.style.marginBottom = '4px';
+                
+                // Añadir el título (nodeId)
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = nodeId;
+                titleSpan.style.fontWeight = 'bold';
+                
+                fetch('./col_DLEH.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data[nodeId]) {
+                            const acepciones = data[nodeId].entrada.subentrada.acepciones;
+                            
+                            // Crear y añadir la etiqueta del último nodo
+                            const lastNode = acepciones[0]["último nodo"];
+                            if (lastNode) {
+                                const nodeLabel = document.createElement('span');
+                                nodeLabel.className = 'node-label-tag';
+                                nodeLabel.textContent = lastNode;
+                                headerContainer.appendChild(titleSpan);
+                                headerContainer.appendChild(nodeLabel);
+                            } else {
+                                headerContainer.appendChild(titleSpan);
+                            }
+                            
+                            // Crear contenedor para las definiciones editables
+                            const definitionsContainer = document.createElement('div');
+                            definitionsContainer.className = 'definitions-container';
+                            
+                            // Añadir cada definición como un campo editable
+                            acepciones.forEach((acepcion, index) => {
+                                const definitionWrapper = document.createElement('div');
+                                definitionWrapper.className = 'definition-wrapper';
+                                
+                                // Crear el campo editable
+                                const editableDiv = document.createElement('div');
+                                editableDiv.className = 'editable-definition';
+                                editableDiv.contentEditable = true;
+                                editableDiv.textContent = `${acepciones.length > 1 ? (index + 1) + '. ' : ''}${acepcion.definiciones}`;
+                                
+                                // Añadir eventos para el campo editable
+                                editableDiv.addEventListener('focus', function() {
+                                    this.classList.add('editing');
+                                });
+                                
+                                editableDiv.addEventListener('blur', function() {
+                                    this.classList.remove('editing');
+                                });
+                                
+                                definitionWrapper.appendChild(editableDiv);
+                                definitionsContainer.appendChild(definitionWrapper);
+                            });
+                            
+                            textContainer.appendChild(headerContainer);
+                            textContainer.appendChild(definitionsContainer);
+                        } else {
+                            headerContainer.appendChild(titleSpan);
+                            textContainer.appendChild(headerContainer);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        headerContainer.appendChild(titleSpan);
+                        textContainer.appendChild(headerContainer);
+                    });
                 
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'remove-btn';
                 removeBtn.innerHTML = '×';
                 removeBtn.onclick = (e) => {
                     e.stopPropagation();
-                    // Deseleccionar en el listado
                     const listItems = document.querySelectorAll('.node-item');
                     listItems.forEach(item => {
                         if (item.textContent === nodeId) {
                             item.classList.remove('selected');
                         }
                     });
-                    
-                    // Actualizar grafo
                     updateGraphSelection(nodeId, false);
-                    
-                    // Eliminar elemento seleccionado
                     selectedItem.remove();
                 };
                 
-                selectedItem.appendChild(textSpan);
+                selectedItem.appendChild(textContainer);
                 selectedItem.appendChild(removeBtn);
                 selectedContainer.appendChild(selectedItem);
             } else {
