@@ -17,26 +17,30 @@
         }
 
         #sidebar {
-            width: 70px;
+            width: 300px;
             background: #2d2d2d;
-            padding: 15px 10px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
             overflow-y: auto;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
         }
 
         .letter-btn {
-            width: 45px;
-            height: 45px;
-            margin: 2px auto;
+            width: 100%;
+            min-height: 60px;
+            padding: 12px;
+            font-size: 30px;
+            text-align: center;
+            white-space: normal;
+            line-height: 1.3;
             border: none;
             border-radius: 12px;
             background: #3d3d3d;
             color: #fff;
             cursor: pointer;
-            font-size: 16px;
             font-weight: 500;
             transition: all 0.3s ease;
             display: flex;
@@ -55,9 +59,116 @@
             box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
         }
 
-        #graph-container {
+        #main-content {
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #upper-section {
+            height: 50%;
+            display: flex;
             background: #1a1a1a;
+        }
+
+        #graph-container {
+            flex: 2;
+            position: relative;
+        }
+
+        #selected-nodes {
+            flex: 1;
+            background: #2d2d2d;
+            padding: 20px;
+            border-left: 2px solid #3d3d3d;
+            overflow-y: auto;
+            min-width: 250px;
+        }
+
+        #selected-nodes h2 {
+            margin: 0 0 20px 0;
+            color: #fff;
+            font-size: 1.5em;
+        }
+
+        #selected-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .selected-item {
+            background: #3d3d3d;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-item .remove-btn {
+            background: none;
+            border: none;
+            color: #FF453A;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .selected-item .remove-btn:hover {
+            background: rgba(255, 69, 58, 0.2);
+        }
+
+        #nodes-list {
+            height: 50%;
+            background: #2d2d2d;
+            padding: 20px;
+            overflow-y: auto;
+            border-top: 2px solid #3d3d3d;
+        }
+
+        #nodes-list h2 {
+            margin: 0 0 20px 0;
+            color: #fff;
+            font-size: 1.5em;
+        }
+
+        #nodes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 800px;  /* Limitar el ancho máximo para mejor legibilidad */
+            margin: 0 auto;    /* Centrar el contenedor */
+        }
+
+        .node-item {
+            background: #3d3d3d;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;  /* Evita la selección de texto */
+        }
+
+        .node-item:hover {
+            background: #4a4a4a;
+            transform: translateX(5px);
+        }
+
+        .node-item.selected {
+            background: #007AFF;
+            transform: translateX(10px);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+
+        .node-item.selected:hover {
+            background: #0066CC;
         }
 
         .links line {
@@ -121,14 +232,44 @@
         #sidebar::-webkit-scrollbar-thumb:hover {
             background: #4a4a4a;
         }
+
+        /* Personalizar scrollbar para el listado */
+        #nodes-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #nodes-list::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        #nodes-list::-webkit-scrollbar-thumb {
+            background: #3d3d3d;
+            border-radius: 3px;
+        }
+
+        #nodes-list::-webkit-scrollbar-thumb:hover {
+            background: #4a4a4a;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <button class="letter-btn" data-letter="all">★</button>
+        <button class="letter-btn" data-category="all">★</button>
     </div>
-    <div id="graph-container">
-        <svg></svg>
+    <div id="main-content">
+        <div id="upper-section">
+            <div id="graph-container">
+                <svg></svg>
+            </div>
+            <div id="selected-nodes">
+                <h2>Elementos seleccionados</h2>
+                <div id="selected-container"></div>
+            </div>
+        </div>
+        <div id="nodes-list">
+            <h2>Categoría</h2>
+            <div id="nodes-container"></div>
+        </div>
     </div>
     <script>
         // Ajustar el SVG al tamaño de la ventana
@@ -143,76 +284,104 @@
         updateSvgSize();
         window.addEventListener('resize', updateSvgSize);
 
-        // Crear botones del alfabeto
-        const alphabet = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
-        alphabet.forEach(letter => {
-            const btn = document.createElement('button');
-            btn.textContent = letter;
-            btn.className = 'letter-btn';
-            btn.setAttribute('data-letter', letter.toLowerCase());
-            document.getElementById('sidebar').appendChild(btn);
-        });
-
         let originalGraphData = null;
         let simulation;
+
+        // Función para extraer últimos nodos únicos del JSON
+        function extractUniqueLastNodes(data) {
+            const nodes = new Set();
+            Object.values(data).forEach(entry => {
+                entry.entrada.subentrada.acepciones.forEach(acepcion => {
+                    if (acepcion["último nodo"]) {
+                        nodes.add(acepcion["último nodo"]);
+                    }
+                });
+            });
+            return Array.from(nodes).sort();
+        }
 
         fetch('./col_DLEH.json')
             .then(response => response.json())
             .then(data => {
+                const lastNodes = extractUniqueLastNodes(data);
+                const sidebar = document.getElementById('sidebar');
+                
+                // Botón "Todos"
+                const allBtn = document.createElement('button');
+                allBtn.textContent = '★';
+                allBtn.className = 'letter-btn';
+                allBtn.setAttribute('data-category', 'all');
+                sidebar.appendChild(allBtn);
+
+                // Crear botones para cada último nodo
+                lastNodes.forEach(node => {
+                    const btn = document.createElement('button');
+                    btn.textContent = node;
+                    btn.className = 'letter-btn';
+                    btn.setAttribute('data-category', node);
+                    sidebar.appendChild(btn);
+                });
+
+                // Modificar el estilo de los botones para acomodar textos más largos
+                const style = document.createElement('style');
+                style.textContent = `
+                    .letter-btn {
+                        width: auto;
+                        min-width: 45px;
+                        height: auto;
+                        min-height: 45px;
+                        padding: 8px;
+                        font-size: 12px;
+                        text-align: left;
+                        white-space: normal;
+                        line-height: 1.2;
+                    }
+                    
+                    #sidebar {
+                        width: 200px;
+                        padding: 15px;
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Inicializar el grafo
                 const graphData = processData(data);
                 originalGraphData = graphData;
                 renderGraph(graphData);
 
+                // Event listeners para los botones
                 document.querySelectorAll('.letter-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         document.querySelectorAll('.letter-btn').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
 
-                        const selectedLetter = btn.getAttribute('data-letter');
+                        const selectedCategory = btn.getAttribute('data-category');
                         let filteredData;
 
-                        if (selectedLetter === 'all') {
-                            // Para "Todos", solo mostrar las letras
+                        if (selectedCategory === 'all') {
+                            // Para "Todos", mostrar solo los últimos nodos sin conexiones
                             filteredData = {
-                                nodes: [
-                                    { id: "Términos Musicales", group: 0 },
-                                    ...alphabet.map(letter => ({ id: letter, group: 1 }))
-                                ],
-                                links: alphabet.map(letter => ({
-                                    source: "Términos Musicales",
-                                    target: letter,
-                                    tipo: "letra"
-                                }))
+                                nodes: lastNodes.map(node => ({ id: node, group: 1 })),
+                                links: []
                             };
                         } else {
-                            // Para una letra específica, mostrar los términos de esa letra
+                            // Filtrar términos por último nodo
                             const filteredTerms = Object.keys(data).filter(term => {
-                                const normalizedFirstChar = normalizeChar(term[0]);
-                                return normalizedFirstChar === selectedLetter.toUpperCase();
+                                return data[term].entrada.subentrada.acepciones.some(
+                                    acepcion => acepcion["último nodo"] === selectedCategory
+                                );
                             });
 
-                            const filteredNodes = [
-                                { id: "Términos Musicales", group: 0 },
-                                { id: selectedLetter.toUpperCase(), group: 1 },
-                                ...filteredTerms.map(term => ({ id: term, group: 2 }))
-                            ];
-
-                            const filteredLinks = [
-                                { 
-                                    source: "Términos Musicales", 
-                                    target: selectedLetter.toUpperCase(),
-                                    tipo: "letra"
-                                },
-                                ...filteredTerms.map(term => ({
-                                    source: selectedLetter.toUpperCase(),
+                            filteredData = {
+                                nodes: [
+                                    { id: selectedCategory, group: 1 },
+                                    ...filteredTerms.map(term => ({ id: term, group: 2 }))
+                                ],
+                                links: filteredTerms.map(term => ({
+                                    source: selectedCategory,
                                     target: term,
                                     tipo: "término"
                                 }))
-                            ];
-
-                            filteredData = {
-                                nodes: filteredNodes,
-                                links: filteredLinks
                             };
                         }
 
@@ -416,11 +585,9 @@
                     .duration(500)
                     .style("opacity", 0);
             });
-        }
 
-        // Función auxiliar para normalizar caracteres
-        function normalizeChar(char) {
-            return char.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            // Actualizar el listado de nodos
+            updateNodesList(graphData.nodes);
         }
 
         function processData(data) {
@@ -428,22 +595,120 @@
             const links = [];
             const nodeSet = new Set();
 
-            // Añadir nodo central
-            nodes.push({ id: "Términos Musicales", group: 0 });
-            nodeSet.add("Términos Musicales");
-
-            // Añadir solo los nodos de las letras
-            alphabet.forEach(letter => {
-                nodes.push({ id: letter, group: 1 });
-                nodeSet.add(letter);
-                links.push({ 
-                    source: "Términos Musicales", 
-                    target: letter,
-                    tipo: "letra"
-                });
+            // Solo añadir los nodos de las categorías
+            extractUniqueLastNodes(data).forEach(node => {
+                nodes.push({ id: node, group: 1 });
+                nodeSet.add(node);
             });
 
             return { nodes, links };
+        }
+
+        // Modificar la función updateNodesList
+        function updateNodesList(nodes) {
+            const container = document.getElementById('nodes-container');
+            const titleElement = document.querySelector('#nodes-list h2');
+            container.innerHTML = '';
+
+            // Encontrar el nodo central (el de grupo 1)
+            const centralNode = nodes.find(node => node.group === 1);
+            const title = centralNode ? centralNode.id : '★ Todos los nodos';
+            titleElement.textContent = title;
+
+            // Filtrar los nodos para excluir el nodo central
+            const listNodes = nodes.filter(node => node.group === 2);
+
+            // Ordenar y mostrar los nodos restantes
+            listNodes.sort((a, b) => a.id.localeCompare(b.id)).forEach(node => {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'node-item';
+                nodeElement.textContent = node.id;
+                
+                nodeElement.style.borderLeft = `4px solid ${
+                    node.group === 2 ? '#32D74B' : '#5856D6'
+                }`;
+                
+                nodeElement.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                    const isSelected = this.classList.contains('selected');
+                    
+                    // Actualizar panel de seleccionados
+                    updateSelectedPanel(node.id, isSelected);
+                    
+                    // Actualizar visualización en el grafo
+                    updateGraphSelection(node.id, isSelected);
+                });
+                
+                container.appendChild(nodeElement);
+            });
+        }
+
+        function updateSelectedPanel(nodeId, isSelected) {
+            const selectedContainer = document.getElementById('selected-container');
+            
+            if (isSelected) {
+                const selectedItem = document.createElement('div');
+                selectedItem.className = 'selected-item';
+                selectedItem.id = `selected-${nodeId}`;
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = nodeId;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '×';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    // Deseleccionar en el listado
+                    const listItems = document.querySelectorAll('.node-item');
+                    listItems.forEach(item => {
+                        if (item.textContent === nodeId) {
+                            item.classList.remove('selected');
+                        }
+                    });
+                    
+                    // Actualizar grafo
+                    updateGraphSelection(nodeId, false);
+                    
+                    // Eliminar elemento seleccionado
+                    selectedItem.remove();
+                };
+                
+                selectedItem.appendChild(textSpan);
+                selectedItem.appendChild(removeBtn);
+                selectedContainer.appendChild(selectedItem);
+            } else {
+                const selectedItem = document.getElementById(`selected-${nodeId}`);
+                if (selectedItem) selectedItem.remove();
+            }
+        }
+
+        function updateGraphSelection(nodeId, isSelected) {
+            const selectedColor = '#007AFF';  // El mismo azul que usamos en el listado
+            
+            const nodeInGraph = d3.select("svg")
+                .selectAll("circle")
+                .filter(d => d.id === nodeId);
+                
+            nodeInGraph
+                .transition()
+                .duration(200)
+                .attr("r", isSelected ? 12 : 8)
+                .style("fill", isSelected ? selectedColor : '#32D74B')  // Cambia al azul cuando está seleccionado
+                .style("filter", isSelected ? 
+                    "drop-shadow(0 0 8px rgba(0,122,255,0.4))" : 
+                    "none"
+                );
+
+            // También actualizamos los enlaces conectados
+            const links = d3.select("svg")
+                .selectAll("line")
+                .filter(l => l.source.id === nodeId || l.target.id === nodeId)
+                .transition()
+                .duration(200)
+                .style("stroke", isSelected ? selectedColor : '#666')  // Enlaces también cambian a azul
+                .style("stroke-opacity", isSelected ? 0.8 : 0.4)
+                .style("stroke-width", isSelected ? 2 : 1.5);
         }
     </script>
 </body>
