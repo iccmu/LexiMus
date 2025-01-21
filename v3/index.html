@@ -14,6 +14,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #1a1a1a;
             color: #fff;
+            font-size: 16px;
         }
 
         #sidebar {
@@ -32,7 +33,7 @@
             width: 100%;
             min-height: 60px;
             padding: 12px;
-            font-size: 30px;
+            font-size: 14px;
             text-align: center;
             white-space: normal;
             line-height: 1.3;
@@ -89,7 +90,7 @@
         #selected-nodes h2 {
             margin: 0 0 20px 0;
             color: #fff;
-            font-size: 1.5em;
+            font-size: 1.8em;
         }
 
         #selected-container {
@@ -102,7 +103,7 @@
             background: #3d3d3d;
             padding: 12px 20px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -135,27 +136,28 @@
         #nodes-list h2 {
             margin: 0 0 20px 0;
             color: #fff;
-            font-size: 1.5em;
+            font-size: 1.8em;
         }
 
         #nodes-container {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
             gap: 12px;
-            max-width: 800px;  /* Limitar el ancho máximo para mejor legibilidad */
-            margin: 0 auto;    /* Centrar el contenedor */
+            padding: 0 20px;
         }
 
         .node-item {
             background: #3d3d3d;
-            padding: 12px 20px;
+            padding: 12px 16px;
             border-radius: 8px;
             font-size: 16px;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             cursor: pointer;
-            user-select: none;  /* Evita la selección de texto */
+            user-select: none;
+            min-width: 0; /* Para evitar desbordamiento */
         }
 
         .node-item:hover {
@@ -195,7 +197,7 @@
         .node-label {
             font-family: 'Segoe UI', sans-serif;
             fill: #fff;
-            font-size: 16px;
+            font-size: 18px;
             pointer-events: none;
             opacity: 0.9;
             transition: all 0.3s ease;
@@ -208,7 +210,7 @@
             color: #fff;
             padding: 12px 16px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             pointer-events: none;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             border: 1px solid #3d3d3d;
@@ -258,7 +260,7 @@
             color: #1a1a1a;
             padding: 2px 8px;
             border-radius: 12px;
-            font-size: 0.8em;
+            font-size: 0.9em;
             font-weight: 500;
             white-space: nowrap;
             margin-left: 8px;
@@ -273,10 +275,37 @@
 
         .definition-wrapper {
             position: relative;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .validate-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 18px;
+        }
+
+        .validate-btn:hover {
+            background: rgba(50, 215, 75, 0.1);
+            color: #32D74B;
+        }
+
+        .validate-btn.validating {
+            color: #007AFF;
+        }
+
+        .validate-btn.validated {
+            color: #32D74B;
         }
 
         .editable-definition {
-            font-size: 0.9em;
+            font-size: 1.1em;
             color: #ccc;
             background: transparent;
             border: 1px solid transparent;
@@ -303,11 +332,93 @@
             border-color: #007AFF;
             color: #fff;
         }
+
+        .stats-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            padding: 32px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .stats-card {
+            background: #2d2d2d;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            height: fit-content;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stats-card h3 {
+            margin: 0 0 20px 0;
+            color: #fff;
+            font-size: 1.6em;
+            font-weight: 500;
+            border-bottom: 2px solid #3d3d3d;
+            padding-bottom: 12px;
+        }
+
+        .stat-items-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #3d3d3d;
+            font-size: 1.2em;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .stat-label {
+            color: #999;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .stat-value.highlight {
+            color: #007AFF;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .stat-chart {
+            margin-top: 20px;
+            height: 200px;
+        }
+
+        /* Añadir estos estilos para manejar el texto largo */
+        .node-item span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .node-item .definition-count {
+            margin-left: 8px;
+            color: #999;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <button class="letter-btn" data-category="all">★</button>
+        <button class="letter-btn" data-category="stats">★</button>
     </div>
     <div id="main-content">
         <div id="upper-section">
@@ -340,6 +451,9 @@
         let originalGraphData = null;
         let simulation;
 
+        // Añadir esta variable global para mantener los elementos seleccionados
+        let selectedElements = new Set();
+
         // Función para extraer últimos nodos únicos del JSON
         function extractUniqueLastNodes(data) {
             const nodes = new Set();
@@ -358,13 +472,14 @@
             .then(data => {
                 const lastNodes = extractUniqueLastNodes(data);
                 const sidebar = document.getElementById('sidebar');
+                sidebar.innerHTML = ''; // Limpiar el sidebar
                 
-                // Botón "Todos"
-                const allBtn = document.createElement('button');
-                allBtn.textContent = '★';
-                allBtn.className = 'letter-btn';
-                allBtn.setAttribute('data-category', 'all');
-                sidebar.appendChild(allBtn);
+                // Crear botón de estrella
+                const statsBtn = document.createElement('button');
+                statsBtn.textContent = '★';
+                statsBtn.className = 'letter-btn';
+                statsBtn.setAttribute('data-category', 'stats');
+                sidebar.appendChild(statsBtn);
 
                 // Crear botones para cada último nodo
                 lastNodes.forEach(node => {
@@ -375,33 +490,6 @@
                     sidebar.appendChild(btn);
                 });
 
-                // Modificar el estilo de los botones para acomodar textos más largos
-                const style = document.createElement('style');
-                style.textContent = `
-                    .letter-btn {
-                        width: auto;
-                        min-width: 45px;
-                        height: auto;
-                        min-height: 45px;
-                        padding: 8px;
-                        font-size: 12px;
-                        text-align: left;
-                        white-space: normal;
-                        line-height: 1.2;
-                    }
-                    
-                    #sidebar {
-                        width: 200px;
-                        padding: 15px;
-                    }
-                `;
-                document.head.appendChild(style);
-
-                // Inicializar el grafo
-                const graphData = processData(data);
-                originalGraphData = graphData;
-                renderGraph(graphData);
-
                 // Event listeners para los botones
                 document.querySelectorAll('.letter-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -409,15 +497,23 @@
                         btn.classList.add('active');
 
                         const selectedCategory = btn.getAttribute('data-category');
-                        let filteredData;
-
-                        if (selectedCategory === 'all') {
-                            // Para "Todos", mostrar solo los últimos nodos sin conexiones
-                            filteredData = {
-                                nodes: lastNodes.map(node => ({ id: node, group: 1 })),
-                                links: []
-                            };
+                        
+                        if (selectedCategory === 'stats') {
+                            // Mostrar dashboard de estadísticas
+                            showStatsDashboard(data, lastNodes);
                         } else {
+                            // Restaurar la vista del grafo manteniendo los elementos seleccionados
+                            const upperSection = document.getElementById('upper-section');
+                            upperSection.innerHTML = `
+                                <div id="graph-container">
+                                    <svg></svg>
+                                </div>
+                                <div id="selected-nodes">
+                                    <h2>Elementos seleccionados</h2>
+                                    <div id="selected-container"></div>
+                                </div>
+                            `;
+
                             // Filtrar términos por último nodo
                             const filteredTerms = Object.keys(data).filter(term => {
                                 return data[term].entrada.subentrada.acepciones.some(
@@ -425,7 +521,22 @@
                                 );
                             });
 
-                            filteredData = {
+                            // Actualizar el listado de nodos filtrados
+                            const nodesList = document.getElementById('nodes-list');
+                            nodesList.innerHTML = `
+                                <h2>Términos en "${selectedCategory}"</h2>
+                                <div id="nodes-container">
+                                    ${filteredTerms
+                                        .sort((a, b) => a.localeCompare(b))
+                                        .map(term => `
+                                            <div class="node-item">
+                                                <span title="${term}">${term}</span>
+                                            </div>
+                                        `).join('')}
+                                </div>
+                            `;
+
+                            const filteredData = {
                                 nodes: [
                                     { id: selectedCategory, group: 1 },
                                     ...filteredTerms.map(term => ({ id: term, group: 2 }))
@@ -436,12 +547,29 @@
                                     tipo: "término"
                                 }))
                             };
-                        }
 
-                        d3.select("svg").selectAll("*").remove();
-                        renderGraph(filteredData);
+                            updateSvgSize();
+                            renderGraph(filteredData);
+
+                            // Restaurar los elementos seleccionados después de renderizar
+                            const selectedContainer = document.getElementById('selected-container');
+                            Array.from(selectedElements).forEach(nodeId => {
+                                updateSelectedPanel(nodeId, true);
+                            });
+
+                            // Marcar como seleccionados los nodos en la lista que correspondan
+                            const nodeItems = document.querySelectorAll('.node-item');
+                            nodeItems.forEach(item => {
+                                if (selectedElements.has(item.textContent.trim())) {
+                                    item.classList.add('selected');
+                                }
+                            });
+                        }
                     });
                 });
+
+                // Simular clic en el primer botón de categoría para inicializar la vista
+                document.querySelectorAll('.letter-btn')[1].click();
             })
             .catch(error => console.error('Error:', error));
 
@@ -543,10 +671,10 @@
                 .text(d => d.id)
                 .style("font-size", d => {
                     switch(d.group) {
-                        case 0: return "24px";  // Nodo central
-                        case 1: return "20px";  // Letras
-                        case 2: return "16px";  // Términos
-                        default: return "16px";
+                        case 0: return "28px";  // Aumentado de 24px
+                        case 1: return "24px";  // Aumentado de 20px
+                        case 2: return "20px";  // Aumentado de 16px
+                        default: return "20px"; // Aumentado de 16px
                     }
                 })
                 .style("font-weight", d => d.group === 0 ? "bold" : "normal")
@@ -696,13 +824,24 @@
             });
         }
 
+        // Modificar la función updateSelectedPanel
         function updateSelectedPanel(nodeId, isSelected) {
             const selectedContainer = document.getElementById('selected-container');
             
             if (isSelected) {
+                selectedElements.add(nodeId);
+            } else {
+                selectedElements.delete(nodeId);
+            }
+            
+            // Recrear todo el panel de seleccionados
+            selectedContainer.innerHTML = '';
+            
+            // Recrear todos los elementos seleccionados
+            Array.from(selectedElements).forEach(id => {
                 const selectedItem = document.createElement('div');
                 selectedItem.className = 'selected-item';
-                selectedItem.id = `selected-${nodeId}`;
+                selectedItem.id = `selected-${id}`;
                 
                 // Crear contenedor para el texto
                 const textContainer = document.createElement('div');
@@ -715,16 +854,16 @@
                 headerContainer.style.alignItems = 'center';
                 headerContainer.style.marginBottom = '4px';
                 
-                // Añadir el título (nodeId)
+                // Añadir el título
                 const titleSpan = document.createElement('span');
-                titleSpan.textContent = nodeId;
+                titleSpan.textContent = id;
                 titleSpan.style.fontWeight = 'bold';
                 
                 fetch('./col_DLEH.json')
                     .then(response => response.json())
                     .then(data => {
-                        if (data[nodeId]) {
-                            const acepciones = data[nodeId].entrada.subentrada.acepciones;
+                        if (data[id]) {
+                            const acepciones = data[id].entrada.subentrada.acepciones;
                             
                             // Crear y añadir la etiqueta del último nodo
                             const lastNode = acepciones[0]["último nodo"];
@@ -738,45 +877,38 @@
                                 headerContainer.appendChild(titleSpan);
                             }
                             
-                            // Crear contenedor para las definiciones editables
+                            // Crear contenedor para las definiciones
                             const definitionsContainer = document.createElement('div');
                             definitionsContainer.className = 'definitions-container';
                             
-                            // Añadir cada definición como un campo editable
                             acepciones.forEach((acepcion, index) => {
                                 const definitionWrapper = document.createElement('div');
                                 definitionWrapper.className = 'definition-wrapper';
                                 
-                                // Crear el campo editable
                                 const editableDiv = document.createElement('div');
                                 editableDiv.className = 'editable-definition';
                                 editableDiv.contentEditable = true;
                                 editableDiv.textContent = `${acepciones.length > 1 ? (index + 1) + '. ' : ''}${acepcion.definiciones}`;
                                 
-                                // Añadir eventos para el campo editable
-                                editableDiv.addEventListener('focus', function() {
-                                    this.classList.add('editing');
-                                });
-                                
-                                editableDiv.addEventListener('blur', function() {
-                                    this.classList.remove('editing');
-                                });
+                                const validateBtn = document.createElement('button');
+                                validateBtn.className = 'validate-btn';
+                                validateBtn.innerHTML = '✓';
+                                validateBtn.onclick = function() {
+                                    this.classList.add('validating');
+                                    setTimeout(() => {
+                                        this.classList.remove('validating');
+                                        this.classList.add('validated');
+                                    }, 2000);
+                                };
                                 
                                 definitionWrapper.appendChild(editableDiv);
+                                definitionWrapper.appendChild(validateBtn);
                                 definitionsContainer.appendChild(definitionWrapper);
                             });
                             
                             textContainer.appendChild(headerContainer);
                             textContainer.appendChild(definitionsContainer);
-                        } else {
-                            headerContainer.appendChild(titleSpan);
-                            textContainer.appendChild(headerContainer);
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        headerContainer.appendChild(titleSpan);
-                        textContainer.appendChild(headerContainer);
                     });
                 
                 const removeBtn = document.createElement('button');
@@ -784,23 +916,21 @@
                 removeBtn.innerHTML = '×';
                 removeBtn.onclick = (e) => {
                     e.stopPropagation();
+                    selectedElements.delete(id);  // Eliminar del Set
                     const listItems = document.querySelectorAll('.node-item');
                     listItems.forEach(item => {
-                        if (item.textContent === nodeId) {
+                        if (item.textContent === id) {
                             item.classList.remove('selected');
                         }
                     });
-                    updateGraphSelection(nodeId, false);
+                    updateGraphSelection(id, false);
                     selectedItem.remove();
                 };
                 
                 selectedItem.appendChild(textContainer);
                 selectedItem.appendChild(removeBtn);
                 selectedContainer.appendChild(selectedItem);
-            } else {
-                const selectedItem = document.getElementById(`selected-${nodeId}`);
-                if (selectedItem) selectedItem.remove();
-            }
+            });
         }
 
         function updateGraphSelection(nodeId, isSelected) {
@@ -829,6 +959,124 @@
                 .style("stroke", isSelected ? selectedColor : '#666')  // Enlaces también cambian a azul
                 .style("stroke-opacity", isSelected ? 0.8 : 0.4)
                 .style("stroke-width", isSelected ? 2 : 1.5);
+        }
+
+        function showStatsDashboard(data, lastNodes) {
+            // Limpiar y actualizar la sección superior
+            const upperSection = document.getElementById('upper-section');
+            upperSection.innerHTML = '';
+
+            const statsDashboard = document.createElement('div');
+            statsDashboard.className = 'stats-dashboard';
+
+            // Tarjeta de Estadísticas Generales
+            const generalStats = document.createElement('div');
+            generalStats.className = 'stats-card';
+            
+            const totalTerms = Object.keys(data).length;
+            const totalDefinitions = Object.values(data).reduce((acc, term) => {
+                return acc + term.entrada.subentrada.acepciones.length;
+            }, 0);
+            const avgDefinitionsPerTerm = (totalDefinitions / totalTerms).toFixed(2);
+
+            generalStats.innerHTML = `
+                <h3>Estadísticas Generales</h3>
+                <div class="stat-items-container">
+                    <div class="stat-item">
+                        <span class="stat-label">Total de Términos</span>
+                        <span class="stat-value highlight">${totalTerms}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total de Definiciones</span>
+                        <span class="stat-value">${totalDefinitions}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Promedio Definiciones/Término</span>
+                        <span class="stat-value">${avgDefinitionsPerTerm}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Categorías Únicas</span>
+                        <span class="stat-value">${lastNodes.length}</span>
+                    </div>
+                </div>
+            `;
+
+            // Tarjeta de Distribución por Categoría
+            const categoryStats = document.createElement('div');
+            categoryStats.className = 'stats-card';
+            categoryStats.innerHTML = '<h3>Distribución por Categoría</h3>';
+
+            const distribution = {};
+            Object.values(data).forEach(term => {
+                term.entrada.subentrada.acepciones.forEach(acepcion => {
+                    const lastNode = acepcion["último nodo"];
+                    if (lastNode) {
+                        distribution[lastNode] = (distribution[lastNode] || 0) + 1;
+                    }
+                });
+            });
+
+            categoryStats.innerHTML = `
+                <div class="stat-items-container">
+                    ${Object.entries(distribution)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([category, count]) => {
+                            const percentage = ((count / totalTerms) * 100).toFixed(1);
+                            return `
+                                <div class="stat-item">
+                                    <span class="stat-label">${category}</span>
+                                    <span class="stat-value">${count} <small style="color: #999">(${percentage}%)</small></span>
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+            `;
+
+            // Tarjeta de Análisis de Complejidad
+            const complexityStats = document.createElement('div');
+            complexityStats.className = 'stats-card';
+            
+            const definitionsPerTerm = Object.values(data).map(term => 
+                term.entrada.subentrada.acepciones.length
+            );
+            const maxDefs = Math.max(...definitionsPerTerm);
+            const minDefs = Math.min(...definitionsPerTerm);
+            
+            complexityStats.innerHTML = `
+                <h3>Análisis de Complejidad</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Máx. Definiciones/Término</span>
+                    <span class="stat-value">${maxDefs}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Mín. Definiciones/Término</span>
+                    <span class="stat-value">${minDefs}</span>
+                </div>
+            `;
+
+            statsDashboard.appendChild(generalStats);
+            statsDashboard.appendChild(categoryStats);
+            statsDashboard.appendChild(complexityStats);
+            upperSection.appendChild(statsDashboard);
+
+            // Actualizar la sección de nodos con estadísticas adicionales
+            const nodesList = document.getElementById('nodes-list');
+            nodesList.innerHTML = `
+                <h2>Resumen de Términos</h2>
+                <div id="nodes-container">
+                    ${Object.entries(data)
+                        .sort((a, b) => a[0].localeCompare(b[0]))
+                        .map(([term, info]) => {
+                            const acepciones = info.entrada.subentrada.acepciones;
+                            return `
+                                <div class="node-item">
+                                    <span title="${term}">${term}</span>
+                                    <span class="definition-count">${acepciones.length}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+            `;
         }
     </script>
 </body>
