@@ -454,6 +454,9 @@
         // Añadir esta variable global para mantener los elementos seleccionados
         let selectedElements = new Set();
 
+        // Definir la URL como constante para mejor mantenimiento
+        const DATA_URL = 'https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/col_DLEH.json';
+
         // Función para extraer últimos nodos únicos del JSON
         function extractUniqueLastNodes(data) {
             const nodes = new Set();
@@ -467,7 +470,7 @@
             return Array.from(nodes).sort();
         }
 
-        fetch('./col_DLEH.json')
+        fetch(DATA_URL)
             .then(response => response.json())
             .then(data => {
                 const lastNodes = extractUniqueLastNodes(data);
@@ -859,7 +862,7 @@
                 titleSpan.textContent = id;
                 titleSpan.style.fontWeight = 'bold';
                 
-                fetch('./col_DLEH.json')
+                fetch(DATA_URL)
                     .then(response => response.json())
                     .then(data => {
                         if (data[id]) {
