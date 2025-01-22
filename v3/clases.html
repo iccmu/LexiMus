@@ -435,22 +435,49 @@
             });
 
         function processElements() {
-            document.querySelectorAll('#hierarchy li').forEach((item, index) => {
+            // Función auxiliar para normalizar texto
+            function normalizeText(text) {
+                return text.toLowerCase()
+                          .replace(/[\[\]()]/g, '') // Eliminar corchetes y paréntesis
+                          .replace(/\s+/g, ' ')     // Normalizar espacios
+                          .trim();
+            }
+
+            // Crear un Map normalizado
+            const normalizedMapping = new Map();
+            urlMapping.forEach((url, key) => {
+                normalizedMapping.set(normalizeText(key), {
+                    originalKey: key,
+                    url: url
+                });
+            });
+
+            const foundNames = new Set();
+            let unmatchedElements = [];
+
+            document.querySelectorAll('#hierarchy li').forEach((item) => {
                 const text = item.childNodes[0].textContent.trim();
+                const normalizedText = normalizeText(text);
                 const children = item.querySelector('ul');
                 
+                // Verificar si el texto existe en el mapping normalizado
+                const match = normalizedMapping.get(normalizedText);
+                if (match) {
+                    foundNames.add(match.originalKey);
+                    console.log(`✅ Match encontrado: "${text}"`);
+                } else {
+                    unmatchedElements.push(text);
+                    console.log(`❌ No se encontró match para: "${text}"`);
+                }
+
                 // Crear el span con el texto y el enlace
                 if (item.childNodes[0].nodeType === 3) {
                     const span = document.createElement('span');
-                    const id = text
-                        .toLowerCase()
-                        .normalize('NFD')
-                        .replace(/[\u0300-\u036f]/g, '')
-                        .replace(/[^a-z0-9]+/g, '_')
-                        .replace(/^_+|_+$/g, '');
+                    const pageUrl = match?.url;
                     
-                    const pageUrl = urlMapping.get(text) || 
-                                   `${BASE_URL}/${id}.html`;
+                    if (!pageUrl) {
+                        console.warn(`⚠️ URL no encontrada para: "${text}"`);
+                    }
                     
                     span.innerHTML = `${text} <a href="${pageUrl}" 
                                         class="class-link" 
@@ -479,6 +506,26 @@
                     event.stopPropagation();
                 });
             });
+
+            // Mostrar resumen de la verificación
+            console.log('\n=== Resumen de Verificación ===');
+            console.log(`Total elementos en CSV: ${normalizedMapping.size}`);
+            console.log(`Total elementos encontrados: ${foundNames.size}`);
+            console.log(`Total elementos sin match: ${unmatchedElements.length}`);
+
+            // Mostrar elementos del CSV que no se encontraron en el árbol
+            const unusedCsvEntries = new Set(normalizedMapping.keys());
+            foundNames.forEach(name => unusedCsvEntries.delete(name));
+            
+            if (unusedCsvEntries.size > 0) {
+                console.log('\n⚠️ Elementos en CSV no utilizados:');
+                unusedCsvEntries.forEach(name => console.log(`- ${name}`));
+            }
+
+            if (unmatchedElements.length > 0) {
+                console.log('\n❌ Elementos sin match en el CSV:');
+                unmatchedElements.forEach(name => console.log(`- ${name}`));
+            }
         }
     </script>
 </body>
