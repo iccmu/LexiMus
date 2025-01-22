@@ -12,6 +12,22 @@
             padding: 20px;
             background-color: #f5f5f5;
             color: #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #main-container {
+            display: flex;
+            width: 100%;
+        }
+
+        #hierarchy-container {
+            width: 25%;
+            padding-right: 20px;
+        }
+
+        #right-panel {
+            width: 75%;
         }
 
         h1 {
@@ -33,12 +49,13 @@
 
         li > span {
             display: block;
-            padding: 8px 12px;
+            padding: 8px 35px 8px 12px;
             border-radius: 6px;
             background-color: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             cursor: pointer;
             transition: all 0.2s ease;
+            position: relative;
         }
 
         li > span:hover {
@@ -131,17 +148,22 @@
 
         /* Nuevo estilo para los enlaces */
         .class-link {
-            color: #2c3e50;
+            color: white;
             text-decoration: none;
-            display: inline-block;
-            margin-left: 10px;
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background-color: #3498db;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 0.8em;
-            opacity: 0.7;
+            opacity: 0.9;
         }
 
         .class-link:hover {
             opacity: 1;
-            text-decoration: underline;
+            background-color: #2980b9;
         }
 
         /* Añadir estos estilos */
@@ -177,21 +199,18 @@
         }
 
         #contentDisplay {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: 350px; /* Ancho fijo para el sidebar */
-            height: 100vh;
-            background: #2d2d2d;
+            width: 100%;
+            height: 100%;
+            background: white;
             padding: 20px;
-            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
-            z-index: 1000;
-            color: #fff;
+            color: #333;
+            border-radius: 8px;
         }
 
         .node-item {
-            background: #3d3d3d;
+            background: #f5f5f5;
             padding: 12px 16px;
             border-radius: 8px;
             margin-bottom: 8px;
@@ -202,16 +221,8 @@
             align-items: center;
         }
 
-        .node-text {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            padding-right: 10px;
-        }
-
         .node-item:hover {
-            background: #4a4a4a;
+            background: #ebebeb;
             transform: translateX(5px);
         }
 
@@ -233,15 +244,53 @@
         .expand-btn:hover {
             color: #fff;
         }
+
+        /* Añadir estos estilos */
+        .breadcrumb-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 2px solid #3498db;
+            color: #333;
+        }
+
+        .breadcrumb-item {
+            display: inline-block;
+            cursor: pointer;
+            color: #3498db;
+            transition: color 0.2s ease;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .breadcrumb-item:hover {
+            color: #2980b9;
+            text-decoration: underline;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .breadcrumb-separator {
+            color: #666;
+            margin: 0 10px;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
     <img src="https://raw.githubusercontent.com/iccmu/LexiMus/main/static/LexiMus-Logo-Horiizontal.svg" 
          alt="LexiMus Logo" 
          style="max-width: 300px; margin: 30px auto; display: block; height: auto;">
-    <ul id="hierarchy">
-        <!-- La jerarquía se generará dinámicamente aquí -->
-    </ul>
+    <div id="main-container">
+        <div id="hierarchy-container">
+            <ul id="hierarchy">
+                <!-- La jerarquía se generará dinámicamente aquí -->
+            </ul>
+        </div>
+        <div id="right-panel">
+            <!-- Aquí irá el contenido futuro del panel derecho -->
+        </div>
+    </div>
 
     <!-- Añadir el modal -->
     <div id="contentModal" class="modal">
@@ -355,46 +404,60 @@
         }
 
         // Añadir estas nuevas funciones
+        async function getBreadcrumbPath(currentTitle) {
+            try {
+                console.log("Getting breadcrumb path for:", currentTitle);
+                const response = await fetch('https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/clases_with_uuids.json');
+                const data = await response.json();
+                
+                const path = [];
+                const found = findPathToTitle(data, currentTitle, path);
+                console.log("Path found:", found, "Path:", path);
+                
+                return path.map(item => ({
+                    title: item.title,
+                    url: `https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/leximus_clases/${item.id}.html`
+                }));
+            } catch (error) {
+                console.error('Error getting breadcrumb path:', error);
+                return [{title: currentTitle, url: ''}];
+            }
+        }
+
+        function findPathToTitle(data, targetTitle, path) {
+            for (let key in data) {
+                if (key === 'id' || key === 'value') continue;
+                
+                if (key === targetTitle) {
+                    path.push({title: key, id: data[key].id});
+                    return true;
+                }
+                
+                if (typeof data[key] === 'object' && data[key] !== null) {
+                    path.push({title: key, id: data[key].id});
+                    if (findPathToTitle(data[key], targetTitle, path)) {
+                        return true;
+                    }
+                    path.pop();
+                }
+            }
+            return false;
+        }
+
         async function loadContent(url, event) {
             event.preventDefault();
             event.stopPropagation();
             
+            console.log("Loading content from URL:", url);
+            
             let contentDiv = document.getElementById('contentDisplay');
+            const rightPanel = document.getElementById('right-panel');
+            
             if (!contentDiv) {
                 contentDiv = document.createElement('div');
                 contentDiv.id = 'contentDisplay';
-                contentDiv.style.cssText = `
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    width: 40%;
-                    height: 40vh;
-                    background: #2d2d2d;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-                    overflow-y: auto;
-                    z-index: 1000;
-                    pointer-events: auto;
-                    color: #fff;
-                `;
-                document.body.appendChild(contentDiv);
+                rightPanel.appendChild(contentDiv);
             }
-
-            const closeButton = document.createElement('button');
-            closeButton.innerHTML = '✖';
-            closeButton.style.cssText = `
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                border: none;
-                background: none;
-                color: #fff;
-                font-size: 20px;
-                cursor: pointer;
-                padding: 5px;
-            `;
-            closeButton.onclick = () => contentDiv.remove();
 
             try {
                 const response = await fetch(url);
@@ -404,37 +467,53 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlContent, 'text/html');
                 
-                const elements = Array.from(doc.querySelectorAll('p, li')).map(el => el.textContent.trim());
+                const h1Element = doc.querySelector('h1');
+                console.log("H1 element found:", h1Element);
                 
+                if (!h1Element) {
+                    throw new Error('No se encontró el título en el contenido');
+                }
+                
+                const currentTitle = h1Element.textContent;
+                console.log("Current title:", currentTitle);
+                
+                // Primero, mostrar el título actual
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'breadcrumb-title';
+                titleDiv.textContent = currentTitle;
+
+                // Limpiar y añadir el nuevo contenido
+                contentDiv.innerHTML = '';
+                contentDiv.appendChild(titleDiv);
+                
+                // Crear el contenedor para los elementos
                 const nodesContainer = document.createElement('div');
-                nodesContainer.style.padding = '20px 0';
+                nodesContainer.style.cssText = `
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 12px;
+                    padding: 20px 0;
+                `;
+
+                // Extraer y procesar los elementos del contenido
+                const elements = Array.from(doc.querySelectorAll('p, li')).map(el => el.textContent.trim());
                 
                 elements.forEach(element => {
                     const nodeItem = document.createElement('div');
                     nodeItem.className = 'node-item';
-                    
+
                     const textSpan = document.createElement('span');
-                    textSpan.className = 'node-text';
                     textSpan.textContent = element;
-                    
-                    const expandBtn = document.createElement('button');
-                    expandBtn.className = 'expand-btn';
-                    expandBtn.textContent = '⋯';
-                    expandBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        nodeItem.classList.toggle('expanded');
-                        expandBtn.textContent = nodeItem.classList.contains('expanded') ? '−' : '⋯';
-                    };
-                    
+                    textSpan.className = 'node-text';
+
                     nodeItem.appendChild(textSpan);
-                    nodeItem.appendChild(expandBtn);
                     nodesContainer.appendChild(nodeItem);
                 });
 
-                contentDiv.innerHTML = '';
-                contentDiv.appendChild(closeButton);
                 contentDiv.appendChild(nodesContainer);
+
             } catch (error) {
+                console.error('Error completo:', error);
                 contentDiv.innerHTML = `
                     <div style="color: red; padding: 20px;">
                         <h2>Error al cargar el contenido</h2>
