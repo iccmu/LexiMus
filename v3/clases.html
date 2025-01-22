@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hierarchical Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        li > span {
+            display: block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        li > span:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        /* Indicador visual para elementos con submenús */
+        li > span::before {
+            content: '▸';
+            display: inline-block;
+            margin-right: 8px;
+            transition: transform 0.2s ease;
+            color: #666;
+        }
+
+        /* Rotar el indicador cuando el menú está expandido */
+        li.expanded > span::before {
+            transform: rotate(90deg);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Líneas conectoras */
+        ul ul::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+
+        /* Niveles de profundidad con diferentes colores */
+        li > span {
+            border-left: 4px solid #3498db;
+        }
+
+        li li > span {
+            border-left: 4px solid #2ecc71;
+        }
+
+        li li li > span {
+            border-left: 4px solid #e74c3c;
+        }
+
+        li li li li > span {
+            border-left: 4px solid #f1c40f;
+        }
+
+        /* Animación suave al expandir/colapsar */
+        ul.expanding {
+            animation: expand 0.3s ease-out;
+        }
+
+        @keyframes expand {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Hierarchical Visualization</h1>
+    <ul id="hierarchy">
+        <li>
+            Los nombres de la música
+            <ul class="hidden">
+                <li>
+                    La faceta eventiva de la música
+                    <ul class="hidden">
+                        <li>
+                            El evento, la acción o el proceso musical
+                            <ul class="hidden">
+                                <li>Verbos de acción y/o interpretación musical (generales, particulares o con carga valorativa)</li>
+                                <li>Verbos de percepción pasiva y/o activa</li>
+                                <li>Verbos de manipulación</li>
+                                <li>Verbos de fabricación y ajuste</li>
+                                <li>Verbos relacionados con la música como actividad empresarial</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Agentes y experimentadores
+                            <ul class="hidden">
+                                <li>
+                                    Agentes
+                                    <ul class="hidden">
+                                        <li>
+                                            Productores
+                                            <ul class="hidden">
+                                                <li>Agentes creadores o poiéticos</li>
+                                                <li>Agentes intérpretes</li>
+                                                <li>Agentes creadores e intérpretes</li>
+                                                <li>Agentes según su función</li>
+                                                <li>Agentes instrumentistas</li>
+                                                <li>Agentes colectivos</li>
+                                                <li>Agentes según su habilidad creadora o interpretativa</li>
+                                            </ul>
+                                        </li>
+                                        <li>
+                                            No productores
+                                            <ul class="hidden">
+                                                <li>Científicos, comentaristas y pedagogos</li>
+                                                <li>Constructores</li>
+                                                <li>Empresarios y gestores</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>Experimentadores</li>
+                            </ul>
+                        </li>
+                        <li>El resultado del evento musical</li>
+                        <li>
+                            Los instrumentos y medios materiales de la acción musical
+                            <ul class="hidden">
+                                <li>
+                                    Familias organológicas
+                                    <ul class="hidden">
+                                        <li>Idiófonos (y sus componentes)</li>
+                                        <li>Membranófonos (y sus componentes)</li>
+                                        <li>Cordófonos (y sus componentes)</li>
+                                        <li>Aerófonos (y sus componentes)</li>
+                                        <li>Electrófonos (y sus componentes)</li>
+                                        <li>Otros dispositivos organológicos</li>
+                                    </ul>
+                                </li>
+                                <li>Otros medios materiales que facilitan la actividad musical</li>
+                                <li>Otros dispositivos empleados para la grabación y reproducción</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Las localizaciones donde se produce el evento musical
+                            <ul class="hidden">
+                                <li>Espacios de la música</li>
+                                <li>Ubicaciones espacio-temporales</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    La música como ente acústico
+                    <ul class="hidden">
+                        <li>
+                            Dimensión espacial del dato sonoro
+                            <ul class="hidden">
+                                <li>Alturas o notas musicales y alteraciones</li>
+                                <li>Cualidades acústicas del dato sonoro o derivadas de la serie armónica</li>
+                                <li>Sistemas de afinación</li>
+                                <li>Interválica y su percepción psico auditiva</li>
+                                <li>Escalas y grados de la escala</li>
+                                <li>Modos</li>
+                                <li>
+                                    Armonía
+                                    <ul class="hidden">
+                                        <li>Combinaciones de dos notas/Intervalos</li>
+                                        <li>Grados del acorde</li>
+                                        <li>
+                                            Acordes
+                                            <ul class="hidden">
+                                                <li>Según el número de notas</li>
+                                                <li>Según la configuración interna</li>
+                                                <li>Según su función</li>
+                                                <li>Acordes individuados</li>
+                                                <li>Inversiones y disposiciones del acorde</li>
+                                                <li>Otros acordes marcados</li>
+                                            </ul>
+                                        </li>
+                                        <li>Tonalidades / Modos</li>
+                                        <li>Funciones o relaciones tonales</li>
+                                        <li>Derivadas melódicas de las estructuras armónicas</li>
+                                        <li>Técnicas compositivas relativas a la armonía</li>
+                                    </ul>
+                                </li>
+                                <li>Símbolos y convenciones gráficas de la notación musical relativos a la dimensión espacial de la música</li>
+                                <li>Técnicas o sistemas empleados para cifrar acordes o codificar información armónica</li>
+                                <li>Ornamentos, alteraciones o modificaciones relativas a la afinación de las alturas musicales lexicalizadas y/o convencionalizadas como indicaciones interpretativas</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Dimensión temporal del dato sonoro
+                            <ul class="hidden">
+                                <li>Figuras rítmicas, silencios y divisiones de las figuras rítmicas</li>
+                                <li>
+                                    Compases
+                                    <ul class="hidden">
+                                        <li>Tipos de compases</li>
+                                        <li>Tiempos del compás</li>
+                                        <li>Fenómenos contramétricos</li>
+                                    </ul>
+                                </li>
+                                <li>Ornamentos, alteraciones o modificaciones relativas a las figuras musicales o el ritmo en general</li>
+                                <li>
+                                    Combinaciones rítmicas
+                                    <ul class="hidden">
+                                        <li>Células rítmicas</li>
+                                        <li>Patrones y esquemas rítmicos o grooves</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    Tempo musical
+                                    <ul class="hidden">
+                                        <li>Indicaciones metronómicas</li>
+                                        <li>
+                                            Indicaciones discursivas de tempo y agógica
+                                            <ul class="hidden">
+                                                <li>Movimiento uniforme</li>
+                                                <li>Aumento o disminución progresiva del movimiento</li>
+                                                <li>Suspensión de la regularidad del movimiento</li>
+                                                <li>Breve y súbito cambio en el movimiento</li>
+                                                <li>Restablecimiento de la regularidad o vuelta al tiempo original</li>
+                                                <li>Desvíos del pulso regular</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>Símbolos y convenciones de la notación musical que codifican el ritmo musical</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto
+                            <ul class="hidden">
+                                <li>Denominaciones de la acústica que describen la altura y el tiempo de las señales sonoras</li>
+                                <li>Cadencias</li>
+                                <li>Progresiones</li>
+                                <li>
+                                    Denominaciones relativas a la Melodía
+                                    <ul class="hidden">
+                                        <li>Tipos de melodía según su extensión</li>
+                                        <li>Tipos de melodía en relación con la escala o acorde</li>
+                                        <li>Tipos de melodía en relación con su propia estructura</li>
+                                        <li>Tipos de melodía en relación con elementos extramusicales</li>
+                                        <li>Ornamentos melódicos</li>
+                                        <li>Melodías o secuencias individuadas</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    Denominaciones relativas a la Textura
+                                    <ul class="hidden">
+                                        <li>Las partes, voces o funciones musicales</li>
+                                        <li>La manera en que se relacionan las partes musicales</li>
+                                    </ul>
+                                </li>
+                                <li>Símbolos y convenciones gráficas de la notación musical relativas a la dimension espacio-temporal del dato sonoro</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Otras dimensiones del dato sonoro aislado o en contexto
+                            <ul class="hidden">
+                                <li>Intensidad</li>
+                                <li>Timbre</li>
+                                <li>
+                                    Carácter
+                                    <ul class="hidden">
+                                        <li>Denominaciones relativas al carácter general de una obra o pasaje</li>
+                                        <li>Denominaciones relativas al fraseo o la articulación musical</li>
+                                    </ul>
+                                </li>
+                                <li>Símbolos y convenciones gráficas relativas a otras dimensiones del dato sonoro</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Estilos musicales
+                            <ul class="hidden">
+                                <li>
+                                    Variables en el diseño semántico de los términos relativos a los estilos musicales
+                                    <ul class="hidden">
+                                        <li>La dimensión espacial (armonía)</li>
+                                        <li>La dimensión temporal (ritmo y tempo)</li>
+                                        <li>La dimensión espacio-temporal (melodía, ritmo armónico y textura)</li>
+                                        <li>Otras dimensiones (timbre)</li>
+                                        <li>La forma</li>
+                                        <li>Lo extramusical</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Continentes de la expresión musical: formas y unidades
+                            <ul class="hidden">
+                                <li>
+                                    Continentes con morfología especificada o formas musicales estructuradas
+                                    <ul class="hidden">
+                                        <li>La dimensión espacial en las formas musicales</li>
+                                        <li>La dimensión temporal en las formas musicales</li>
+                                        <li>La dimensión espacio-temporal en las formas musicales</li>
+                                        <li>Lo extramusical en las formas musicales (elementos textuales, coreográficos, etc.)</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    Continentes sin morfología especificada o unidades musicales
+                                    <ul class="hidden">
+                                        <li>Unidades musicales según efectivos musicales</li>
+                                        <li>Unidades musicales según su extensión o disposición interna</li>
+                                        <li>Lo extramusical en las unidades musicales</li>
+                                    </ul>
+                                </li>
+                                <li>Unidades musicales banalizadas</li>
+                                <li>Segmentaciones de los continentes musicales</li>
+                                <li>Símbolos y convenciones gráficas de la notación musical relativas a la segmentación de los continentes</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Géneros musicales
+                            <ul class="hidden">
+                                <li>Los géneros como entidades multidimensionales</li>
+                                <li>
+                                    Género como término comodín
+                                    <ul class="hidden">
+                                        <li>Intercambiable con estilo</li>
+                                        <li>Intercambiable con forma/continente</li>
+                                        <li>Intercambiable con plantilla/medios musicales</li>
+                                    </ul>
+                                </li>
+                                <li>Género como término superordinado</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+    <script>
+        document.querySelectorAll('#hierarchy li').forEach(item => {
+            const text = item.childNodes[0].textContent.trim();
+            const children = item.querySelector('ul');
+            
+            // Envolver el texto en un span
+            if (item.childNodes[0].nodeType === 3) { // Nodo de texto
+                const span = document.createElement('span');
+                span.textContent = text;
+                item.insertBefore(span, item.childNodes[0]);
+                item.removeChild(item.childNodes[1]);
+            }
+
+            if (children) {
+                item.querySelector('span').addEventListener('click', function(event) {
+                    children.classList.toggle('hidden');
+                    children.classList.add('expanding');
+                    item.classList.toggle('expanded');
+                    event.stopPropagation();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
