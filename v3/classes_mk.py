@@ -2,17 +2,10 @@ import csv
 import json
 from pathlib import Path
 import re
-import unicodedata
 
 def normalize_string(text):
-    """Normaliza un string manteniendo ñ y tildes para mostrar, pero eliminándolas para IDs."""
-    # Convertir 'ñ' a 'n' y eliminar tildes para el ID
-    id_text = ''.join(
-        c for c in unicodedata.normalize('NFD', text)
-        if unicodedata.category(c) != 'Mn'
-    )
-    id_text = id_text.replace('ñ', 'n')
-    return re.sub(r'[^a-z0-9]+', '_', id_text.lower()).strip('_')
+    """Normaliza el texto para crear IDs válidos."""
+    return re.sub(r'[^a-z0-9]+', '_', str(text).lower()).strip('_')
 
 def extract_hierarchy(element, parent_path=""):
     """Extrae la jerarquía recursivamente y genera IDs únicos."""
@@ -22,16 +15,15 @@ def extract_hierarchy(element, parent_path=""):
         for key, value in element.items():
             current_path = f"{parent_path}/{key}" if parent_path else key
             id = normalize_string(key)
-            gist_url = f"https://gist.github.com/user/leximus_{id}"
+            page_url = f"https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/leximus_pages/{id}.html"
             
             items.append({
-                'name': key,  # Mantiene tildes y ñ para mostrar
-                'id': id,     # Version normalizada para URLs
+                'name': key,
+                'id': id,
                 'path': current_path,
-                'gist_url': gist_url
+                'page_url': page_url
             })
             
-            # Procesar elementos hijos
             if isinstance(value, (dict, list)):
                 items.extend(extract_hierarchy(value, current_path))
     
@@ -42,13 +34,13 @@ def extract_hierarchy(element, parent_path=""):
             else:
                 id = normalize_string(str(item))
                 current_path = f"{parent_path}/{item}"
-                gist_url = f"https://gist.github.com/user/leximus_{id}"
+                page_url = f"https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/leximus_pages/{id}.html"
                 
                 items.append({
                     'name': item,
                     'id': id,
                     'path': current_path,
-                    'gist_url': gist_url
+                    'page_url': page_url
                 })
     
     return items
@@ -67,7 +59,10 @@ def generate_html_page(item):
     <h1>{item['name']}</h1>
     <p>ID: {item['id']}</p>
     <p>Path: {item['path']}</p>
-    <p>Gist URL: <a href="{item['gist_url']}" target="_blank">{item['gist_url']}</a></p>
+    <p>URL: <a href="{item['page_url']}" target="_blank">{item['page_url']}</a></p>
+    
+    <!-- Aquí puedes añadir más información específica de la clase -->
+    
 </body>
 </html>
 """
@@ -87,7 +82,7 @@ def main():
     
     # Guardar la información en CSV
     with open('leximus_mapping.csv', 'w', encoding='utf-8', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['name', 'id', 'path', 'gist_url'])
+        writer = csv.DictWriter(f, fieldnames=['name', 'id', 'path', 'page_url'])
         writer.writeheader()
         writer.writerows(items)
     

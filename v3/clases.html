@@ -414,6 +414,7 @@
     <script>
         // Cargar el CSV de mapeo
         let urlMapping = new Map();
+        const BASE_URL = "https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/leximus_pages";
 
         fetch('leximus_mapping.csv')
             .then(response => response.text())
@@ -425,7 +426,7 @@
                 for(let i = 1; i < lines.length; i++) {
                     const values = lines[i].split(',');
                     if(values.length >= 4) {
-                        urlMapping.set(values[0], values[3]); // name -> gist_url
+                        urlMapping.set(values[0], values[3]); // name -> page_url
                     }
                 }
 
@@ -441,11 +442,19 @@
                 // Crear el span con el texto y el enlace
                 if (item.childNodes[0].nodeType === 3) {
                     const span = document.createElement('span');
-                    const gistUrl = urlMapping.get(text) || '#';
+                    const id = text
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9]+/g, '_')
+                        .replace(/^_+|_+$/g, '');
                     
-                    span.innerHTML = `${text} <a href="${gistUrl}" 
+                    const pageUrl = urlMapping.get(text) || 
+                                   `${BASE_URL}/${id}.html`;
+                    
+                    span.innerHTML = `${text} <a href="${pageUrl}" 
                                         class="class-link" 
-                                        title="Ver definición RDF"
+                                        title="Ver definición"
                                         target="_blank">🔗</a>`;
                     item.insertBefore(span, item.childNodes[0]);
                     item.removeChild(item.childNodes[1]);
