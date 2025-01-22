@@ -177,14 +177,7 @@
         }
 
         #contentDisplay::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: -1;
+            /* Eliminar este bloque completo */
         }
     </style>
 </head>
@@ -204,6 +197,9 @@
         </div>
     </div>
 
+    <!-- Añadir D3.js antes del script principal -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
     <script>
         // Función para generar la jerarquía HTML desde el JSON
         function generateHierarchy(data) {
@@ -221,10 +217,6 @@
                 html += '<li>';
                 html += `<span>
                             ${key}
-                            <small class="uuid" style="color: #666; margin-left: 10px; cursor: pointer" 
-                                   onclick="copyToClipboard('${uuid}', event)">
-                                ${uuid}
-                            </small>
                             <a href="javascript:void(0)" class="class-link" onclick="loadContent('${githubUrl}', event)">🔗</a>
                         </span>`;
                 
@@ -269,10 +261,6 @@
                     <li>
                         <span>
                             ${firstKey}
-                            <small class="uuid" style="color: #666; margin-left: 10px; cursor: pointer"
-                                   onclick="copyToClipboard('${firstNode.id}', event)">
-                                ${firstNode.id}
-                            </small>
                             <a href="javascript:void(0)" class="class-link" onclick="loadContent('${githubUrl}', event)">🔗</a>
                         </span>
                         ${generateHierarchy(firstNode)}
@@ -317,28 +305,27 @@
             event.preventDefault();
             event.stopPropagation();
             
-            // Crear o encontrar el div donde mostraremos el contenido
             let contentDiv = document.getElementById('contentDisplay');
             if (!contentDiv) {
                 contentDiv = document.createElement('div');
                 contentDiv.id = 'contentDisplay';
                 contentDiv.style.cssText = `
                     position: fixed;
-                    top: 20px;
+                    bottom: 20px;
                     right: 20px;
-                    width: 60%;
-                    height: 90vh;
+                    width: 40%;
+                    height: 40vh;
                     background: white;
                     padding: 20px;
                     border-radius: 8px;
                     box-shadow: 0 0 10px rgba(0,0,0,0.2);
                     overflow-y: auto;
                     z-index: 1000;
+                    pointer-events: auto;
                 `;
                 document.body.appendChild(contentDiv);
             }
             
-            // Crear botón de cerrar
             const closeButton = document.createElement('button');
             closeButton.innerHTML = '✖';
             closeButton.style.cssText = `
@@ -353,22 +340,72 @@
             `;
             closeButton.onclick = () => contentDiv.remove();
             
-            // Mostrar mensaje de carga
-            contentDiv.innerHTML = '<h2>Cargando contenido...</h2>';
-            
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al cargar el contenido');
                 
                 const content = await response.text();
-                
-                // Crear un contenedor temporal para parsear el HTML
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(content, 'text/html');
                 
-                // Extraer el contenido del body
-                const bodyContent = doc.body.innerHTML;
+                const titleText = doc.querySelector('h1').textContent;
+                const hierarchy = titleText.split('/');
                 
+                // Crear el contenedor para el gráfico
+                const graphContainer = document.createElement('div');
+                graphContainer.style.cssText = `
+                    width: 100%;
+                    height: 80px;
+                    margin-bottom: 20px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 20px;
+                    overflow-x: auto;
+                `;
+
+                // Crear la matriz de nodos
+                const matrixHtml = hierarchy.map((text, index) => `
+                    <div style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        min-width: ${100/hierarchy.length}%;
+                        position: relative;
+                    ">
+                        <div style="
+                            width: 12px;
+                            height: 12px;
+                            background: #3498db;
+                            border-radius: 50%;
+                            margin-bottom: 8px;
+                            position: relative;
+                            z-index: 2;
+                        "></div>
+                        ${index < hierarchy.length - 1 ? `
+                            <div style="
+                                position: absolute;
+                                height: 2px;
+                                background: #3498db;
+                                left: 50%;
+                                right: -50%;
+                                top: 5px;
+                                z-index: 1;
+                            "></div>
+                        ` : ''}
+                        <div style="
+                            font-size: 12px;
+                            text-align: center;
+                            max-width: 120px;
+                            color: #2c3e50;
+                        ">${text.trim()}</div>
+                    </div>
+                `).join('');
+
+                graphContainer.innerHTML = matrixHtml;
+
                 // Crear el contenedor del contenido
                 const contentContainer = document.createElement('div');
                 contentContainer.style.cssText = `
@@ -376,11 +413,18 @@
                     background: white;
                     border-radius: 8px;
                 `;
-                contentContainer.innerHTML = bodyContent;
+                
+                const htmlContent = doc.body.innerHTML;
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                const h1 = tempDiv.querySelector('h1');
+                if (h1) h1.remove();
+                contentContainer.innerHTML = tempDiv.innerHTML;
                 
                 // Limpiar el div y añadir el nuevo contenido
                 contentDiv.innerHTML = '';
                 contentDiv.appendChild(closeButton);
+                contentDiv.appendChild(graphContainer);
                 contentDiv.appendChild(contentContainer);
                 
             } catch (error) {
