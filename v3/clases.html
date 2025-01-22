@@ -128,6 +128,21 @@
             85% { opacity: 1; transform: translate(-50%, 0); }
             100% { opacity: 0; transform: translate(-50%, -20px); }
         }
+
+        /* Nuevo estilo para los enlaces */
+        .class-link {
+            color: #2c3e50;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .class-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -397,38 +412,65 @@
     </ul>
 
     <script>
-        document.querySelectorAll('#hierarchy li').forEach(item => {
-            const text = item.childNodes[0].textContent.trim();
-            const children = item.querySelector('ul');
-            
-            // Envolver el texto en un span
-            if (item.childNodes[0].nodeType === 3) {
-                const span = document.createElement('span');
-                span.textContent = text;
-                item.insertBefore(span, item.childNodes[0]);
-                item.removeChild(item.childNodes[1]);
-            }
+        // Cargar el CSV de mapeo
+        let urlMapping = new Map();
 
-            // Añadir el evento click a todos los spans
-            item.querySelector('span').addEventListener('click', function(event) {
-                if (children) {
-                    children.classList.toggle('hidden');
-                    children.classList.add('expanding');
-                    item.classList.toggle('expanded');
-                } else {
-                    const message = document.createElement('div');
-                    message.className = 'temp-message';
-                    message.textContent = 'No hay más subniveles';
-                    document.body.appendChild(message);
-                    
-                    // Eliminar el mensaje después de la animación
-                    setTimeout(() => {
-                        message.remove();
-                    }, 1500);
+        fetch('leximus_mapping.csv')
+            .then(response => response.text())
+            .then(csv => {
+                // Parsear el CSV
+                const lines = csv.split('\n');
+                const headers = lines[0].split(',');
+                
+                for(let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',');
+                    if(values.length >= 4) {
+                        urlMapping.set(values[0], values[3]); // name -> gist_url
+                    }
                 }
-                event.stopPropagation();
+
+                // Una vez cargado el CSV, procesar los elementos
+                processElements();
             });
-        });
+
+        function processElements() {
+            document.querySelectorAll('#hierarchy li').forEach((item, index) => {
+                const text = item.childNodes[0].textContent.trim();
+                const children = item.querySelector('ul');
+                
+                // Crear el span con el texto y el enlace
+                if (item.childNodes[0].nodeType === 3) {
+                    const span = document.createElement('span');
+                    const gistUrl = urlMapping.get(text) || '#';
+                    
+                    span.innerHTML = `${text} <a href="${gistUrl}" 
+                                        class="class-link" 
+                                        title="Ver definición RDF"
+                                        target="_blank">🔗</a>`;
+                    item.insertBefore(span, item.childNodes[0]);
+                    item.removeChild(item.childNodes[1]);
+                }
+
+                // Evento click (sin cambios)
+                item.querySelector('span').addEventListener('click', function(event) {
+                    if (children) {
+                        children.classList.toggle('hidden');
+                        children.classList.add('expanding');
+                        item.classList.toggle('expanded');
+                    } else {
+                        const message = document.createElement('div');
+                        message.className = 'temp-message';
+                        message.textContent = 'No hay más subniveles';
+                        document.body.appendChild(message);
+                        
+                        setTimeout(() => {
+                            message.remove();
+                        }, 1500);
+                    }
+                    event.stopPropagation();
+                });
+            });
+        }
     </script>
 </body>
 </html>
