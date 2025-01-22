@@ -165,6 +165,7 @@
                 
                 const nodeData = data[key];
                 const uuid = nodeData.id;
+                const githubUrl = `https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/leximus_clases/${uuid}.html`;
                 
                 html += '<li>';
                 html += `<span>
@@ -173,7 +174,7 @@
                                    onclick="copyToClipboard('${uuid}', event)">
                                 ${uuid}
                             </small>
-                            <a href="leximus_clases/${uuid}.html" class="class-link" target="_blank">🔗</a>
+                            <a href="${githubUrl}" class="class-link" target="_blank">🔗</a>
                         </span>`;
                 
                 // Verificar si hay subnodos (excluyendo 'id' y 'value')
@@ -205,12 +206,13 @@
         }
 
         // Cargar el JSON y generar la jerarquía
-        fetch('clases_with_uuids.json')
+        fetch('https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/clases_with_uuids.json')
             .then(response => response.json())
             .then(data => {
                 const hierarchyContainer = document.getElementById('hierarchy');
                 const firstKey = Object.keys(data).find(key => key !== 'id' && key !== 'value');
                 const firstNode = data[firstKey];
+                const githubUrl = `https://raw.githubusercontent.com/iccmu/LexiMus/refs/heads/main/v3/leximus_clases/${firstNode.id}.html`;
                 
                 hierarchyContainer.innerHTML = `
                     <li>
@@ -220,7 +222,7 @@
                                    onclick="copyToClipboard('${firstNode.id}', event)">
                                 ${firstNode.id}
                             </small>
-                            <a href="leximus_clases/${firstNode.id}.html" class="class-link" target="_blank">🔗</a>
+                            <a href="${githubUrl}" class="class-link" target="_blank">🔗</a>
                         </span>
                         ${generateHierarchy(firstNode)}
                     </li>
