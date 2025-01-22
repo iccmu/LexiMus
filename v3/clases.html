@@ -106,6 +106,27 @@
                 transform: translateY(0);
             }
         }
+
+        /* Estilo para el mensaje temporal */
+        .temp-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            animation: fadeInOut 1.5s ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            15% { opacity: 1; transform: translate(-50%, 0); }
+            85% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
     </style>
 </head>
 <body>
@@ -375,21 +396,32 @@
             const children = item.querySelector('ul');
             
             // Envolver el texto en un span
-            if (item.childNodes[0].nodeType === 3) { // Nodo de texto
+            if (item.childNodes[0].nodeType === 3) {
                 const span = document.createElement('span');
                 span.textContent = text;
                 item.insertBefore(span, item.childNodes[0]);
                 item.removeChild(item.childNodes[1]);
             }
 
-            if (children) {
-                item.querySelector('span').addEventListener('click', function(event) {
+            // Añadir el evento click a todos los spans
+            item.querySelector('span').addEventListener('click', function(event) {
+                if (children) {
                     children.classList.toggle('hidden');
                     children.classList.add('expanding');
                     item.classList.toggle('expanded');
-                    event.stopPropagation();
-                });
-            }
+                } else {
+                    const message = document.createElement('div');
+                    message.className = 'temp-message';
+                    message.textContent = 'No hay más subniveles';
+                    document.body.appendChild(message);
+                    
+                    // Eliminar el mensaje después de la animación
+                    setTimeout(() => {
+                        message.remove();
+                    }, 1500);
+                }
+                event.stopPropagation();
+            });
         });
     </script>
 </body>
