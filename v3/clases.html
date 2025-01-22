@@ -176,8 +176,62 @@
             cursor: pointer;
         }
 
-        #contentDisplay::before {
-            /* Eliminar este bloque completo */
+        #contentDisplay {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 350px; /* Ancho fijo para el sidebar */
+            height: 100vh;
+            background: #2d2d2d;
+            padding: 20px;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            z-index: 1000;
+            color: #fff;
+        }
+
+        .node-item {
+            background: #3d3d3d;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .node-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 10px;
+        }
+
+        .node-item:hover {
+            background: #4a4a4a;
+            transform: translateX(5px);
+        }
+
+        .node-item.expanded .node-text {
+            white-space: normal;
+            overflow: visible;
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 0 5px;
+            font-size: 18px;
+            min-width: 24px;
+        }
+
+        .expand-btn:hover {
+            color: #fff;
         }
     </style>
 </head>
