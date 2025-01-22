@@ -1,0 +1,166 @@
+{
+  "Los nombres de la música": {
+    "La faceta eventiva de la música": {
+      "El evento, la acción o el proceso musical": {
+        "Verbos de acción y/o interpretación musical (generales, particulares o con carga valorativa)": null,
+        "Verbos de percepción pasiva y/o activa": null,
+        "Verbos de manipulación": null,
+        "Verbos de fabricación y ajuste": null,
+        "Verbos relacionados con la música como actividad empresarial": null
+      },
+      "agentes y experimentadores": {
+        "agentes": {
+          "Productores": {
+            "Agentes creadores o poiéticos": null,
+            "Agentes intérpretes": null,
+            "Agentes creadores e intérpretes": null,
+            "Agentes según su función": null,
+            "Agentes instrumentistas": null,
+            "Agentes colectivos": null,
+            "Agentes según su habilidad creadora o interpretativa": null
+          },
+          "No productores": {
+            "Científicos, comentaristas y pedagogos": null,
+            "Constructores": null,
+            "Empresarios y gestores": null
+          }
+        },
+        "experimentadores": null
+      },
+      "El resultado del evento musical": null,
+      "Los instrumentos y medios materiales de la acción musical": {
+        "Familias organológicas": {
+          "Idiófonos (y sus componentes)": null,
+          "Membranófonos (y sus componentes)": null,
+          "Cordófonos (y sus componentes)": null,
+          "Aerófonos (y sus componentes)": null,
+          "Electrófonos (y sus componentes)": null,
+          "Otros dispositivos organológicos": null
+        },
+        "Otros medios materiales que facilitan la actividad musical": null,
+        "Otros dispositivos empleados para la grabación y reproducción": null
+      },
+      "Las [localizaciones] donde se produce el evento musical]": {
+        "Espacios de la música": null,
+        "Ubicaciones espacio-temporales": null
+      }
+    },
+    "La música como ente acústico": {
+      "Dimensión espacial del dato sonoro": {
+        "Alturas o notas musicales y alteraciones": null,
+        "Cualidades acústicas del dato sonoro o derivadas de la serie armónica": null,
+        "Sistemas de afinación": null,
+        "Interválica y su percepción psico auditiva": null,
+        "Escalas y grados de la escala": null,
+        "Modos": null,
+        "Armonía": {
+          "Combinaciones de dos notas/Intervalos": null,
+          "Grados del acorde": null,
+          "Acordes": {
+            "Según el número de notas": null,
+            "Según la configuración interna": null,
+            "Según su función": null,
+            "Acordes individuados": null,
+            "Inversiones y disposiciones del acorde": null,
+            "Otros acordes marcados": null
+          },
+          "Tonalidades / Modos": null,
+          "Funciones o relaciones tonales": null,
+          "Derivadas melódicas de las estructuras armónicas": null,
+          "Técnicas compositivas relativas a la armonía": null
+        },
+        "Símbolos y convenciones gráficas de la notación musical relativos a la dimensión espacial de la música": null,
+        "Técnicas o sistemas empleados para cifrar acordes o codificar información armónica": null,
+        "Ornamentos, alteraciones o modificaciones relativas a la afinación de las alturas musicales lexicalizadas y/o convencionalizadas como indicaciones interpretativas": null
+      },
+      "Dimensión temporal del dato sonoro": {
+        "Figuras rítmicas, silencios y divisiones de las figuras rítmicas": null,
+        "Compases": {
+          "Tipos de compases": null,
+          "Tiempos del compás": null,
+          "Fenómenos contramétricos": null
+        },
+        "Ornamentos, alteraciones o modificaciones relativas a las figuras musicales o el ritmo en general": null,
+        "Combinaciones rítmicas": {
+          "Células rítmicas": null,
+          "Patrones y esquemas rítmicos o grooves": null
+        },
+        "Tempo musical": {
+          "Indicaciones metronómicas": null,
+          "Indicaciones discursivas de tempo y agógica": {
+            "Movimiento uniforme": null,
+            "Aumento o disminución progresiva del movimiento": null,
+            "Suspensión de la regularidad del movimiento": null,
+            "Breve y súbito cambio en el movimiento": null,
+            "Restablecimiento de la regularidad o vuelta al tiempo original": null,
+            "Desvíos del pulso regular": null
+          }
+        },
+        "Símbolos y convenciones de la notación musical que codifican el ritmo musical": null
+      },
+      "Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto": {
+        "Denominaciones de la acústica que describen la altura y el tiempo de las señales sonoras": null,
+        "Cadencias": null,
+        "Progresiones": null,
+        "Denominaciones relativas a la Melodía": {
+          "Tipos de melodía según su extensión": null,
+          "Tipos de melodía en relación con la escala o acorde": null,
+          "Tipos de melodía en relación con su propia estructura": null,
+          "Tipos de melodía en relación con elementos extramusicales": null,
+          "Ornamentos melódicos": null,
+          "Melodías o secuencias individuadas": null
+        },
+        "Denominaciones relativas a la Textura": {
+          "Las partes, voces o funciones musicales": null,
+          "La manera en que se relacionan las partes musicales": null
+        },
+        "Símbolos y convenciones gráficas de la notación musical relativas a la dimension espacio-temporal del dato sonoro": null
+      },
+      "Otras dimensiones del dato sonoro aislado o en contexto": {
+        "Intensidad": null,
+        "Timbre": null,
+        "Carácter": {
+          "Denominaciones relativas al carácter general de una obra o pasaje": null,
+          "Denominaciones relativas al fraseo o la articulación musical": null
+        },
+        "Símbolos y convenciones gráficas relativas a otras dimensiones del dato sonoro": null
+      },
+      "Estilos musicales": {
+        "Variables en el diseño semántico de los términos relativos a los estilos musicales": {
+          "La dimensión espacial (armonía)": null,
+          "La dimensión temporal (ritmo y tempo)": null,
+          "La dimensión espacio-temporal (melodía, ritmo armónico y textura)": null,
+          "Otras dimensiones (timbre)": null,
+          "La forma": null,
+          "Lo extramusical": null
+        }
+      },
+      "Continentes de la expresión musical: formas y unidades": {
+        "Continentes con morfología especificada o formas musicales estructuradas": {
+          "La dimensión espacial en las formas musicales": null,
+          "La dimensión temporal en las formas musicales": null,
+          "La dimensión espacio-temporal en las formas musicales": null,
+          "Lo extramusical en las formas musicales (elementos textuales, coreográficos, etc.)": null
+        },
+        "Continentes sin morfología especificada o unidades musicales": {
+          "Unidades musicales según efectivos musicales": null,
+          "Unidades musicales según su extensión o disposición interna": null,
+          "Lo extramusical en las unidades musicales": null
+        },
+        "Unidades musicales banalizadas": null,
+        "Segmentaciones de los continentes musicales": null,
+        "Símbolos y convenciones gráficas de la notación musical relativas a la segmentación de los continentes": null
+      },
+      "Géneros musicales": {
+        "Los géneros como entidades multidimensionales": null,
+        "Género como término comodín": {
+          "Intercambiable con estilo": null,
+          "Intercambiable con forma/continente": null,
+          "Intercambiable con plantilla/medios musicales": null
+        },
+        "Género como término superordinado": null
+      }
+    }
+  }
+}
+    
