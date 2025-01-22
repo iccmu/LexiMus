@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -148,10 +148,7 @@
 <body>
     <img src="https://raw.githubusercontent.com/iccmu/LexiMus/main/static/LexiMus-Logo-Horiizontal.svg" 
          alt="LexiMus Logo" 
-         style="max-width: 300px; 
-                margin: 30px auto; 
-                display: block;
-                height: auto;">
+         style="max-width: 300px; margin: 30px auto; display: block; height: auto;">
     <ul id="hierarchy">
         <!-- La jerarquía se generará dinámicamente aquí -->
     </ul>
@@ -166,11 +163,23 @@
             for (let key in data) {
                 if (key === 'id' || key === 'value') continue;
                 
-                html += '<li>';
-                html += `<span>${key}</span>`;
+                const nodeData = data[key];
+                const uuid = nodeData.id;
                 
-                if (Object.keys(data[key]).length > 2) { // Si tiene más propiedades además de 'id' y 'value'
-                    html += generateHierarchy(data[key]);
+                html += '<li>';
+                html += `<span>
+                            ${key}
+                            <small class="uuid" style="color: #666; margin-left: 10px; cursor: pointer" 
+                                   onclick="copyToClipboard('${uuid}', event)">
+                                ${uuid}
+                            </small>
+                            <a href="leximus_clases/${uuid}.html" class="class-link" target="_blank">🔗</a>
+                        </span>`;
+                
+                // Verificar si hay subnodos (excluyendo 'id' y 'value')
+                const hasChildren = Object.keys(nodeData).some(k => k !== 'id' && k !== 'value');
+                if (hasChildren) {
+                    html += generateHierarchy(nodeData);
                 }
                 
                 html += '</li>';
@@ -180,15 +189,40 @@
             return html;
         }
 
+        // Función para copiar al portapapeles
+        function copyToClipboard(text, event) {
+            event.stopPropagation();
+            navigator.clipboard.writeText(text).then(() => {
+                const message = document.createElement('div');
+                message.className = 'temp-message';
+                message.textContent = 'UUID copiado al portapapeles';
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 1500);
+            });
+        }
+
         // Cargar el JSON y generar la jerarquía
         fetch('clases_with_uuids.json')
             .then(response => response.json())
             .then(data => {
                 const hierarchyContainer = document.getElementById('hierarchy');
+                const firstKey = Object.keys(data).find(key => key !== 'id' && key !== 'value');
+                const firstNode = data[firstKey];
+                
                 hierarchyContainer.innerHTML = `
                     <li>
-                        <span>${Object.keys(data)[1]}</span>
-                        ${generateHierarchy(data[Object.keys(data)[1]])}
+                        <span>
+                            ${firstKey}
+                            <small class="uuid" style="color: #666; margin-left: 10px; cursor: pointer"
+                                   onclick="copyToClipboard('${firstNode.id}', event)">
+                                ${firstNode.id}
+                            </small>
+                            <a href="leximus_clases/${firstNode.id}.html" class="class-link" target="_blank">🔗</a>
+                        </span>
+                        ${generateHierarchy(firstNode)}
                     </li>
                 `;
                 
@@ -198,8 +232,12 @@
             .catch(error => console.error('Error loading hierarchy:', error));
 
         function addEventListeners() {
-            document.querySelectorAll('#hierarchy li span').forEach(span => {
+            document.querySelectorAll('#hierarchy li > span').forEach(span => {
                 span.addEventListener('click', function(event) {
+                    if (event.target.classList.contains('uuid') || event.target.classList.contains('class-link')) {
+                        return; // No expandir/colapsar si se hace clic en el UUID o el enlace
+                    }
+                    
                     const li = this.parentElement;
                     const ul = li.querySelector('ul');
                     
