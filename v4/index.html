@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .hidden { display: none; }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        h2, h3 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #userList {
+            margin-top: 1.5rem;
+        }
+
+        #userList ul {
+            list-style: none;
+        }
+
+        #userList li {
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        #logoutButton {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: auto;
+            padding: 8px 16px;
+            background-color: #dc3545;
+            font-size: 0.9rem;
+        }
+
+        #logoutButton:hover {
+            background-color: #c82333;
+        }
+
+        /* Nuevo estilo para el botón de usuarios */
+        #usersButton {
+            position: absolute;
+            top: 1rem;
+            right: 6rem; /* Posicionado a la izquierda del botón logout */
+            width: auto;
+            padding: 8px 16px;
+            background-color: #007bff;
+            font-size: 0.9rem;
+        }
+
+        #usersButton:hover {
+            background-color: #0056b3;
+        }
+
+        /* Estilos para el modal de usuarios */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 400px;
+            margin-top: 8px;
+        }
+
+        .modal-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            color: #333;
+            text-align: left;
+        }
+
+        #simpleUserList {
+            max-height: 300px; /* Altura máxima para el listado */
+            overflow-y: auto; /* Scroll solo para el listado */
+            padding-right: 10px; /* Espacio para el scrollbar */
+        }
+
+        .create-user-form {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        /* Estilo para la barra de scroll */
+        #simpleUserList::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #simpleUserList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #simpleUserList::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        #simpleUserList::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .user-item {
+            padding: 12px 15px;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #333;
+            border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-item .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-item .creator-info {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .creator-icon {
+            width: 16px;
+            height: 16px;
+            fill: #666;
+        }
+
+        .create-user-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .create-user-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .create-user-form button:hover {
+            background-color: #0056b3;
+        }
+
+        .checkbox-container {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        /* Estilo para el contenedor de botones de usuario */
+        #userManagement {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        #logoutButton {
+            width: auto;
+            padding: 8px 16px;
+            background-color: #dc3545;
+            font-size: 0.9rem;
+        }
+
+        #logoutButton:hover {
+            background-color: #c82333;
+        }
+
+        #usersButton {
+            width: auto;
+            padding: 8px 16px;
+            background-color: #007bff;
+            font-size: 0.9rem;
+        }
+
+        #usersButton:hover {
+            background-color: #0056b3;
+        }
+
+        /* Estilo para la top bar */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+
+        .current-user {
+            display: none;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        #loginControls {
+            display: flex;
+            align-items: center;
+        }
+
+        #loginForm {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #userControls {
+            display: none;
+            gap: 10px;
+            align-items: center;
+            position: relative;
+        }
+
+        .top-bar input {
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .top-bar button {
+            height: 38px;
+            padding: 0 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-upload {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            position: relative;
+            z-index: 1001;
+        }
+
+        .custom-file-upload {
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            z-index: 1001;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #218838;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        #uploadButton {
+            background-color: #28a745;
+            color: white;
+            position: relative;
+            z-index: 1001;
+        }
+
+        #usersButton, #logoutButton {
+            position: relative;
+            z-index: 1001;
+        }
+
+        .user-type {
+            margin-left: 0.5rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .user-type.superuser {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .user-type.regular {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .container {
+            margin-top: 70px; /* Espacio para la top bar */
+        }
+
+        /* Ajuste del modal para que aparezca debajo de la top bar */
+        .modal {
+            top: 55%;
+        }
+
+        /* Estilos para los inputs en la top bar */
+        .top-bar input {
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .top-bar button {
+            height: 38px;
+            padding: 0 16px;
+            border-radius: 6px;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #loginControls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #userControls {
+            display: none;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #usersButton, #logoutButton {
+            height: 38px;
+            padding: 0 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        #usersButton {
+            background-color: #007bff;
+        }
+
+        #logoutButton {
+            background-color: #dc3545;
+        }
+
+        /* Añadir estos estilos */
+        .file-upload {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .custom-file-upload {
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #218838;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        #uploadButton {
+            height: 38px;
+            padding: 0 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        #uploadButton:hover {
+            background-color: #218838;
+        }
+
+        /* Estilos para la tabla CSV */
+        .csv-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .csv-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .csv-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            color: #666;
+        }
+
+        .csv-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .csv-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        #userNetworkContainer {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 20px;
+            background-color: white;
+        }
+        
+        .network-container {
+            padding: 20px;
+            margin-top: 70px;
+        }
+
+        .validate-button {
+            margin-top: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .validate-button:hover {
+            background-color: #218838;
+        }
+
+        .validate-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Ajustes para el formulario de login */
+        #loginForm {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #loginForm input {
+            margin-bottom: 0; /* Eliminar el margen inferior que tenían los inputs */
+        }
+
+        #loginForm button {
+            margin: 0; /* Eliminar márgenes del botón */
+            height: 38px; /* Mantener la misma altura que los inputs */
+        }
+
+        .main-csv-container {
+            position: fixed;
+            right: 20px;
+            top: 80px;
+            width: 600px; /* Aumentado para mejor visualización de la tabla */
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .main-csv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .main-csv-header h3 {
+            margin: 0;
+        }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+
+        .main-csv-content {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        /* Estilo para el modal de confirmación */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .confirm-modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .main-csv-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .main-csv-table th,
+        .main-csv-table td {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .main-csv-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .main-csv-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .main-csv-table tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        /* Asegurar que el modal de usuarios aparezca por encima */
+        #usersModal {
+            z-index: 1002;
+        }
+    </style>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="current-user" id="currentUserDisplay">
+            Current user: <span class="username"></span>
+            <span class="user-type"></span>
+        </div>
+        
+        <div id="loginControls">
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="text" id="loginUsername" placeholder="Username">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button type="submit">Login</button>
+            </form>
+        </div>
+        
+        <div id="userControls">
+            <label class="custom-file-upload">
+                <input type="file" id="csvFile" accept=".csv" onchange="handleFileSelect(event)">
+                Upload CSV
+            </label>
+            <button id="uploadButton" onclick="validateAndSaveCSV()" style="display: none;">
+                Validate and Save
+            </button>
+            <button id="usersButton" onclick="toggleUsers()">Users</button>
+            <button id="logoutButton" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Contenedor para el gráfico de nodos (visible solo en login) -->
+    <div id="loginNetworkContainer" class="network-container">
+        <div id="userNetworkContainer"></div>
+    </div>
+
+    <!-- Contenedor para el CSV (visible solo después del login) -->
+    <div id="mainContainer" class="container" style="display: none;">
+        <div id="csvTableContainer" style="display: none;">
+            <table id="csvTable" class="csv-table"></table>
+        </div>
+    </div>
+
+    <!-- Añadir después del div mainContainer -->
+    <div id="mainCsvContainer" class="main-csv-container" style="display: none;">
+        <div class="main-csv-header">
+            <h3>Main CSV</h3>
+            <button id="deleteMainCsvButton" onclick="handleDeleteMainCsv()" class="delete-button">
+                Delete Main CSV
+            </button>
+        </div>
+        <div class="main-csv-content">
+            <table id="mainCsvTable" class="main-csv-table"></table>
+        </div>
+    </div>
+
+    <!-- Modal de usuarios movido fuera del container -->
+    <div id="usersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-section">
+                <h3>Users</h3>
+                <div id="simpleUserList"></div>
+            </div>
+            
+            <div id="modalCreateUser" class="create-user-form">
+                <form onsubmit="createUserModal(event)">
+                    <input type="text" id="modalNewUsername" placeholder="Username" required>
+                    <input type="password" id="modalNewPassword" placeholder="Password" required>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="modalNewIsSuperuser">
+                        <label for="modalNewIsSuperuser">Superuser</label>
+                    </div>
+                    <button type="submit">Create User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Añadir el modal de confirmación al final del body -->
+    <div id="confirmModal" class="confirm-modal">
+        <h4>Confirm Deletion</h4>
+        <p>Are you sure you want to delete the main CSV file?</p>
+        <div class="confirm-modal-buttons">
+            <button onclick="cancelDelete()" class="cancel-button">Cancel</button>
+            <button onclick="confirmDelete()" class="delete-button">Delete</button>
+        </div>
+    </div>
+    <div id="modalOverlay" class="modal-overlay"></div>
+
+    <script>
+        let currentUser = null;
+        let currentCSVContent = null; // Variable para almacenar el contenido del CSV
+
+        // Función para guardar la sesión
+        function saveSession(userData) {
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+        }
+
+        // Función para cargar la sesión
+        function loadSession() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                return JSON.parse(savedUser);
+            }
+            return null;
+        }
+
+        // Función para borrar la sesión
+        function clearSession() {
+            localStorage.removeItem('currentUser');
+        }
+
+        // Modificar la función login
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (data.detail === 'Invalid credentials') {
+                        alert('Login failed: Usuario o contraseña incorrectos');
+                    } else {
+                        alert(`Login failed: ${data.detail || 'Error desconocido'}`);
+                    }
+                    return;
+                }
+                
+                if (data.success) {
+                    currentUser = {
+                        username: data.username,
+                        is_superuser: data.is_superuser
+                    };
+                    
+                    // Guardar la sesión
+                    saveSession(currentUser);
+                    
+                    // Resto del código de login...
+                    updateUIForLoggedUser(currentUser);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        // Función para actualizar la UI cuando el usuario está logueado
+        function updateUIForLoggedUser(user) {
+            const currentUserDisplay = document.getElementById('currentUserDisplay');
+            currentUserDisplay.style.display = 'block';
+            currentUserDisplay.querySelector('.username').textContent = user.username;
+            
+            const userTypeSpan = currentUserDisplay.querySelector('.user-type');
+            if (user.is_superuser) {
+                userTypeSpan.textContent = 'Superuser';
+                userTypeSpan.className = 'user-type superuser';
+            } else {
+                userTypeSpan.textContent = 'Regular User';
+                userTypeSpan.className = 'user-type regular';
+            }
+            
+            document.getElementById('loginControls').style.display = 'none';
+            document.getElementById('userControls').style.display = 'flex';
+            document.getElementById('loginNetworkContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+            
+            const createForm = document.getElementById('modalCreateUser');
+            if (user.is_superuser) {
+                createForm.style.display = 'block';
+                document.getElementById('usersButton').style.display = 'block';
+            } else {
+                createForm.style.display = 'none';
+                document.getElementById('usersButton').style.display = 'none';
+            }
+            
+            loadUsers();
+            loadMainCsv();
+        }
+
+        // Modificar la función logout
+        function logout() {
+            currentUser = null;
+            clearSession(); // Borrar la sesión
+            
+            const currentUserDisplay = document.getElementById('currentUserDisplay');
+            currentUserDisplay.style.display = 'none';
+            currentUserDisplay.querySelector('.username').textContent = '';
+            currentUserDisplay.querySelector('.user-type').textContent = '';
+            
+            document.getElementById('loginControls').style.display = 'flex';
+            document.getElementById('userControls').style.display = 'none';
+            document.getElementById('loginNetworkContainer').style.display = 'block';
+            document.getElementById('mainContainer').style.display = 'none';
+            
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('usersModal').style.display = 'none';
+            
+            createUserNetwork();
+        }
+
+        // Modificar el evento DOMContentLoaded para verificar la sesión
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = loadSession();
+            if (savedUser) {
+                currentUser = savedUser;
+                updateUIForLoggedUser(savedUser);
+            } else {
+                createUserNetwork();
+                document.getElementById('mainContainer').style.display = 'none';
+            }
+        });
+
+        async function loadUsers() {
+            const response = await fetch('/api/users');
+            const data = await response.json();
+            
+            // Actualizar la lista simple de usuarios
+            const simpleUserList = document.getElementById('simpleUserList');
+            simpleUserList.innerHTML = data.users.map(user => `
+                <div class="user-item">
+                    <div class="user-info">
+                        <strong>${user.username}</strong>
+                    </div>
+                    <div class="creator-info">
+                        <span>Created by: ${user.created_by}</span>
+                        <svg class="creator-icon" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+
+            // Actualizar el gráfico de usuarios
+            createUserNetwork();
+        }
+
+        async function createUser() {
+            if (!currentUser?.is_superuser) {
+                alert('Only superusers can create new users');
+                return;
+            }
+
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        is_superuser: false,
+                        created_by: currentUser.username
+                    })
+                });
+
+                if (response.ok) {
+                    alert('User created successfully');
+                    document.getElementById('newUsername').value = '';
+                    document.getElementById('newPassword').value = '';
+                    loadUsers();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail);
+                }
+            } catch (error) {
+                alert('Failed to create user');
+            }
+        }
+
+        function toggleUsers() {
+            const modal = document.getElementById('usersModal');
+            const usersButton = document.getElementById('usersButton');
+            
+            if (modal.style.display === 'block') {
+                modal.classList.remove('visible');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 200);
+            } else {
+                // Calcular la posición exacta
+                const buttonRect = usersButton.getBoundingClientRect();
+                modal.style.top = (buttonRect.bottom + 5) + 'px';
+                modal.style.right = (window.innerWidth - buttonRect.right) + 'px';
+                
+                modal.style.display = 'block';
+                loadUsers();
+                // Forzar un reflow
+                modal.offsetHeight;
+                modal.classList.add('visible');
+            }
+        }
+
+        async function createUserModal(event) {
+            event.preventDefault();
+            
+            if (!currentUser?.is_superuser) {
+                alert('Only superusers can create new users');
+                return;
+            }
+
+            const username = document.getElementById('modalNewUsername').value;
+            const password = document.getElementById('modalNewPassword').value;
+            const is_superuser = document.getElementById('modalNewIsSuperuser').checked;
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        is_superuser: is_superuser,
+                        created_by: currentUser.username
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    let message = 'User created successfully';
+                    if (is_superuser && data.folder_created) {
+                        message += ` and folder '${username}@main.py' created`;
+                    }
+                    alert(message);
+                    
+                    // Limpiar el formulario
+                    document.getElementById('modalNewUsername').value = '';
+                    document.getElementById('modalNewPassword').value = '';
+                    document.getElementById('modalNewIsSuperuser').checked = false;
+                    
+                    // Recargar la lista de usuarios
+                    loadUsers();
+                } else {
+                    if (response.status === 403) {
+                        alert('You do not have permission to create users');
+                    } else {
+                        alert(data.detail || 'Error creating user');
+                    }
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                alert('Error creating user');
+            }
+        }
+
+        // Modificar handleFileSelect para guardar el contenido
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('uploadButton').style.display = 'inline-block';
+            } else {
+                document.getElementById('uploadButton').style.display = 'none';
+            }
+            
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('File is too large. Maximum size is 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentCSVContent = event.target.result; // Guardar el contenido
+                const lines = currentCSVContent.split('\n');
+                
+                // Obtener los headers (primera línea)
+                const headers = lines[0].split(',').map(header => header.trim());
+                
+                // Analizar tipos de datos basados en la primera fila de datos
+                const firstDataRow = lines[1]?.split(',').map(cell => cell.trim());
+                
+                const columns = headers.map((header, index) => {
+                    const value = firstDataRow?.[index];
+                    let type = 'string';
+                    
+                    if (value) {
+                        if (!isNaN(value) && value.indexOf('.') !== -1) {
+                            type = 'float';
+                        } else if (!isNaN(value)) {
+                            type = 'integer';
+                        } else if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false') {
+                            type = 'boolean';
+                        } else if (!isNaN(Date.parse(value))) {
+                            type = 'date';
+                        }
+                    }
+
+                    return {
+                        name: header,
+                        type: type
+                    };
+                });
+
+                displayCSVData(columns);
+                document.getElementById('validateButton').disabled = false;
+            };
+
+            reader.onerror = function() {
+                alert('Error reading file');
+                currentCSVContent = null;
+                document.getElementById('validateButton').disabled = true;
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Nueva función para validar y guardar el CSV
+        async function validateAndSaveCSV() {
+            if (!currentCSVContent || !currentUser) {
+                alert('No CSV file loaded or user not logged in');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/save-csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: currentCSVContent,
+                        username: currentUser.username,
+                        is_superuser: currentUser.is_superuser
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('CSV validated and saved successfully!');
+                    // Limpiar el estado actual
+                    currentCSVContent = null;
+                    document.getElementById('csvFile').value = '';
+                    document.getElementById('csvTableContainer').style.display = 'none';
+                    document.getElementById('validateButton').disabled = true;
+                    
+                    // Recargar el CSV principal si es un superusuario
+                    if (currentUser?.is_superuser) {
+                        loadMainCsv();
+                    }
+                } else {
+                    alert(data.detail || 'Error saving CSV');
+                }
+            } catch (error) {
+                console.error('Error saving CSV:', error);
+                alert('Error saving CSV');
+            }
+        }
+
+        // Modificar displayCSVData para habilitar/deshabilitar el botón
+        function displayCSVData(columns) {
+            if (!columns || !Array.isArray(columns)) {
+                console.error('Invalid columns data:', columns);
+                return;
+            }
+
+            const tableContainer = document.getElementById('csvTableContainer');
+            const table = document.getElementById('csvTable');
+            
+            try {
+                // Limpiar tabla existente
+                table.innerHTML = '';
+                
+                // Crear filas para cada columna
+                columns.forEach(column => {
+                    if (!column || typeof column !== 'object') {
+                        console.error('Invalid column data:', column);
+                        return;
+                    }
+
+                    const row = document.createElement('tr');
+                    
+                    // Celda del nombre de la columna
+                    const headerCell = document.createElement('th');
+                    headerCell.textContent = column.name || 'Unnamed Column';
+                    row.appendChild(headerCell);
+                    
+                    // Celda del tipo de dato
+                    const typeCell = document.createElement('td');
+                    typeCell.textContent = column.type || 'unknown';
+                    row.appendChild(typeCell);
+                    
+                    table.appendChild(row);
+                });
+                
+                // Mostrar la tabla y habilitar el botón de validación
+                tableContainer.style.display = 'block';
+                document.getElementById('validateButton').disabled = false;
+            } catch (error) {
+                console.error('Error displaying CSV data:', error);
+                alert('Error displaying CSV data');
+                document.getElementById('validateButton').disabled = true;
+            }
+        }
+
+        // Función para crear el gráfico de usuarios
+        async function createUserNetwork() {
+            try {
+                const response = await fetch('/api/users');
+                const userData = await response.json();
+                const users = userData.users;
+
+                // Crear nodos y aristas
+                const nodes = users.map(user => ({
+                    id: user.username,
+                    label: user.username,
+                    color: user.is_superuser === "True" ? 
+                           {background: '#28a745', border: '#1e7e34'} : 
+                           {background: '#6c757d', border: '#545b62'},
+                    font: { color: 'white' }
+                }));
+
+                const edges = users
+                    .filter(user => user.created_by && user.created_by !== "system")
+                    .map(user => ({
+                        from: user.created_by,
+                        to: user.username,
+                        arrows: 'to',
+                        color: { color: '#007bff' }
+                    }));
+
+                // Configuración del gráfico
+                const container = document.getElementById('userNetworkContainer');
+                const networkData = {
+                    nodes: new vis.DataSet(nodes),
+                    edges: new vis.DataSet(edges)
+                };
+
+                const options = {
+                    nodes: {
+                        shape: 'box',
+                        margin: 10,
+                        borderWidth: 2,
+                        shadow: true
+                    },
+                    edges: {
+                        width: 2,
+                        smooth: {
+                            type: 'continuous'
+                        }
+                    },
+                    physics: {
+                        stabilization: true,
+                        barnesHut: {
+                            gravitationalConstant: -80000,
+                            springConstant: 0.001,
+                            springLength: 200
+                        }
+                    },
+                    layout: {
+                        hierarchical: {
+                            direction: 'UD',
+                            sortMethod: 'directed',
+                            nodeSpacing: 150,
+                            levelSeparation: 150
+                        }
+                    }
+                };
+
+                // Crear la red
+                const network = new vis.Network(container, networkData, options);
+
+                // Eventos de la red
+                network.on('click', function(params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        const user = users.find(u => u.username === nodeId);
+                        if (user) {
+                            alert(`User: ${user.username}\nType: ${user.is_superuser === "True" ? "Superuser" : "Regular User"}\nCreated by: ${user.created_by || "system"}`);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating network:', error);
+            }
+        }
+
+        // Añadir nueva función handleLogin
+        function handleLogin(event) {
+            event.preventDefault();
+            login();
+        }
+
+        // Función para cargar el CSV principal
+        async function loadMainCsv() {
+            if (!currentUser?.is_superuser) {
+                document.getElementById('mainCsvContainer').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/main-csv/${currentUser.username}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('mainCsvContainer');
+                const table = document.getElementById('mainCsvTable');
+                
+                if (data.exists) {
+                    // Parsear el contenido CSV
+                    const rows = data.content.split('\n').map(row => row.split(','));
+                    const headers = rows[0];
+
+                    // Limpiar la tabla
+                    table.innerHTML = '';
+
+                    // Crear encabezados
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    headerRow.innerHTML = `
+                        <th>#</th>
+                        <th>Campo</th>
+                    `;
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    // Crear cuerpo de la tabla
+                    const tbody = document.createElement('tbody');
+                    headers.forEach((header, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${header.trim()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    table.appendChild(tbody);
+
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading main CSV:', error);
+            }
+        }
+
+        // Función para manejar el borrado del CSV
+        function handleDeleteMainCsv() {
+            document.getElementById('confirmModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+
+        // Función para cancelar el borrado
+        function cancelDelete() {
+            document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        // Función para confirmar el borrado
+        async function confirmDelete() {
+            try {
+                const response = await fetch(`/api/main-csv/${currentUser.username}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    document.getElementById('mainCsvContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error deleting main CSV:', error);
+                alert('Error deleting main CSV');
+            }
+            
+            cancelDelete(); // Cerrar el modal
+        }
+    </script>
+</body>
+</html>

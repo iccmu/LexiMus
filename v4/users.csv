@@ -1,0 +1,8 @@
+username,password,is_superuser,created_by
+ucm,ucm,True,system
+ur,ur,True,system
+usal,usal,True,system
+iss,iss,False,ucm
+dos,dos,False,usal
+alv,alv,False,ucm
+5,5,False,ucm
