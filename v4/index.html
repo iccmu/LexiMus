@@ -704,7 +704,7 @@
                 <input type="file" id="csvFile" accept=".csv" onchange="handleFileSelect(event)">
                 Upload CSV
             </label>
-            <button id="uploadButton" onclick="validateAndSaveCSV()" style="display: none;">
+            <button id="uploadButton" onclick="validateAndSaveCSV()" class="validate-button" style="display: none;">
                 Validate and Save
             </button>
             <button id="usersButton" onclick="toggleUsers()">Users</button>
@@ -721,6 +721,9 @@
     <div id="mainContainer" class="container" style="display: none;">
         <div id="csvTableContainer" style="display: none;">
             <table id="csvTable" class="csv-table"></table>
+            <button id="validateButton" class="validate-button" onclick="validateAndSaveCSV()" disabled>
+                Validate and Save CSV
+            </button>
         </div>
     </div>
 
@@ -1045,11 +1048,6 @@
         // Modificar handleFileSelect para guardar el contenido
         function handleFileSelect(event) {
             const file = event.target.files[0];
-            if (file) {
-                document.getElementById('uploadButton').style.display = 'inline-block';
-            } else {
-                document.getElementById('uploadButton').style.display = 'none';
-            }
             
             if (!file) return;
 
@@ -1162,6 +1160,7 @@
 
             const tableContainer = document.getElementById('csvTableContainer');
             const table = document.getElementById('csvTable');
+            const uploadButton = document.getElementById('uploadButton');
             
             try {
                 // Limpiar tabla existente
@@ -1189,13 +1188,15 @@
                     table.appendChild(row);
                 });
                 
-                // Mostrar la tabla y habilitar el botón de validación
+                // Mostrar la tabla y habilitar el botón de carga
                 tableContainer.style.display = 'block';
-                document.getElementById('validateButton').disabled = false;
+                uploadButton.style.display = 'inline-block';
             } catch (error) {
                 console.error('Error displaying CSV data:', error);
                 alert('Error displaying CSV data');
-                document.getElementById('validateButton').disabled = true;
+                if (uploadButton) {
+                    uploadButton.style.display = 'none';
+                }
             }
         }
 
