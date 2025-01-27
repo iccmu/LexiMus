@@ -26,9 +26,11 @@
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
+            width: 90%;
+            max-width: none;
             position: relative;
+            margin-top: 70px;
+            min-height: calc(90vh - 70px);
         }
 
         h2, h3 {
@@ -391,10 +393,6 @@
             color: white;
         }
 
-        .container {
-            margin-top: 70px; /* Espacio para la top bar */
-        }
-
         /* Ajuste del modal para que aparezca debajo de la top bar */
         .modal {
             top: 55%;
@@ -523,16 +521,22 @@
 
         #userNetworkContainer {
             width: 100%;
-            height: 400px;
+            height: 100%;
             border: 1px solid #ddd;
             border-radius: 8px;
-            margin-top: 20px;
             background-color: white;
         }
         
         .network-container {
             padding: 20px;
             margin-top: 70px;
+            width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+            height: calc(90vh - 90px);
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .validate-button {
@@ -573,23 +577,22 @@
         }
 
         .main-csv-container {
-            position: fixed;
-            right: 20px;
-            top: 80px;
-            width: 600px; /* Aumentado para mejor visualización de la tabla */
+            width: 90%;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            max-height: calc(100vh - 100px);
-            overflow-y: auto;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 70px auto 20px auto;
+            height: calc(90vh - 90px); /* Cambiado de min-height a height fija */
+            overflow: auto; /* Añadido overflow auto */
+            position: relative; /* Añadido position relative */
         }
 
         .main-csv-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px; /* Reducido de 15px a 10px */
         }
 
         .main-csv-header h3 {
@@ -610,12 +613,15 @@
         }
 
         .main-csv-content {
-            font-family: monospace;
-            white-space: pre-wrap;
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
+            position: relative; /* Añadido position relative */
+            width: 100%;
+            height: calc(100% - 60px); /* Altura ajustada para dejar espacio al header */
+            overflow: auto; /* Añadido overflow auto */
+        }
+
+        .main-csv-table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
         /* Estilo para el modal de confirmación */
@@ -650,18 +656,12 @@
             z-index: 999;
         }
 
-        .main-csv-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
         .main-csv-table th,
         .main-csv-table td {
-            padding: 8px;
+            padding: 6px; /* Reducido de 8px a 6px */
             border: 1px solid #dee2e6;
             text-align: left;
-            font-size: 14px;
+            font-size: 13px; /* Reducido de 14px a 13px */
         }
 
         .main-csv-table th {
@@ -717,17 +717,7 @@
         <div id="userNetworkContainer"></div>
     </div>
 
-    <!-- Contenedor para el CSV (visible solo después del login) -->
-    <div id="mainContainer" class="container" style="display: none;">
-        <div id="csvTableContainer" style="display: none;">
-            <table id="csvTable" class="csv-table"></table>
-            <button id="validateButton" class="validate-button" onclick="validateAndSaveCSV()" disabled>
-                Validate and Save CSV
-            </button>
-        </div>
-    </div>
-
-    <!-- Añadir después del div mainContainer -->
+    <!-- Contenedor principal para el CSV -->
     <div id="mainCsvContainer" class="main-csv-container" style="display: none;">
         <div class="main-csv-header">
             <h3>Main CSV</h3>
@@ -839,7 +829,7 @@
             }
         }
 
-        // Función para actualizar la UI cuando el usuario está logueado
+        // Modificar la función updateUIForLoggedUser
         function updateUIForLoggedUser(user) {
             const currentUserDisplay = document.getElementById('currentUserDisplay');
             currentUserDisplay.style.display = 'block';
@@ -857,7 +847,6 @@
             document.getElementById('loginControls').style.display = 'none';
             document.getElementById('userControls').style.display = 'flex';
             document.getElementById('loginNetworkContainer').style.display = 'none';
-            document.getElementById('mainContainer').style.display = 'block';
             
             const createForm = document.getElementById('modalCreateUser');
             if (user.is_superuser) {
@@ -884,14 +873,18 @@
             
             document.getElementById('loginControls').style.display = 'flex';
             document.getElementById('userControls').style.display = 'none';
-            document.getElementById('loginNetworkContainer').style.display = 'block';
-            document.getElementById('mainContainer').style.display = 'none';
-            
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
+            document.getElementById('mainCsvContainer').style.display = 'none';
             document.getElementById('usersModal').style.display = 'none';
             
-            createUserNetwork();
+            // Limpiar campos de login
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            
+            // Mostrar el contenedor de red después de un pequeño retraso
+            setTimeout(() => {
+                document.getElementById('loginNetworkContainer').style.display = 'block';
+                createUserNetwork();
+            }, 100);
         }
 
         // Modificar el evento DOMContentLoaded para verificar la sesión
@@ -902,7 +895,7 @@
                 updateUIForLoggedUser(savedUser);
             } else {
                 createUserNetwork();
-                document.getElementById('mainContainer').style.display = 'none';
+                document.getElementById('mainCsvContainer').style.display = 'none';
             }
         });
 
@@ -1045,7 +1038,7 @@
             }
         }
 
-        // Modificar handleFileSelect para guardar el contenido
+        // Modificar handleFileSelect
         function handleFileSelect(event) {
             const file = event.target.files[0];
             
@@ -1096,19 +1089,20 @@
                 });
 
                 displayCSVData(columns);
-                document.getElementById('validateButton').disabled = false;
+                // Mostrar el botón de upload en lugar de habilitar el botón de validación
+                document.getElementById('uploadButton').style.display = 'inline-block';
             };
 
             reader.onerror = function() {
                 alert('Error reading file');
                 currentCSVContent = null;
-                document.getElementById('validateButton').disabled = true;
+                document.getElementById('uploadButton').style.display = 'none';
             };
 
             reader.readAsText(file);
         }
 
-        // Nueva función para validar y guardar el CSV
+        // Modificar la función validateAndSaveCSV para que sea async y use await correctamente
         async function validateAndSaveCSV() {
             if (!currentCSVContent || !currentUser) {
                 alert('No CSV file loaded or user not logged in');
@@ -1135,13 +1129,11 @@
                     // Limpiar el estado actual
                     currentCSVContent = null;
                     document.getElementById('csvFile').value = '';
-                    document.getElementById('csvTableContainer').style.display = 'none';
-                    document.getElementById('validateButton').disabled = true;
+                    document.getElementById('mainCsvContainer').style.display = 'none';
+                    document.getElementById('uploadButton').style.display = 'none';
                     
-                    // Recargar el CSV principal si es un superusuario
-                    if (currentUser?.is_superuser) {
-                        loadMainCsv();
-                    }
+                    // Recargar el CSV principal
+                    await loadMainCsv();
                 } else {
                     alert(data.detail || 'Error saving CSV');
                 }
@@ -1151,6 +1143,11 @@
             }
         }
 
+        // Modificar el botón en el HTML para usar onclick con función async
+        document.getElementById('uploadButton').onclick = async () => {
+            await validateAndSaveCSV();
+        };
+
         // Modificar displayCSVData para habilitar/deshabilitar el botón
         function displayCSVData(columns) {
             if (!columns || !Array.isArray(columns)) {
@@ -1158,42 +1155,54 @@
                 return;
             }
 
-            const tableContainer = document.getElementById('csvTableContainer');
-            const table = document.getElementById('csvTable');
+            // Mostrar el botón de upload
             const uploadButton = document.getElementById('uploadButton');
-            
+            if (uploadButton) {
+                uploadButton.style.display = 'inline-block';
+            }
+
+            // Mostrar el contenedor principal del CSV
+            const container = document.getElementById('mainCsvContainer');
+            if (container) {
+                container.style.display = 'block';
+            }
+
+            // Actualizar la tabla principal
+            const table = document.getElementById('mainCsvTable');
+            if (!table) {
+                console.error('CSV table element not found');
+                return;
+            }
+
             try {
                 // Limpiar tabla existente
                 table.innerHTML = '';
                 
-                // Crear filas para cada columna
-                columns.forEach(column => {
-                    if (!column || typeof column !== 'object') {
-                        console.error('Invalid column data:', column);
-                        return;
-                    }
-
-                    const row = document.createElement('tr');
-                    
-                    // Celda del nombre de la columna
-                    const headerCell = document.createElement('th');
-                    headerCell.textContent = column.name || 'Unnamed Column';
-                    row.appendChild(headerCell);
-                    
-                    // Celda del tipo de dato
-                    const typeCell = document.createElement('td');
-                    typeCell.textContent = column.type || 'unknown';
-                    row.appendChild(typeCell);
-                    
-                    table.appendChild(row);
-                });
+                // Crear encabezados
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headerRow.innerHTML = `
+                    <th>#</th>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                `;
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
                 
-                // Mostrar la tabla y habilitar el botón de carga
-                tableContainer.style.display = 'block';
-                uploadButton.style.display = 'inline-block';
+                // Crear cuerpo de la tabla
+                const tbody = document.createElement('tbody');
+                columns.forEach((column, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${column.name || 'Unnamed Column'}</td>
+                        <td>${column.type || 'unknown'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                table.appendChild(tbody);
             } catch (error) {
                 console.error('Error displaying CSV data:', error);
-                alert('Error displaying CSV data');
                 if (uploadButton) {
                     uploadButton.style.display = 'none';
                 }
@@ -1290,11 +1299,6 @@
 
         // Función para cargar el CSV principal
         async function loadMainCsv() {
-            if (!currentUser?.is_superuser) {
-                document.getElementById('mainCsvContainer').style.display = 'none';
-                return;
-            }
-
             try {
                 const response = await fetch(`/api/main-csv/${currentUser.username}`);
                 const data = await response.json();
@@ -1313,6 +1317,14 @@
                     // Crear encabezados
                     const thead = document.createElement('thead');
                     const headerRow = document.createElement('tr');
+                    
+                    // Añadir título que muestra de quién es el CSV
+                    const title = document.createElement('h3');
+                    title.textContent = currentUser.is_superuser ? 
+                        'Your Main CSV' : 
+                        `Main CSV from ${data.owner}`;
+                    container.querySelector('.main-csv-header h3').textContent = title.textContent;
+
                     headerRow.innerHTML = `
                         <th>#</th>
                         <th>Campo</th>
@@ -1333,6 +1345,12 @@
                     table.appendChild(tbody);
 
                     container.style.display = 'block';
+                    
+                    // Mostrar el botón de eliminar solo para superusuarios
+                    const deleteButton = document.getElementById('deleteMainCsvButton');
+                    if (deleteButton) {
+                        deleteButton.style.display = currentUser.is_superuser ? 'block' : 'none';
+                    }
                 } else {
                     container.style.display = 'none';
                 }

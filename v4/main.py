@@ -234,13 +234,20 @@ async def save_csv(request: CSVSaveRequest):
 @app.get("/api/main-csv/{username}")
 async def get_main_csv(username: str):
     try:
-        # Verificar que el usuario es un superusuario
         users = read_users()
-        user = next((u for u in users if u["username"] == username), None)
-        if not user or user["is_superuser"] != "True":
-            raise HTTPException(status_code=403, detail="Only superusers can have main CSV")
+        requesting_user = next((u for u in users if u["username"] == username), None)
         
-        file_path = os.path.join('static', f'{username}@main.py', 'main.csv')
+        if not requesting_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Si es superusuario, obtener su propio CSV
+        if requesting_user["is_superuser"] == "True":
+            csv_owner = username
+        else:
+            # Si es usuario regular, obtener el CSV de su creador
+            csv_owner = requesting_user["created_by"]
+        
+        file_path = os.path.join('static', f'{csv_owner}@main.py', 'main.csv')
         if not os.path.exists(file_path):
             return {"exists": False}
         
@@ -249,7 +256,8 @@ async def get_main_csv(username: str):
         
         return {
             "exists": True,
-            "content": content
+            "content": content,
+            "owner": csv_owner
         }
     except Exception as e:
         logger.error(f"Error reading main CSV: {str(e)}")
