@@ -685,6 +685,7 @@
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
+    <!-- Estructura principal -->
     <div class="top-bar">
         <div class="current-user" id="currentUserDisplay">
             Current user: <span class="username"></span>
@@ -712,7 +713,7 @@
         </div>
     </div>
 
-    <!-- Contenedor para el gráfico de nodos (visible solo en login) -->
+    <!-- Contenedores principales -->
     <div id="loginNetworkContainer" class="network-container">
         <div id="userNetworkContainer"></div>
     </div>
@@ -763,30 +764,29 @@
     </div>
     <div id="modalOverlay" class="modal-overlay"></div>
 
+    <!-- Scripts -->
     <script>
+        // User Management
         let currentUser = null;
-        let currentCSVContent = null; // Variable para almacenar el contenido del CSV
-
-        // Función para guardar la sesión
+        
+        // CSV Management
+        let currentCSVContent = null;
+        
+        // Session Management Functions
         function saveSession(userData) {
             localStorage.setItem('currentUser', JSON.stringify(userData));
         }
 
-        // Función para cargar la sesión
         function loadSession() {
             const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                return JSON.parse(savedUser);
-            }
-            return null;
+            return savedUser ? JSON.parse(savedUser) : null;
         }
 
-        // Función para borrar la sesión
         function clearSession() {
             localStorage.removeItem('currentUser');
         }
-
-        // Modificar la función login
+        
+        // User Management Functions
         async function login() {
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
@@ -828,8 +828,72 @@
                 alert('Error de conexión');
             }
         }
+        
+        // CSV Management Functions
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            
+            if (!file) return;
 
-        // Modificar la función updateUIForLoggedUser
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('File is too large. Maximum size is 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentCSVContent = event.target.result; // Guardar el contenido
+                const lines = currentCSVContent.split('\n');
+                
+                // Obtener los headers (primera línea)
+                const headers = lines[0].split(',').map(header => header.trim());
+                
+                // Analizar tipos de datos basados en la primera fila de datos
+                const firstDataRow = lines[1]?.split(',').map(cell => cell.trim());
+                
+                const columns = headers.map((header, index) => {
+                    const value = firstDataRow?.[index];
+                    let type = 'string';
+                    
+                    if (value) {
+                        if (!isNaN(value) && value.indexOf('.') !== -1) {
+                            type = 'float';
+                        } else if (!isNaN(value)) {
+                            type = 'integer';
+                        } else if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false') {
+                            type = 'boolean';
+                        } else if (!isNaN(Date.parse(value))) {
+                            type = 'date';
+                        }
+                    }
+
+                    return {
+                        name: header,
+                        type: type
+                    };
+                });
+
+                displayCSVData(columns);
+                // Mostrar el botón de upload en lugar de habilitar el botón de validación
+                document.getElementById('uploadButton').style.display = 'inline-block';
+            };
+
+            reader.onerror = function() {
+                alert('Error reading file');
+                currentCSVContent = null;
+                document.getElementById('uploadButton').style.display = 'none';
+            };
+
+            reader.readAsText(file);
+        }
+
+        // User Management Functions
         function updateUIForLoggedUser(user) {
             const currentUserDisplay = document.getElementById('currentUserDisplay');
             currentUserDisplay.style.display = 'block';
@@ -861,7 +925,6 @@
             loadMainCsv();
         }
 
-        // Modificar la función logout
         function logout() {
             currentUser = null;
             clearSession(); // Borrar la sesión
@@ -887,7 +950,6 @@
             }, 100);
         }
 
-        // Modificar el evento DOMContentLoaded para verificar la sesión
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = loadSession();
             if (savedUser) {
@@ -1038,71 +1100,7 @@
             }
         }
 
-        // Modificar handleFileSelect
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            
-            if (!file) return;
-
-            if (!file.name.toLowerCase().endsWith('.csv')) {
-                alert('Please select a CSV file');
-                return;
-            }
-
-            const maxSize = 5 * 1024 * 1024;
-            if (file.size > maxSize) {
-                alert('File is too large. Maximum size is 5MB');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                currentCSVContent = event.target.result; // Guardar el contenido
-                const lines = currentCSVContent.split('\n');
-                
-                // Obtener los headers (primera línea)
-                const headers = lines[0].split(',').map(header => header.trim());
-                
-                // Analizar tipos de datos basados en la primera fila de datos
-                const firstDataRow = lines[1]?.split(',').map(cell => cell.trim());
-                
-                const columns = headers.map((header, index) => {
-                    const value = firstDataRow?.[index];
-                    let type = 'string';
-                    
-                    if (value) {
-                        if (!isNaN(value) && value.indexOf('.') !== -1) {
-                            type = 'float';
-                        } else if (!isNaN(value)) {
-                            type = 'integer';
-                        } else if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false') {
-                            type = 'boolean';
-                        } else if (!isNaN(Date.parse(value))) {
-                            type = 'date';
-                        }
-                    }
-
-                    return {
-                        name: header,
-                        type: type
-                    };
-                });
-
-                displayCSVData(columns);
-                // Mostrar el botón de upload en lugar de habilitar el botón de validación
-                document.getElementById('uploadButton').style.display = 'inline-block';
-            };
-
-            reader.onerror = function() {
-                alert('Error reading file');
-                currentCSVContent = null;
-                document.getElementById('uploadButton').style.display = 'none';
-            };
-
-            reader.readAsText(file);
-        }
-
-        // Modificar la función validateAndSaveCSV para que sea async y use await correctamente
+        // CSV Management Functions
         async function validateAndSaveCSV() {
             if (!currentCSVContent || !currentUser) {
                 alert('No CSV file loaded or user not logged in');
@@ -1143,12 +1141,6 @@
             }
         }
 
-        // Modificar el botón en el HTML para usar onclick con función async
-        document.getElementById('uploadButton').onclick = async () => {
-            await validateAndSaveCSV();
-        };
-
-        // Modificar displayCSVData para habilitar/deshabilitar el botón
         function displayCSVData(columns) {
             if (!columns || !Array.isArray(columns)) {
                 console.error('Invalid columns data:', columns);
@@ -1209,7 +1201,6 @@
             }
         }
 
-        // Función para crear el gráfico de usuarios
         async function createUserNetwork() {
             try {
                 const response = await fetch('/api/users');
