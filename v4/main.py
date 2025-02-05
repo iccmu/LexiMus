@@ -36,8 +36,9 @@ class User(BaseModel):
     is_superuser: bool = False
     created_by: str = None
 
-class CSVSaveRequest(BaseModel):
+class JSONSaveRequest(BaseModel):
     content: str
+    url: str  # Nueva propiedad para la URL
     username: str
     is_superuser: bool
 
@@ -190,49 +191,56 @@ async def login(user: User):
 async def favicon():
     return HTTPException(status_code=404)
 
-@app.post("/api/save-csv")
-async def save_csv(request: CSVSaveRequest):
+@app.post("/api/save-json")
+async def save_json(request: JSONSaveRequest):
     try:
         # Determinar la ruta de guardado según el tipo de usuario
         if request.is_superuser:
             base_path = os.path.join('static', f'{request.username}@main.py')
-            file_path = os.path.join(base_path, 'main.csv')  # Archivo principal para superusuarios
+            file_path = os.path.join(base_path, 'main.json')  # Archivo principal para superusuarios
+            
+            # Si el archivo existe, hacer una copia de respaldo antes de sobrescribir
+            if os.path.exists(file_path):
+                backup_path = os.path.join(base_path, 'main.json.backup')
+                try:
+                    os.rename(file_path, backup_path)
+                    logger.info(f"Backup created for main JSON: {backup_path}")
+                except Exception as e:
+                    logger.error(f"Error creating backup: {str(e)}")
         else:
-            # Encontrar el superusuario que creó este usuario
             users = read_users()
             user_info = next((u for u in users if u["username"] == request.username), None)
             if not user_info:
                 raise HTTPException(status_code=404, detail="User not found")
             
             base_path = os.path.join('static', f'{user_info["created_by"]}@main.py', request.username)
-            file_path = os.path.join(base_path, 'validated.csv')  # CSV normal para usuarios regulares
+            file_path = os.path.join(base_path, 'validated.json')
 
-        # Asegurar que la carpeta existe
         os.makedirs(base_path, exist_ok=True)
 
-        # Para superusuarios, verificar si ya existe un CSV principal
-        if request.is_superuser and os.path.exists(file_path):
-            # Si existe, eliminarlo antes de guardar el nuevo
-            os.remove(file_path)
-            logger.info(f"Existing main CSV removed for superuser {request.username}")
+        # Validar que el contenido sea JSON válido
+        try:
+            json.loads(request.content)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON content")
 
-        # Guardar el archivo CSV
+        # Guardar el archivo JSON
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(request.content)
 
-        logger.info(f"CSV saved successfully for user {request.username} at {file_path}")
+        logger.info(f"JSON saved successfully for user {request.username} at {file_path}")
         return {
-            "message": "CSV saved successfully", 
+            "message": "JSON saved successfully", 
             "path": file_path,
-            "is_main_csv": request.is_superuser
+            "is_main_json": request.is_superuser
         }
 
     except Exception as e:
-        logger.error(f"Error saving CSV: {str(e)}")
+        logger.error(f"Error saving JSON: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/main-csv/{username}")
-async def get_main_csv(username: str):
+@app.get("/api/main-json/{username}")
+async def get_main_json(username: str):
     try:
         users = read_users()
         requesting_user = next((u for u in users if u["username"] == username), None)
@@ -240,14 +248,12 @@ async def get_main_csv(username: str):
         if not requesting_user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Si es superusuario, obtener su propio CSV
         if requesting_user["is_superuser"] == "True":
-            csv_owner = username
+            json_owner = username
         else:
-            # Si es usuario regular, obtener el CSV de su creador
-            csv_owner = requesting_user["created_by"]
+            json_owner = requesting_user["created_by"]
         
-        file_path = os.path.join('static', f'{csv_owner}@main.py', 'main.csv')
+        file_path = os.path.join('static', f'{json_owner}@main.py', 'main.json')
         if not os.path.exists(file_path):
             return {"exists": False}
         
@@ -257,29 +263,29 @@ async def get_main_csv(username: str):
         return {
             "exists": True,
             "content": content,
-            "owner": csv_owner
+            "owner": json_owner
         }
     except Exception as e:
-        logger.error(f"Error reading main CSV: {str(e)}")
+        logger.error(f"Error reading main JSON: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.delete("/api/main-csv/{username}")
-async def delete_main_csv(username: str):
+@app.delete("/api/main-json/{username}")
+async def delete_main_json(username: str):
     try:
         # Verificar que el usuario es un superusuario
         users = read_users()
         user = next((u for u in users if u["username"] == username), None)
         if not user or user["is_superuser"] != "True":
-            raise HTTPException(status_code=403, detail="Only superusers can delete main CSV")
+            raise HTTPException(status_code=403, detail="Only superusers can delete main JSON")
         
-        file_path = os.path.join('static', f'{username}@main.py', 'main.csv')
+        file_path = os.path.join('static', f'{username}@main.py', 'main.json')
         if os.path.exists(file_path):
             os.remove(file_path)
-            logger.info(f"Main CSV deleted for superuser {username}")
-            return {"message": "Main CSV deleted successfully"}
+            logger.info(f"Main JSON deleted for superuser {username}")
+            return {"message": "Main JSON deleted successfully"}
         else:
-            return {"message": "No main CSV found"}
+            return {"message": "No main JSON found"}
             
     except Exception as e:
-        logger.error(f"Error deleting main CSV: {str(e)}")
+        logger.error(f"Error deleting main JSON: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

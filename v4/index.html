@@ -30,7 +30,7 @@
             max-width: none;
             position: relative;
             margin-top: 70px;
-            min-height: calc(90vh - 70px);
+            min-height: fit-content;
         }
 
         h2, h3 {
@@ -583,16 +583,16 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin: 70px auto 20px auto;
-            height: calc(90vh - 90px); /* Cambiado de min-height a height fija */
-            overflow: auto; /* Añadido overflow auto */
-            position: relative; /* Añadido position relative */
+            min-height: fit-content;
+            overflow: visible;
+            position: relative;
         }
 
         .main-csv-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px; /* Reducido de 15px a 10px */
+            margin-bottom: 10px;
         }
 
         .main-csv-header h3 {
@@ -613,10 +613,10 @@
         }
 
         .main-csv-content {
-            position: relative; /* Añadido position relative */
+            position: relative;
             width: 100%;
-            height: calc(100% - 60px); /* Altura ajustada para dejar espacio al header */
-            overflow: auto; /* Añadido overflow auto */
+            height: auto;
+            overflow: visible;
         }
 
         .main-csv-table {
@@ -632,10 +632,39 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 2px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
+            z-index: 1002;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .confirm-modal h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .confirm-modal p {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .confirmation-note {
+            font-size: 0.9em;
+            color: #888;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .confirm-input {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            display: block;
         }
 
         .confirm-modal-buttons {
@@ -645,6 +674,159 @@
             margin-top: 20px;
         }
 
+        .confirm-modal-buttons button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .confirm-modal-buttons .cancel-button {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .confirm-modal-buttons .cancel-button:hover {
+            background-color: #5a6268;
+        }
+
+        .confirm-modal-buttons .delete-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .confirm-modal-buttons .delete-button:hover {
+            background-color: #c82333;
+        }
+
+        /* Asegurar que el modal de usuarios aparezca por encima */
+        #usersModal {
+            z-index: 1002;
+        }
+
+        /* Estilos para el árbol JSON con transiciones suaves */
+        .json-tree {
+            list-style-type: none;
+            padding-left: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .json-tree li {
+            margin: 8px 0;
+            position: relative;
+        }
+
+        .json-tree li > span {
+            display: block;
+            padding: 8px 35px 8px 12px;
+            border-radius: 6px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .json-tree li > span:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            transform: translateX(5px);
+        }
+
+        .json-tree li > span::before {
+            content: '▸';
+            display: inline-block;
+            margin-right: 8px;
+            transition: transform 0.2s ease;
+            color: #666;
+        }
+
+        .json-tree li.expanded > span::before {
+            transform: rotate(90deg);
+        }
+
+        .json-tree .hidden {
+            display: none;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-out;
+        }
+
+        .json-tree ul {
+            opacity: 1;
+            max-height: 1000px; /* Altura máxima para la animación */
+            transition: all 0.3s ease-in;
+        }
+
+        .json-tree ul::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+
+        /* Estilos para los diferentes niveles del árbol */
+        .json-tree li > span {
+            border-left: 4px solid #3498db;
+        }
+
+        .json-tree li li > span {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .json-tree li li li > span {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .json-tree li li li li > span {
+            border-left: 4px solid #f1c40f;
+        }
+
+        .json-tree li li li li li > span {
+            border-left: 4px solid #9b59b6;
+        }
+
+        .json-tree li li li li li li > span {
+            border-left: 4px solid #e67e22;
+        }
+
+        .json-tree li li li li li li li > span {
+            border-left: 4px solid #1abc9c;
+        }
+
+        /* Efectos hover para cada nivel */
+        .json-tree li > span:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .json-tree li li > span:hover {
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+
+        .json-tree li li li > span:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .json-tree li li li li > span:hover {
+            background-color: rgba(241, 196, 15, 0.1);
+        }
+
+        .json-tree li li li li li > span:hover {
+            background-color: rgba(155, 89, 182, 0.1);
+        }
+
+        .json-tree li li li li li li > span:hover {
+            background-color: rgba(230, 126, 34, 0.1);
+        }
+
+        .json-tree li li li li li li li > span:hover {
+            background-color: rgba(26, 188, 156, 0.1);
+        }
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -652,34 +834,46 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
         }
 
-        .main-csv-table th,
-        .main-csv-table td {
-            padding: 6px; /* Reducido de 8px a 6px */
-            border: 1px solid #dee2e6;
-            text-align: left;
-            font-size: 13px; /* Reducido de 14px a 13px */
+        .delete-button-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: right;
         }
 
-        .main-csv-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
-        .main-csv-table tr:nth-child(even) {
-            background-color: #f8f9fa;
+        .delete-button:hover {
+            background-color: #c82333;
         }
 
-        .main-csv-table tr:hover {
-            background-color: #f2f2f2;
+        /* Animación de sacudida */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
         }
 
-        /* Asegurar que el modal de usuarios aparezca por encima */
-        #usersModal {
-            z-index: 1002;
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* Asegurar que el elemento final tenga un estilo distintivo */
+        .json-tree li > span.end-node {
+            color: #666;
+            font-style: italic;
+            cursor: not-allowed;
         }
     </style>
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
@@ -700,12 +894,10 @@
             </form>
         </div>
         
-        <div id="userControls">
-            <label class="custom-file-upload">
-                <input type="file" id="csvFile" accept=".csv" onchange="handleFileSelect(event)">
-                Upload CSV
-            </label>
-            <button id="uploadButton" onclick="validateAndSaveCSV()" class="validate-button" style="display: none;">
+        <div id="userControls" style="display: none;">
+            <input type="text" id="jsonUrl" placeholder="Enter JSON URL" style="display: none;">
+            <button id="loadJsonButton" onclick="loadJsonFromUrl()" style="display: none;">Load JSON</button>
+            <button id="uploadButton" onclick="validateAndSaveJSON()" class="validate-button" style="display: none;">
                 Validate and Save
             </button>
             <button id="usersButton" onclick="toggleUsers()">Users</button>
@@ -721,13 +913,15 @@
     <!-- Contenedor principal para el CSV -->
     <div id="mainCsvContainer" class="main-csv-container" style="display: none;">
         <div class="main-csv-header">
-            <h3>Main CSV</h3>
-            <button id="deleteMainCsvButton" onclick="handleDeleteMainCsv()" class="delete-button">
-                Delete Main CSV
-            </button>
+            <h3>Main JSON</h3>
         </div>
         <div class="main-csv-content">
             <table id="mainCsvTable" class="main-csv-table"></table>
+        </div>
+        <div class="delete-button-container">
+            <button id="deleteMainCsvButton" onclick="handleDeleteMainCsv()" class="delete-button" style="display: none;">
+                Delete Main JSON
+            </button>
         </div>
     </div>
 
@@ -756,7 +950,9 @@
     <!-- Añadir el modal de confirmación al final del body -->
     <div id="confirmModal" class="confirm-modal">
         <h4>Confirm Deletion</h4>
-        <p>Are you sure you want to delete the main CSV file?</p>
+        <p>Are you sure you want to delete the main JSON file?</p>
+        <p class="confirmation-note">Please type "DELETE" to confirm:</p>
+        <input type="text" id="confirmInput" class="confirm-input" placeholder="Type DELETE">
         <div class="confirm-modal-buttons">
             <button onclick="cancelDelete()" class="cancel-button">Cancel</button>
             <button onclick="confirmDelete()" class="delete-button">Delete</button>
@@ -771,6 +967,7 @@
         
         // CSV Management
         let currentCSVContent = null;
+        let currentJSONContent = null;
         
         // Session Management Functions
         function saveSession(userData) {
@@ -820,8 +1017,8 @@
                     // Guardar la sesión
                     saveSession(currentUser);
                     
-                    // Resto del código de login...
-                    updateUIForLoggedUser(currentUser);
+                    // Actualizar UI
+                    await updateUIForLoggedUser(currentUser);
                 }
             } catch (error) {
                 console.error('Login error:', error);
@@ -830,99 +1027,239 @@
         }
         
         // CSV Management Functions
-        async function handleFileSelect(event) {
-            const file = event.target.files[0];
-            
-            if (!file) return;
-
-            if (!file.name.toLowerCase().endsWith('.csv')) {
-                alert('Please select a CSV file');
+        async function loadJsonFromUrl() {
+            const url = document.getElementById('jsonUrl').value;
+            if (!url) {
+                alert('Please enter a URL');
                 return;
             }
 
-            const maxSize = 5 * 1024 * 1024;
-            if (file.size > maxSize) {
-                alert('File is too large. Maximum size is 5MB');
-                return;
+            try {
+                const response = await fetch(url);
+                const jsonData = await response.json();
+                currentJSONContent = JSON.stringify(jsonData, null, 2);
+                
+                displayJSONData(jsonData);
+                document.getElementById('uploadButton').style.display = 'inline-block';
+            } catch (error) {
+                console.error('Error loading JSON:', error);
+                alert('Error loading JSON from URL');
             }
+        }
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                currentCSVContent = event.target.result; // Guardar el contenido
-                const lines = currentCSVContent.split('\n');
+        function displayJSONData(jsonData) {
+            const container = document.getElementById('mainCsvContainer');
+            container.style.display = 'block';
+
+            const table = document.getElementById('mainCsvTable');
+            table.innerHTML = '';
+
+            // Obtener el nombre de la rama principal (ignorando 'id')
+            const mainBranchName = Object.keys(jsonData).find(key => key !== 'id');
+
+            // Crear la estructura jerárquica
+            function createTreeHTML(data, level = 0) {
+                let html = '<ul class="json-tree">';
                 
-                // Obtener los headers (primera línea)
-                const headers = lines[0].split(',').map(header => header.trim());
-                
-                // Analizar tipos de datos basados en la primera fila de datos
-                const firstDataRow = lines[1]?.split(',').map(cell => cell.trim());
-                
-                const columns = headers.map((header, index) => {
-                    const value = firstDataRow?.[index];
-                    let type = 'string';
+                for (const [key, value] of Object.entries(data)) {
+                    if (key === 'id') continue;
                     
-                    if (value) {
-                        if (!isNaN(value) && value.indexOf('.') !== -1) {
-                            type = 'float';
-                        } else if (!isNaN(value)) {
-                            type = 'integer';
-                        } else if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false') {
-                            type = 'boolean';
-                        } else if (!isNaN(Date.parse(value))) {
-                            type = 'date';
+                    const isObject = value && typeof value === 'object';
+                    let displayText;
+                    let spanClass = '';
+                    
+                    if (isObject) {
+                        displayText = key;
+                    } else if (value === null) {
+                        displayText = `¡Has llegado al final de la rama!`;
+                        spanClass = ' class="end-node"';
+                    } else {
+                        displayText = `${key}: ${value}`;
+                    }
+                    
+                    const liClass = (key === mainBranchName) ? ' class="expanded"' : '';
+                    html += `<li${liClass}><span${spanClass}>${displayText}</span>`;
+                    
+                    if (isObject) {
+                        html += createTreeHTML(value, level + 1);
+                    }
+                    
+                    html += '</li>';
+                }
+                
+                html += '</ul>';
+                return html;
+            }
+
+            table.innerHTML = createTreeHTML(jsonData);
+
+            // Añadir event listeners para expandir/colapsar y la animación de sacudida
+            document.querySelectorAll('.json-tree li > span').forEach(span => {
+                span.addEventListener('click', function() {
+                    if (this.classList.contains('end-node')) {
+                        // Evitar múltiples animaciones simultáneas
+                        if (!this.classList.contains('shake')) {
+                            this.classList.add('shake');
+                            this.addEventListener('animationend', () => {
+                                this.classList.remove('shake');
+                            }, { once: true });
                         }
+                        return;
                     }
 
-                    return {
-                        name: header,
-                        type: type
-                    };
+                    const li = this.parentElement;
+                    const ul = li.querySelector('ul');
+                    
+                    if (ul) {
+                        if (ul.classList.contains('hidden')) {
+                            ul.style.display = 'block';
+                            setTimeout(() => {
+                                ul.classList.remove('hidden');
+                            }, 10);
+                        } else {
+                            ul.classList.add('hidden');
+                            ul.addEventListener('transitionend', function handler() {
+                                if (ul.classList.contains('hidden')) {
+                                    ul.style.display = 'none';
+                                }
+                                ul.removeEventListener('transitionend', handler);
+                            });
+                        }
+                        li.classList.toggle('expanded');
+                    }
+                });
+            });
+
+            // Ocultar todos los subniveles excepto el de la rama principal
+            document.querySelectorAll('.json-tree ul').forEach((ul) => {
+                const parentLi = ul.closest('li');
+                const isMainBranch = parentLi && 
+                                    parentLi.querySelector('span') && 
+                                    parentLi.querySelector('span').textContent === mainBranchName;
+                
+                if (!isMainBranch) {
+                    ul.classList.add('hidden');
+                }
+            });
+
+            // Actualizar el título con el nombre de la rama principal
+            const title = document.querySelector('.main-csv-header h3');
+            title.textContent = mainBranchName || 'Main JSON';
+        }
+
+        async function validateAndSaveJSON() {
+            if (!currentJSONContent || !currentUser) {
+                alert('No JSON loaded or user not logged in');
+                return;
+            }
+
+            try {
+                // Validar que el JSON sea válido antes de enviarlo
+                JSON.parse(currentJSONContent);
+
+                const response = await fetch('/api/save-json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: currentJSONContent,
+                        url: document.getElementById('jsonUrl').value,
+                        username: currentUser.username,
+                        is_superuser: currentUser.is_superuser
+                    })
                 });
 
-                displayCSVData(columns);
-                // Mostrar el botón de upload en lugar de habilitar el botón de validación
-                document.getElementById('uploadButton').style.display = 'inline-block';
-            };
+                const data = await response.json();
 
-            reader.onerror = function() {
-                alert('Error reading file');
-                currentCSVContent = null;
-                document.getElementById('uploadButton').style.display = 'none';
-            };
+                if (response.ok) {
+                    alert(currentUser.is_superuser ? 
+                        'Main JSON saved successfully! A backup of the previous version was created.' : 
+                        'JSON validated and saved successfully!');
+                    
+                    currentJSONContent = null;
+                    document.getElementById('jsonUrl').value = '';
+                    document.getElementById('mainCsvContainer').style.display = 'none';
+                    document.getElementById('uploadButton').style.display = 'none';
+                    
+                    await loadMainJson();
+                } else {
+                    alert(data.detail || 'Error saving JSON');
+                }
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    alert('Invalid JSON content. Please check the format.');
+                } else {
+                    console.error('Error saving JSON:', error);
+                    alert('Error saving JSON');
+                }
+            }
+        }
 
-            reader.readAsText(file);
+        async function loadMainJson() {
+            try {
+                const response = await fetch(`/api/main-json/${currentUser.username}`);
+                const data = await response.json();
+                
+                if (data.exists) {
+                    const jsonData = JSON.parse(data.content);
+                    displayJSONData(jsonData);
+                    
+                    // Obtener el nombre de la rama principal, ignorando la propiedad 'id'
+                    const mainBranchName = Object.keys(jsonData).find(key => key !== 'id');
+                    
+                    const title = document.querySelector('.main-csv-header h3');
+                    title.textContent = mainBranchName || 'Main JSON';
+                    
+                    document.getElementById('mainCsvContainer').style.display = 'block';
+                    
+                    const deleteButton = document.getElementById('deleteMainCsvButton');
+                    if (deleteButton) {
+                        deleteButton.style.display = currentUser.is_superuser ? 'block' : 'none';
+                    }
+                } else {
+                    document.getElementById('mainCsvContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading main JSON:', error);
+            }
         }
 
         // User Management Functions
-        function updateUIForLoggedUser(user) {
-            const currentUserDisplay = document.getElementById('currentUserDisplay');
-            currentUserDisplay.style.display = 'block';
-            currentUserDisplay.querySelector('.username').textContent = user.username;
-            
-            const userTypeSpan = currentUserDisplay.querySelector('.user-type');
-            if (user.is_superuser) {
-                userTypeSpan.textContent = 'Superuser';
-                userTypeSpan.className = 'user-type superuser';
-            } else {
-                userTypeSpan.textContent = 'Regular User';
-                userTypeSpan.className = 'user-type regular';
+        async function updateUIForLoggedUser(user) {
+            try {
+                currentUser = user;
+                
+                const currentUserDisplay = document.getElementById('currentUserDisplay');
+                currentUserDisplay.style.display = 'flex';
+                currentUserDisplay.querySelector('.username').textContent = user.username;
+                currentUserDisplay.querySelector('.user-type').textContent = user.is_superuser ? '(Superuser)' : '(Regular User)';
+                
+                document.getElementById('loginControls').style.display = 'none';
+                document.getElementById('userControls').style.display = 'flex';
+                document.getElementById('loginNetworkContainer').style.display = 'none';
+                
+                // Mostrar/ocultar elementos según el tipo de usuario
+                if (user.is_superuser) {
+                    document.getElementById('jsonUrl').style.display = 'block';
+                    document.getElementById('loadJsonButton').style.display = 'block';
+                    document.getElementById('deleteMainCsvButton').style.display = 'block';
+                } else {
+                    document.getElementById('jsonUrl').style.display = 'none';
+                    document.getElementById('loadJsonButton').style.display = 'none';
+                    document.getElementById('deleteMainCsvButton').style.display = 'none';
+                    document.getElementById('mainCsvContainer').style.display = 'none';
+                }
+                
+                // Esperar a que estas operaciones asíncronas se completen
+                await Promise.all([
+                    loadUsers(),
+                    loadMainJson()
+                ]);
+            } catch (error) {
+                console.error('Error updating UI:', error);
+                alert('Error actualizando la interfaz');
             }
-            
-            document.getElementById('loginControls').style.display = 'none';
-            document.getElementById('userControls').style.display = 'flex';
-            document.getElementById('loginNetworkContainer').style.display = 'none';
-            
-            const createForm = document.getElementById('modalCreateUser');
-            if (user.is_superuser) {
-                createForm.style.display = 'block';
-                document.getElementById('usersButton').style.display = 'block';
-            } else {
-                createForm.style.display = 'none';
-                document.getElementById('usersButton').style.display = 'none';
-            }
-            
-            loadUsers();
-            loadMainCsv();
         }
 
         function logout() {
@@ -950,14 +1287,18 @@
             }, 100);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedUser = loadSession();
-            if (savedUser) {
-                currentUser = savedUser;
-                updateUIForLoggedUser(savedUser);
-            } else {
-                createUserNetwork();
-                document.getElementById('mainCsvContainer').style.display = 'none';
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const savedUser = loadSession();
+                if (savedUser) {
+                    currentUser = savedUser;
+                    await updateUIForLoggedUser(savedUser);
+                } else {
+                    createUserNetwork();
+                    document.getElementById('mainCsvContainer').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error initializing:', error);
             }
         });
 
@@ -1101,106 +1442,6 @@
         }
 
         // CSV Management Functions
-        async function validateAndSaveCSV() {
-            if (!currentCSVContent || !currentUser) {
-                alert('No CSV file loaded or user not logged in');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/save-csv', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        content: currentCSVContent,
-                        username: currentUser.username,
-                        is_superuser: currentUser.is_superuser
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('CSV validated and saved successfully!');
-                    // Limpiar el estado actual
-                    currentCSVContent = null;
-                    document.getElementById('csvFile').value = '';
-                    document.getElementById('mainCsvContainer').style.display = 'none';
-                    document.getElementById('uploadButton').style.display = 'none';
-                    
-                    // Recargar el CSV principal
-                    await loadMainCsv();
-                } else {
-                    alert(data.detail || 'Error saving CSV');
-                }
-            } catch (error) {
-                console.error('Error saving CSV:', error);
-                alert('Error saving CSV');
-            }
-        }
-
-        function displayCSVData(columns) {
-            if (!columns || !Array.isArray(columns)) {
-                console.error('Invalid columns data:', columns);
-                return;
-            }
-
-            // Mostrar el botón de upload
-            const uploadButton = document.getElementById('uploadButton');
-            if (uploadButton) {
-                uploadButton.style.display = 'inline-block';
-            }
-
-            // Mostrar el contenedor principal del CSV
-            const container = document.getElementById('mainCsvContainer');
-            if (container) {
-                container.style.display = 'block';
-            }
-
-            // Actualizar la tabla principal
-            const table = document.getElementById('mainCsvTable');
-            if (!table) {
-                console.error('CSV table element not found');
-                return;
-            }
-
-            try {
-                // Limpiar tabla existente
-                table.innerHTML = '';
-                
-                // Crear encabezados
-                const thead = document.createElement('thead');
-                const headerRow = document.createElement('tr');
-                headerRow.innerHTML = `
-                    <th>#</th>
-                    <th>Campo</th>
-                    <th>Tipo</th>
-                `;
-                thead.appendChild(headerRow);
-                table.appendChild(thead);
-                
-                // Crear cuerpo de la tabla
-                const tbody = document.createElement('tbody');
-                columns.forEach((column, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${column.name || 'Unnamed Column'}</td>
-                        <td>${column.type || 'unknown'}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                table.appendChild(tbody);
-            } catch (error) {
-                console.error('Error displaying CSV data:', error);
-                if (uploadButton) {
-                    uploadButton.style.display = 'none';
-                }
-            }
-        }
-
         async function createUserNetwork() {
             try {
                 const response = await fetch('/api/users');
@@ -1288,69 +1529,7 @@
             login();
         }
 
-        // Función para cargar el CSV principal
-        async function loadMainCsv() {
-            try {
-                const response = await fetch(`/api/main-csv/${currentUser.username}`);
-                const data = await response.json();
-                
-                const container = document.getElementById('mainCsvContainer');
-                const table = document.getElementById('mainCsvTable');
-                
-                if (data.exists) {
-                    // Parsear el contenido CSV
-                    const rows = data.content.split('\n').map(row => row.split(','));
-                    const headers = rows[0];
-
-                    // Limpiar la tabla
-                    table.innerHTML = '';
-
-                    // Crear encabezados
-                    const thead = document.createElement('thead');
-                    const headerRow = document.createElement('tr');
-                    
-                    // Añadir título que muestra de quién es el CSV
-                    const title = document.createElement('h3');
-                    title.textContent = currentUser.is_superuser ? 
-                        'Your Main CSV' : 
-                        `Main CSV from ${data.owner}`;
-                    container.querySelector('.main-csv-header h3').textContent = title.textContent;
-
-                    headerRow.innerHTML = `
-                        <th>#</th>
-                        <th>Campo</th>
-                    `;
-                    thead.appendChild(headerRow);
-                    table.appendChild(thead);
-
-                    // Crear cuerpo de la tabla
-                    const tbody = document.createElement('tbody');
-                    headers.forEach((header, index) => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${index + 1}</td>
-                            <td>${header.trim()}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                    table.appendChild(tbody);
-
-                    container.style.display = 'block';
-                    
-                    // Mostrar el botón de eliminar solo para superusuarios
-                    const deleteButton = document.getElementById('deleteMainCsvButton');
-                    if (deleteButton) {
-                        deleteButton.style.display = currentUser.is_superuser ? 'block' : 'none';
-                    }
-                } else {
-                    container.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error loading main CSV:', error);
-            }
-        }
-
-        // Función para manejar el borrado del CSV
+        // Función para manejar el borrado del JSON
         function handleDeleteMainCsv() {
             document.getElementById('confirmModal').style.display = 'block';
             document.getElementById('modalOverlay').style.display = 'block';
@@ -1364,8 +1543,14 @@
 
         // Función para confirmar el borrado
         async function confirmDelete() {
+            const confirmInput = document.getElementById('confirmInput');
+            if (confirmInput.value !== 'DELETE') {
+                alert('Please type "DELETE" to confirm');
+                return;
+            }
+
             try {
-                const response = await fetch(`/api/main-csv/${currentUser.username}`, {
+                const response = await fetch(`/api/main-json/${currentUser.username}`, {
                     method: 'DELETE'
                 });
                 
@@ -1373,11 +1558,13 @@
                     document.getElementById('mainCsvContainer').style.display = 'none';
                 }
             } catch (error) {
-                console.error('Error deleting main CSV:', error);
-                alert('Error deleting main CSV');
+                console.error('Error deleting main JSON:', error);
+                alert('Error deleting main JSON');
             }
             
-            cancelDelete(); // Cerrar el modal
+            // Limpiar el input y cerrar el modal
+            confirmInput.value = '';
+            cancelDelete();
         }
     </script>
 </body>
