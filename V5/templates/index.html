@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto 1fr;
+            gap: 20px;
+            grid-template-areas:
+                "top-bar top-bar"
+                "input-data validation-status"
+                "input-data json";
+            min-height: 90vh;
+        }
+
+        .top-bar {
+            grid-area: top-bar;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .json {
+            grid-area: json;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 40px);
+        }
+
+        .input-data {
+            grid-area: input-data;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .upload-form {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .upload-btn {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .upload-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #json-preview {
+            margin-top: 20px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        #json-preview pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .user-details {
+            display: flex;
+            gap: 20px;
+            color: #666;
+        }
+
+        .user-details span {
+            font-weight: bold;
+            color: #333;
+        }
+
+        h3 {
+            margin-top: 0;
+            flex-shrink: 0;
+        }
+
+        .node-item {
+            background: #f5f5f5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .node-item:hover {
+            background: #ebebeb;
+            transform: translateX(5px);
+        }
+
+        .node-text {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .nodes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            padding: 20px 0;
+        }
+
+        .json-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 2px solid #3498db;
+            color: #333;
+        }
+
+        .hierarchy-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .json-hierarchy {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .json-hierarchy li {
+            margin: 5px 0;
+        }
+
+        .node-item {
+            background: #ffffff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 4px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 3px solid #3498db;
+        }
+
+        .node-item:hover {
+            transform: translateX(5px);
+            background: #f0f0f0;
+        }
+
+        .node-item.has-children {
+            border-left: 3px solid #2ecc71;
+        }
+
+        .key {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .value {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Líneas conectoras */
+        .json-hierarchy ul {
+            position: relative;
+        }
+
+        .json-hierarchy ul::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+
+        /* Diferentes niveles de profundidad */
+        .json-hierarchy .node-item {
+            border-left-width: 3px;
+        }
+
+        .json-hierarchy ul .node-item {
+            border-left-color: #e74c3c;
+        }
+
+        .json-hierarchy ul ul .node-item {
+            border-left-color: #f1c40f;
+        }
+
+        .json-hierarchy ul ul ul .node-item {
+            border-left-color: #9b59b6;
+        }
+
+        /* Estilos para elementos expandibles */
+        .node-item.has-children {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .node-item.has-children::after {
+            content: '▸';
+            position: absolute;
+            right: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .node-item.has-children.expanded::after {
+            transform: rotate(90deg);
+        }
+
+        /* Ocultar submenús por defecto */
+        .json-hierarchy ul {
+            display: none;
+        }
+
+        /* Mostrar submenús cuando el padre está expandido */
+        .json-hierarchy li.expanded > ul {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .validation-status {
+            grid-area: validation-status;
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+            margin-bottom: 15px;
+            display: none;  /* Inicialmente oculto */
+            align-items: center;
+            justify-content: space-between;
+            border-left: 4px solid #28a745;
+            transition: all 0.3s ease;
+            height: fit-content;
+        }
+
+        .validation-status:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .validation-status .json-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+            margin-left: 8px;
+        }
+
+        .validation-status span:first-child {
+            color: #666;
+        }
+
+        .validation-status button {
+            background-color: #e0e0e0;
+            color: #666;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .validation-status button:hover {
+            background-color: #d0d0d0;
+            color: #333;
+        }
+
+        .json-list {
+            grid-area: validation-status;
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .json-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding-bottom: 10px;
+        }
+
+        .json-list-header h3 {
+            margin: 0;
+        }
+
+        .json-list-header .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .json-list-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .json-cards-container {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .json-cards-container.collapsed {
+            max-height: 0;
+        }
+
+        .json-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .json-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .json-card .json-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .json-card .hierarchy-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <div class="user-info">
+                <div class="user-details">
+                    <p>Usuario: <span id="username"></span></p>
+                    <p>Tipo: <span id="usertype"></span></p>
+                    <p>Creado por: <span id="created-by"></span></p>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
+        <div class="input-data">
+            <!-- Espacio reservado para futuros inputs -->
+            <h3>Área de Entrada de Datos</h3>
+            <p>Esta sección está reservada para futuros formularios o inputs de datos.</p>
+        </div>
+
+        <div class="validation-status" id="validationStatus">
+            <div>
+                <span>JSON Validado:</span>
+                <span class="json-name" id="jsonName"></span>
+            </div>
+            <button onclick="hideValidationStatus()">×</button>
+        </div>
+        <div class="json">
+            <div class="upload-form">
+                <input type="text" id="jsonUrl" 
+                       placeholder="Introduce la URL del JSON (ejemplo: https://raw.githubusercontent.com/...)" 
+                       class="url-input">
+                <button onclick="uploadJson()" class="upload-btn">Visualizar JSON</button>
+                <button onclick="validateAndSaveJson()" class="upload-btn" style="background-color: #28a745;">Validar y Guardar</button>
+            </div>
+            <div id="json-preview"></div>
+        </div>
+
+        <div class="json-list" id="jsonList">
+            <div class="json-list-header" onclick="toggleJsonList()" id="jsonListHeader">
+                <h3>JSONs Guardados</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="json-cards-container" id="jsonCardsContainer">
+                <div id="jsonCards"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar si el usuario está autenticado
+        if (!sessionStorage.getItem('user')) {
+            window.location.href = '/';
+        }
+
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        document.getElementById('username').textContent = user.username;
+        document.getElementById('usertype').textContent = user.is_superuser ? 'Superusuario' : 'Usuario normal';
+        document.getElementById('created-by').textContent = user.created_by || 'N/A';
+
+        // Función para cerrar sesión
+        function logout() {
+            sessionStorage.removeItem('user');
+            window.location.href = '/';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(sessionStorage.getItem('user'));
+            const uploadForm = document.querySelector('.upload-form');
+            
+            // Ocultar formulario de subida si no es superusuario
+            if (!user.is_superuser) {
+                uploadForm.style.display = 'none';
+                document.querySelector('.input-data').innerHTML = `
+                    <h3>Área de Visualización</h3>
+                    <p>Como usuario normal, puedes ver los JSONs subidos por tu superusuario: ${user.created_by}</p>
+                `;
+            }
+            
+            loadSavedJsons();
+        });
+
+        async function uploadJson() {
+            const user = JSON.parse(sessionStorage.getItem('user'));
+            if (!user.is_superuser) {
+                alert('Solo los superusuarios pueden subir JSONs');
+                return;
+            }
+            
+            const urlInput = document.getElementById('jsonUrl');
+            const previewDiv = document.getElementById('json-preview');
+            
+            try {
+                const user = JSON.parse(sessionStorage.getItem('user'));
+                if (!user) {
+                    throw new Error('Usuario no autenticado');
+                }
+
+                // Hacer la petición GET directamente a la URL proporcionada
+                const response = await fetch(urlInput.value);
+                const jsonData = await response.json();
+                
+                if (response.ok) {
+                    previewDiv.innerHTML = '';
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'json-title';
+                    previewDiv.appendChild(titleDiv);
+
+                    const hierarchyContainer = document.createElement('div');
+                    hierarchyContainer.className = 'hierarchy-container';
+
+                    // Procesar el JSON directamente sin esperar la estructura data
+                    const dataToProcess = jsonData.data || jsonData;
+                    processHierarchy(dataToProcess, hierarchyContainer);
+                    previewDiv.appendChild(hierarchyContainer);
+
+                    // Expandir el primer nivel por defecto
+                    const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
+                    firstLevelItems.forEach(item => {
+                        item.classList.add('expanded');
+                        item.querySelector('.node-item')?.classList.add('expanded');
+                    });
+
+                } else {
+                    previewDiv.innerHTML = `<p style="color: red;">Error: No se pudo cargar el JSON</p>`;
+                }
+            } catch (error) {
+                previewDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        function processHierarchy(data, container, level = 0) {
+            const ul = document.createElement('ul');
+            ul.className = 'json-hierarchy';
+            ul.style.paddingLeft = level > 0 ? '20px' : '0';
+
+            Object.entries(data).forEach(([key, value]) => {
+                if (key === 'id') return;
+
+                const li = document.createElement('li');
+                const nodeItem = document.createElement('div');
+                nodeItem.className = 'node-item';
+
+                const keySpan = document.createElement('span');
+                keySpan.className = 'key';
+                keySpan.textContent = key;
+
+                nodeItem.appendChild(keySpan);
+
+                if (typeof value === 'object' && value !== null) {
+                    nodeItem.classList.add('has-children');
+                    
+                    nodeItem.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const parentLi = this.parentElement;
+                        parentLi.classList.toggle('expanded');
+                        this.classList.toggle('expanded');
+                    });
+
+                    li.appendChild(nodeItem);
+                    processHierarchy(value, li, level + 1);
+                } else {
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'value';
+                    valueSpan.textContent = value === null ? 
+                        ': ¡Has llegado al final de la rama!' : 
+                        `: ${value}`;
+                    nodeItem.appendChild(valueSpan);
+                    li.appendChild(nodeItem);
+                }
+
+                ul.appendChild(li);
+            });
+
+            container.appendChild(ul);
+        }
+
+        async function validateAndSaveJson() {
+            const user = JSON.parse(sessionStorage.getItem('user'));
+            if (!user.is_superuser) {
+                alert('Solo los superusuarios pueden subir JSONs');
+                return;
+            }
+            
+            const urlInput = document.getElementById('jsonUrl');
+            const previewDiv = document.getElementById('json-preview');
+            const validationStatus = document.getElementById('validationStatus');
+            
+            try {
+                const user = JSON.parse(sessionStorage.getItem('user'));
+                if (!user) {
+                    throw new Error('Usuario no autenticado');
+                }
+
+                const formData = new FormData();
+                formData.append('url', urlInput.value);
+                formData.append('user_data', JSON.stringify(user));
+
+                const response = await fetch('/upload-json', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Obtener el primer elemento del JSON
+                    const jsonData = result.data;
+                    const firstKey = Object.keys(jsonData)[0];
+                    const firstValue = jsonData[firstKey];
+                    
+                    // Mostrar el estado de validación
+                    const jsonName = document.getElementById('jsonName');
+                    jsonName.textContent = `${firstKey}: ${typeof firstValue === 'object' ? 'Objeto' : firstValue}`;
+                    validationStatus.style.display = 'flex';  // Asegurarse de que se muestre
+                    
+                    alert('JSON validado y guardado correctamente en: ' + result.saved_path);
+                    await loadSavedJsons(); // Recargar la lista después de guardar
+                } else {
+                    throw new Error(result.detail || 'Error al guardar el JSON');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function hideValidationStatus() {
+            document.getElementById('validationStatus').style.display = 'none';
+        }
+
+        function toggleJsonList() {
+            const header = document.getElementById('jsonListHeader');
+            const container = document.getElementById('jsonCardsContainer');
+            
+            header.classList.toggle('collapsed');
+            container.classList.toggle('collapsed');
+        }
+
+        async function loadSavedJsons() {
+            const user = JSON.parse(sessionStorage.getItem('user'));
+            if (!user) {
+                console.log('No hay usuario autenticado');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/list-jsons/${user.username}`);
+                const data = await response.json();
+
+                const jsonCardsContainer = document.getElementById('jsonCards');
+                jsonCardsContainer.innerHTML = '';
+
+                if (!data.files || data.files.length === 0) {
+                    jsonCardsContainer.innerHTML = `
+                        <div class="no-files-message">
+                            No hay archivos JSON guardados
+                        </div>
+                    `;
+                    return;
+                }
+
+                for (const file of data.files) {
+                    const card = document.createElement('div');
+                    card.className = 'json-card';
+                    
+                    // Crear contenedor para el título y contenido
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'json-title';
+                    titleDiv.textContent = file.filename;
+                    
+                    const hierarchyContainer = document.createElement('div');
+                    hierarchyContainer.className = 'hierarchy-container';
+                    
+                    // Obtener el JSON completo del archivo
+                    const response = await fetch(`/get-json-content/${file.filename}`);
+                    const jsonData = await response.json();
+                    
+                    // Procesar la jerarquía del JSON
+                    processHierarchy(jsonData, hierarchyContainer);
+                    
+                    card.appendChild(titleDiv);
+                    card.appendChild(hierarchyContainer);
+                    
+                    // Expandir el primer nivel por defecto
+                    const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
+                    firstLevelItems.forEach(item => {
+                        item.classList.add('expanded');
+                        item.querySelector('.node-item')?.classList.add('expanded');
+                    });
+                    
+                    jsonCardsContainer.appendChild(card);
+                }
+            } catch (error) {
+                const jsonCardsContainer = document.getElementById('jsonCards');
+                jsonCardsContainer.innerHTML = `
+                    <div class="error-message">
+                        Error al cargar los archivos: ${error.message}
+                    </div>
+                `;
+                console.error('Error loading JSONs:', error);
+            }
+        }
+    </script>
+</body>
+</html> 

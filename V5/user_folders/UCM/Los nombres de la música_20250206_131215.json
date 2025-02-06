@@ -1,0 +1,500 @@
+{
+  "id": "aee2b934-5393-4f8c-a3ef-c70405144215",
+  "Los nombres de la música": {
+    "id": "47283857-a7e7-4008-b72d-0c7c5c15ab01",
+    "La faceta eventiva de la música": {
+      "id": "ef7698fe-401f-4624-baaf-016615865c0c",
+      "El evento, la acción o el proceso musical": {
+        "id": "5a04eb42-a2c1-436e-86d6-916363249c09",
+        "Verbos de acción y/o interpretación musical (generales, particulares o con carga valorativa)": {
+          "id": "87d090d3-3fb5-428c-b907-79aa7098cf27",
+          "value": null
+        },
+        "Verbos de percepción pasiva y/o activa": {
+          "id": "9c6f9db4-47bb-4fb2-a5e2-824dc622bc4f",
+          "value": null
+        },
+        "Verbos de manipulación": {
+          "id": "bc7ee132-079b-40d4-84fb-50097841a4e8",
+          "value": null
+        },
+        "Verbos de fabricación y ajuste": {
+          "id": "9136eb08-e7fc-404d-b06c-da6f2acf5c36",
+          "value": null
+        },
+        "Verbos relacionados con la música como actividad empresarial": {
+          "id": "26e89583-d2dc-4bae-b5f2-113af219a60c",
+          "value": null
+        }
+      },
+      "agentes y experimentadores": {
+        "id": "8a466cfe-c605-4d36-9218-8b3f141767ed",
+        "agentes": {
+          "id": "1920b0bc-bdba-4be5-81c8-cfb07d9ccafb",
+          "Productores": {
+            "id": "5ed0d7f9-5ce3-49c3-91e1-bc2256c12c8a",
+            "Agentes creadores o poiéticos": {
+              "id": "bdd35175-c4e9-4386-81d0-f47cae8db63d",
+              "value": null
+            },
+            "Agentes intérpretes": {
+              "id": "05927780-37e5-44f8-ab1b-a968ce290cf2",
+              "value": null
+            },
+            "Agentes creadores e intérpretes": {
+              "id": "637facab-2054-4a43-8908-731b533fcb41",
+              "value": null
+            },
+            "Agentes según su función": {
+              "id": "8ef530de-1402-4c3b-8d6b-517efc8e9a66",
+              "value": null
+            },
+            "Agentes instrumentistas": {
+              "id": "1b315039-4834-44b9-acf3-0b824de0064d",
+              "value": null
+            },
+            "Agentes colectivos": {
+              "id": "1c1913f5-b5f9-49da-b831-097d0aaf1008",
+              "value": null
+            },
+            "Agentes según su habilidad creadora o interpretativa": {
+              "id": "40ab01cf-f0e7-4363-b97e-4dc55ab618e8",
+              "value": null
+            }
+          },
+          "No productores": {
+            "id": "2916963c-4c62-4f45-9b14-901f0486c284",
+            "Científicos, comentaristas y pedagogos": {
+              "id": "ad3e6d22-7fe5-4ba0-9c11-108da75d47d4",
+              "value": null
+            },
+            "Constructores": {
+              "id": "f7cf0120-5888-4193-95d9-b67bad3568c4",
+              "value": null
+            },
+            "Empresarios y gestores": {
+              "id": "49329125-abc3-4b6e-8cd0-291ab157313d",
+              "value": null
+            }
+          }
+        },
+        "experimentadores": {
+          "id": "643d81ed-8b5d-4bca-9d04-d3b2bee59492",
+          "value": null
+        }
+      },
+      "El resultado del evento musical": {
+        "id": "13741413-a393-4cf4-8434-3b9ebce902c3",
+        "value": null
+      },
+      "Los instrumentos y medios materiales de la acción musical": {
+        "id": "abf1d2c7-bed7-49ef-a06c-52e8a0c03c9e",
+        "Familias organológicas": {
+          "id": "799a6fe5-cfa7-459d-9451-d4cd4a0558f8",
+          "Idiófonos (y sus componentes)": {
+            "id": "988de8a8-1e34-48e1-847c-597ed11ebb53",
+            "value": null
+          },
+          "Membranófonos (y sus componentes)": {
+            "id": "6d1f9ad0-e1b9-43cb-b836-85aeab839761",
+            "value": null
+          },
+          "Cordófonos (y sus componentes)": {
+            "id": "68d4aaee-edaf-4150-b2f7-72a6ba913b41",
+            "value": null
+          },
+          "Aerófonos (y sus componentes)": {
+            "id": "92cd062a-872e-47e8-b7a1-ec22bc0fdb01",
+            "value": null
+          },
+          "Electrófonos (y sus componentes)": {
+            "id": "429e9bc7-76b5-48e5-b874-7975adc670de",
+            "value": null
+          },
+          "Otros dispositivos organológicos": {
+            "id": "dde5a3a2-7650-4634-8b03-00db622ce17c",
+            "value": null
+          }
+        },
+        "Otros medios materiales que facilitan la actividad musical": {
+          "id": "edb57e0a-85c7-473b-bf0e-df2e95d440b2",
+          "value": null
+        },
+        "Otros dispositivos empleados para la grabación y reproducción": {
+          "id": "de5f36d9-efc6-48f7-9126-9843aa928de6",
+          "value": null
+        }
+      },
+      "Las [localizaciones] donde se produce el evento musical]": {
+        "id": "e7ae2288-3f39-4701-9cc6-46b03ad80bbd",
+        "Espacios de la música": {
+          "id": "67d6ad8c-a5e4-4d01-856e-3cf3c0b5d49b",
+          "value": null
+        },
+        "Ubicaciones espacio-temporales": {
+          "id": "ec2cae86-91ad-453f-b64b-7864c3b6c2e3",
+          "value": null
+        }
+      }
+    },
+    "La música como ente acústico": {
+      "id": "70df82cb-cbf7-4f14-8933-6ef4a49e124e",
+      "Dimensión espacial del dato sonoro": {
+        "id": "440b53a2-b230-4649-8d86-a873ae9e6aa5",
+        "Alturas o notas musicales y alteraciones": {
+          "id": "8f2d6b7b-c934-4dd9-a237-f82925507c44",
+          "value": null
+        },
+        "Cualidades acústicas del dato sonoro o derivadas de la serie armónica": {
+          "id": "8599febe-f469-45c7-9dab-da4b5052fafc",
+          "value": null
+        },
+        "Sistemas de afinación": {
+          "id": "1afbd4d3-8de5-4df1-bb54-15cab47b8c3f",
+          "value": null
+        },
+        "Interválica y su percepción psico auditiva": {
+          "id": "785990dc-9708-400c-a520-7c29e843a725",
+          "value": null
+        },
+        "Escalas y grados de la escala": {
+          "id": "7a020a4c-ab04-4455-84d6-e9a1b970bb6a",
+          "value": null
+        },
+        "Modos": {
+          "id": "b4c72a82-4e1f-45f2-b157-3b778419cb20",
+          "value": null
+        },
+        "Armonía": {
+          "id": "2b0a2e63-b0e6-4850-a29f-46b3a52ba0c5",
+          "Combinaciones de dos notas/Intervalos": {
+            "id": "a7c589fe-2349-4f18-a9f5-3f622a70f7ae",
+            "value": null
+          },
+          "Grados del acorde": {
+            "id": "771d2b5b-d001-4752-93e0-10c4a17a1e29",
+            "value": null
+          },
+          "Acordes": {
+            "id": "32d2b0a2-8c98-4ac9-9dba-aedc2df191dd",
+            "Según el número de notas": {
+              "id": "87118ccd-0ba9-49ed-b15e-daa99a42676c",
+              "value": null
+            },
+            "Según la configuración interna": {
+              "id": "46a29d44-8f78-47cb-8b9c-a3b38a050ae4",
+              "value": null
+            },
+            "Según su función": {
+              "id": "7d845582-6103-4568-896e-0e417616a058",
+              "value": null
+            },
+            "Acordes individuados": {
+              "id": "587a6ef8-1fcb-43d8-a6a9-fe6095233603",
+              "value": null
+            },
+            "Inversiones y disposiciones del acorde": {
+              "id": "bcd2e3f6-0f7f-4988-adb4-306cfdbbce1d",
+              "value": null
+            },
+            "Otros acordes marcados": {
+              "id": "7da1f437-e8a8-4b00-a654-2db3b945c16b",
+              "value": null
+            }
+          },
+          "Tonalidades / Modos": {
+            "id": "5d84c5fc-a57f-4d49-b8d1-e7e87aafba67",
+            "value": null
+          },
+          "Funciones o relaciones tonales": {
+            "id": "bebd4a96-24a8-460b-9f11-00e8e3333e29",
+            "value": null
+          },
+          "Derivadas melódicas de las estructuras armónicas": {
+            "id": "cfcaa55b-a475-4b0e-a093-c148572db258",
+            "value": null
+          },
+          "Técnicas compositivas relativas a la armonía": {
+            "id": "275cb200-2f06-48ca-957e-977723ef26dc",
+            "value": null
+          }
+        },
+        "Símbolos y convenciones gráficas de la notación musical relativos a la dimensión espacial de la música": {
+          "id": "305b9aea-b65d-4d3e-994d-d6f51b9c71d2",
+          "value": null
+        },
+        "Técnicas o sistemas empleados para cifrar acordes o codificar información armónica": {
+          "id": "531dafae-5ede-4456-b351-8cd2eb39bc7c",
+          "value": null
+        },
+        "Ornamentos, alteraciones o modificaciones relativas a la afinación de las alturas musicales lexicalizadas y/o convencionalizadas como indicaciones interpretativas": {
+          "id": "f398f476-346f-4867-b8c8-9efe8bbf9bb9",
+          "value": null
+        }
+      },
+      "Dimensión temporal del dato sonoro": {
+        "id": "2af29922-c6d8-4240-ad9f-39093c65370d",
+        "Figuras rítmicas, silencios y divisiones de las figuras rítmicas": {
+          "id": "5f961130-4947-4de7-9532-5b95858d9738",
+          "value": null
+        },
+        "Compases": {
+          "id": "c2404b89-9da2-4aac-ad9e-a21ec852ce23",
+          "Tipos de compases": {
+            "id": "44b94f4b-062f-4fb2-8b9a-51e1462e2691",
+            "value": null
+          },
+          "Tiempos del compás": {
+            "id": "386b9477-526b-4e12-b704-f6ab216c3e61",
+            "value": null
+          },
+          "Fenómenos contramétricos": {
+            "id": "0bb84400-e7b2-46d4-a57a-20f5902278fe",
+            "value": null
+          }
+        },
+        "Ornamentos, alteraciones o modificaciones relativas a las figuras musicales o el ritmo en general": {
+          "id": "d5687b56-108a-4e8a-aad3-022d8625d18a",
+          "value": null
+        },
+        "Combinaciones rítmicas": {
+          "id": "b468c0c8-8f7a-4863-9662-59f69c4ca6eb",
+          "Células rítmicas": {
+            "id": "6c8f45e8-81e5-4c5d-85b9-18b3996742bb",
+            "value": null
+          },
+          "Patrones y esquemas rítmicos o grooves": {
+            "id": "6f216993-9f7c-48eb-be08-601ce6ccf9ab",
+            "value": null
+          }
+        },
+        "Tempo musical": {
+          "id": "472e9754-542e-47b9-aac4-7f735f313e4f",
+          "Indicaciones metronómicas": {
+            "id": "9ce47983-7831-4c2b-a42d-414ef8e0d061",
+            "value": null
+          },
+          "Indicaciones discursivas de tempo y agógica": {
+            "id": "a5dfaf45-1e94-4e44-a4b3-420eb2e8507a",
+            "Movimiento uniforme": {
+              "id": "78ede68a-bf69-4b16-891b-7362364d83e1",
+              "value": null
+            },
+            "Aumento o disminución progresiva del movimiento": {
+              "id": "c3578079-f476-44e7-823b-2ca151e02404",
+              "value": null
+            },
+            "Suspensión de la regularidad del movimiento": {
+              "id": "0883444d-e085-43cc-912c-b0fca6bf47db",
+              "value": null
+            },
+            "Breve y súbito cambio en el movimiento": {
+              "id": "6ae57371-9e88-47c1-ad42-89f716950813",
+              "value": null
+            },
+            "Restablecimiento de la regularidad o vuelta al tiempo original": {
+              "id": "1a979d35-cc0d-4dd4-bcff-69a360c656a8",
+              "value": null
+            },
+            "Desvíos del pulso regular": {
+              "id": "f2712ec5-fc28-4129-bfc2-dc89323c34fb",
+              "value": null
+            }
+          }
+        },
+        "Símbolos y convenciones de la notación musical que codifican el ritmo musical": {
+          "id": "2d5a890d-f328-449c-a349-cab5c089e04a",
+          "value": null
+        }
+      },
+      "Dimensión espacio-temporal del dato sonoro aislado o en contexto": {
+        "id": "ca12090a-0d59-4de1-b73f-ff9b5387a675",
+        "Denominaciones de la acústica que describen la altura y el tiempo de las señales sonoras": {
+          "id": "dcaeb9b3-aceb-464c-b951-49ea9e7fff69",
+          "value": null
+        },
+        "Cadencias": {
+          "id": "a7c233db-f34e-468d-be01-97df621b0af4",
+          "value": null
+        },
+        "Progresiones": {
+          "id": "16008072-2d2a-48a6-985c-6f026022d18a",
+          "value": null
+        },
+        "Denominaciones relativas a la Melodía": {
+          "id": "d1852172-585d-42a9-85d3-4b1f84c973b2",
+          "Tipos de melodía según su extensión": {
+            "id": "23063b46-be84-40b3-831b-55d9b2e48bb8",
+            "value": null
+          },
+          "Tipos de melodía en relación con la escala o acorde": {
+            "id": "60c28bd6-6fa0-4789-83ad-e98d6d889ff2",
+            "value": null
+          },
+          "Tipos de melodía en relación con su propia estructura": {
+            "id": "343522fa-9428-4f30-95f1-a06f548e6e9e",
+            "value": null
+          },
+          "Tipos de melodía en relación con elementos extramusicales": {
+            "id": "5858eac2-9ff4-4d68-a22c-44ee03c7cdb0",
+            "value": null
+          },
+          "Ornamentos melódicos": {
+            "id": "97251a70-b473-4fa1-a359-10057c813466",
+            "value": null
+          },
+          "Melodías o secuencias individuadas": {
+            "id": "087c6b66-7e03-4fa3-812b-b32385028ef0",
+            "value": null
+          }
+        },
+        "Denominaciones relativas a la Textura": {
+          "id": "ea3ef095-1181-4f55-be1c-061d869bd136",
+          "Las partes, voces o funciones musicales": {
+            "id": "47e461c7-08ef-409d-96f6-07c564da7f89",
+            "value": null
+          },
+          "La manera en que se relacionan las partes musicales": {
+            "id": "74342c4b-1caa-44d5-a911-102e4a627a80",
+            "value": null
+          }
+        },
+        "Símbolos y convenciones gráficas de la notación musical relativas a la dimension espacio-temporal del dato sonoro": {
+          "id": "f367dbbc-a971-4bbb-a3e3-5ccbb7206384",
+          "value": null
+        }
+      },
+      "Otras dimensiones del dato sonoro aislado o en contexto": {
+        "id": "4f6fb270-fb0b-4f16-b7b9-5b3838cdf1fc",
+        "Intensidad": {
+          "id": "959bdd25-035a-4ebf-a4a0-0c49aacc0a74",
+          "value": null
+        },
+        "Timbre": {
+          "id": "1da77dfe-095f-4c7e-bb73-e7f11150fa32",
+          "value": null
+        },
+        "Carácter": {
+          "id": "f460d127-f946-4939-b40e-e305755a7627",
+          "Denominaciones relativas al carácter general de una obra o pasaje": {
+            "id": "deef9227-fb66-4d4a-9f66-456d268c8371",
+            "value": null
+          },
+          "Denominaciones relativas al fraseo o la articulación musical": {
+            "id": "0c4f9997-daaf-46a8-bbbf-dad1c1af92d1",
+            "value": null
+          }
+        },
+        "Símbolos y convenciones gráficas relativas a otras dimensiones del dato sonoro": {
+          "id": "c14b8a07-85a9-444a-811a-e5720c2350a8",
+          "value": null
+        }
+      },
+      "Estilos musicales": {
+        "id": "9a9b7385-34de-48f6-86a6-426631dede80",
+        "Variables en el diseño semántico de los términos relativos a los estilos musicales": {
+          "id": "ff2cda30-bba4-4c41-b964-4caae338eeb3",
+          "La dimensión espacial (armonía)": {
+            "id": "bc69b141-c1cf-4715-a46c-36553ef6c2f0",
+            "value": null
+          },
+          "La dimensión temporal (ritmo y tempo)": {
+            "id": "d9a076d9-88b8-4cf8-96ec-b35889cec17e",
+            "value": null
+          },
+          "La dimensión espacio-temporal (melodía, ritmo armónico y textura)": {
+            "id": "d9d126ad-aea0-4159-84ed-2aeb97b05004",
+            "value": null
+          },
+          "Otras dimensiones (timbre)": {
+            "id": "40180958-79e1-4e49-b568-2eb75e072c32",
+            "value": null
+          },
+          "La forma": {
+            "id": "65b5c5aa-d6eb-4db7-95c6-6e18ba860b53",
+            "value": null
+          },
+          "Lo extramusical": {
+            "id": "b5f3120a-5819-48a0-9272-15386ef1cf59",
+            "value": null
+          }
+        }
+      },
+      "Continentes de la expresión musical: formas y unidades": {
+        "id": "b5afa5d5-75a9-4600-bacb-3aa2738147c1",
+        "Continentes con morfología especificada o formas musicales estructuradas": {
+          "id": "d190465e-8f40-4f62-a452-c0c0de127e91",
+          "La dimensión espacial en las formas musicales": {
+            "id": "8c420485-b581-48d8-a187-1592de776e60",
+            "value": null
+          },
+          "La dimensión temporal en las formas musicales": {
+            "id": "dc2dceef-e544-4600-9090-9a7be89e1970",
+            "value": null
+          },
+          "La dimensión espacio-temporal en las formas musicales": {
+            "id": "4f8b8f1e-be13-4335-bd4a-200a23c44d6d",
+            "value": null
+          },
+          "Lo extramusical en las formas musicales (elementos textuales, coreográficos, etc.)": {
+            "id": "8925aebc-5ebe-4767-b6a7-793230fad692",
+            "value": null
+          }
+        },
+        "Continentes sin morfología especificada o unidades musicales": {
+          "id": "352ad966-958d-4eda-aaf2-149ec0d5bee7",
+          "Unidades musicales según efectivos musicales": {
+            "id": "758eceaf-6d44-4917-b88a-29112726f7c6",
+            "value": null
+          },
+          "Unidades musicales según su extensión o disposición interna": {
+            "id": "9b6aa8c9-2035-42c9-9159-40c23dcb3ac3",
+            "value": null
+          },
+          "Lo extramusical en las unidades musicales": {
+            "id": "5091bdeb-dcc9-4657-859e-13cf1dcf8842",
+            "value": null
+          }
+        },
+        "Unidades musicales banalizadas": {
+          "id": "7c93fc93-1a15-461b-9962-4165a39df550",
+          "value": null
+        },
+        "Segmentaciones de los continentes musicales": {
+          "id": "47c28ea6-ab3e-4bb3-b530-b876ea5962e7",
+          "value": null
+        },
+        "Símbolos y convenciones gráficas de la notación musical relativas a la segmentación de los continentes": {
+          "id": "8d6f079b-3092-4099-982b-607bcacc88af",
+          "value": null
+        }
+      },
+      "Géneros musicales": {
+        "id": "0d53aa9e-6a4d-42a5-a996-19b9f94a739b",
+        "Los géneros como entidades multidimensionales": {
+          "id": "23b15da9-e078-4daf-822e-4e96c61c5f0a",
+          "value": null
+        },
+        "Género como término comodín": {
+          "id": "152d4b1b-4f2a-43d4-9842-119f73dffb03",
+          "Intercambiable con estilo": {
+            "id": "54e48e8b-3c32-43a6-b430-3dd973965c64",
+            "value": null
+          },
+          "Intercambiable con forma/continente": {
+            "id": "24e7de55-6cff-4ebb-a000-732d2dbc2655",
+            "value": null
+          },
+          "Intercambiable con plantilla/medios musicales": {
+            "id": "c5576a2c-c145-46b9-a40b-04c55cce4391",
+            "value": null
+          }
+        },
+        "Género como término superordinado": {
+          "id": "e55f5478-5ee7-46a9-8c6b-0c23d4a793e3",
+          "value": null
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        .error-message {
+            color: red;
+            margin-top: 1rem;
+            display: none;
+        }
+        #hierarchy-network {
+            width: 400px;
+            height: 200px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Iniciar Sesión</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Iniciar Sesión</button>
+            <div id="errorMessage" class="error-message"></div>
+        </form>
+    </div>
+    
+    <div id="hierarchy-network"></div>
+
+    <script>
+        // Datos de usuarios y jerarquía
+        const users = [
+            { username: 'system', is_superuser: true, created_by: null },
+            { username: 'uno', is_superuser: true, created_by: 'system' },
+            { username: 'USAL', is_superuser: true, created_by: 'uno' },
+            { username: 'UR', is_superuser: true, created_by: 'uno' },
+            { username: 'UCM', is_superuser: true, created_by: 'uno' },
+            { username: 'iss', is_superuser: false, created_by: 'UCM' }
+        ];
+
+        // Crear nodos y enlaces
+        const nodes = new vis.DataSet(
+            users.map(user => ({
+                id: user.username,
+                label: user.username,
+                color: user.is_superuser ? '#1a73e8' : '#34a853',
+                font: { color: 'white' }
+            }))
+        );
+
+        const edges = new vis.DataSet(
+            users.filter(user => user.created_by)
+                .map(user => ({
+                    from: user.created_by,
+                    to: user.username,
+                    arrows: 'to'
+                }))
+        );
+
+        // Configuración del gráfico
+        const container = document.getElementById('hierarchy-network');
+        const data = {
+            nodes: nodes,
+            edges: edges
+        };
+        const options = {
+            layout: {
+                hierarchical: {
+                    direction: 'UD',
+                    sortMethod: 'directed',
+                    nodeSpacing: 50,
+                    levelSeparation: 50
+                }
+            },
+            nodes: {
+                shape: 'box',
+                margin: 5,
+                borderWidth: 1,
+                shadow: true,
+                size: 20,
+                font: {
+                    size: 12
+                }
+            },
+            edges: {
+                width: 1,
+                color: { color: '#999999' }
+            }
+        };
+
+        // Crear la red
+        const network = new vis.Network(container, data, options);
+
+        // Manejo del formulario de login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Guardar información del usuario en sessionStorage
+                    sessionStorage.setItem('user', JSON.stringify(data.user));
+                    // Redirigir al dashboard
+                    window.location.href = data.redirect;
+                } else {
+                    const errorMessage = document.getElementById('errorMessage');
+                    errorMessage.textContent = data.detail;
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
