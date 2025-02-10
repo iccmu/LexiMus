@@ -1,0 +1,31 @@
+{
+  "id": "c8e56f23-9f4a-5g6b-c234-567890bcdefg",
+  "Clasificación de Cocinas del Mundo": {
+    "id": "d2e3f4g5-6h7i-8j9k-0l1m-nopqrstuvwxy",
+    "Técnicas Culinarias": {
+      "id": "ggg12345-6789-abcd-efgh-ijklmnopqrst",
+      "Métodos de Cocción": {
+        "id": "hhh98765-4321-zyxw-vuts-rqponmlkjihg",
+        "Calor Seco": {
+          "id": "iii11111-2222-3333-4444-555555555555",
+          "value": null
+        },
+        "Calor Húmedo": {
+          "id": "jjj22222-3333-4444-5555-666666666666",
+          "value": null
+        }
+      },
+      "Preparaciones": {
+        "id": "kkk33333-4444-5555-6666-777777777777",
+        "Cortes": {
+          "id": "lll44444-5555-6666-7777-888888888888",
+          "value": null
+        },
+        "Marinados": {
+          "id": "mmm55555-6666-7777-8888-999999999999",
+          "value": null
+        }
+      }
+    }
+  }
+}

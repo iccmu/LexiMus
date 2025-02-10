@@ -74,8 +74,24 @@
         .upload-form {
             margin-top: 20px;
             display: flex;
+            flex-direction: column;
             gap: 10px;
             flex-shrink: 0;
+        }
+
+        .upload-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .upload-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .file-input {
+            flex: 1;
+            padding: 8px;
         }
 
         .url-input {
@@ -186,9 +202,9 @@
 
         .node-item {
             background: #ffffff;
-            padding: 8px 12px;
+            padding: 4px 8px;
             border-radius: 6px;
-            margin: 4px 0;
+            margin: 2px 0;
             transition: all 0.3s ease;
             cursor: pointer;
             border-left: 3px solid #3498db;
@@ -339,6 +355,7 @@
             margin-bottom: 15px;
             overflow: hidden;
             transition: all 0.3s ease;
+            margin-top: 5px;
         }
 
         .json-list-header {
@@ -375,8 +392,8 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            padding: 20px;
+            margin: 5px 0 10px 0;
+            padding: 10px;
             transition: all 0.3s ease;
         }
 
@@ -395,11 +412,41 @@
         }
 
         .json-card .hierarchy-container {
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 10px;
+            padding: 5px;
             background-color: #f8f9fa;
             border-radius: 4px;
+        }
+
+        #jsonCards {
+            padding: 5px 10px;
+        }
+
+        .flying-json {
+            position: fixed;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            pointer-events: none;
+            z-index: 1000;
+            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+            opacity: 1;
+            transform-origin: center;
+        }
+
+        .flying-json.animate {
+            transform: scale(0.3);
+            opacity: 0;
+        }
+
+        @keyframes flash {
+            0% { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            50% { box-shadow: 0 2px 20px rgba(52, 152, 219, 0.5); }
+            100% { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        }
+
+        .json-list.highlight {
+            animation: flash 1s ease-out;
         }
     </style>
 </head>
@@ -431,11 +478,16 @@
         </div>
         <div class="json">
             <div class="upload-form">
-                <input type="text" id="jsonUrl" 
-                       placeholder="Introduce la URL del JSON (ejemplo: https://raw.githubusercontent.com/...)" 
-                       class="url-input">
-                <button onclick="uploadJson()" class="upload-btn">Visualizar JSON</button>
-                <button onclick="validateAndSaveJson()" class="upload-btn" style="background-color: #28a745;">Validar y Guardar</button>
+                <div class="upload-options">
+                    <input type="text" id="jsonUrl" 
+                           placeholder="Introduce la URL del JSON (ejemplo: https://raw.githubusercontent.com/...)" 
+                           class="url-input">
+                    <input type="file" id="jsonFile" accept=".json" class="file-input">
+                </div>
+                <div class="upload-buttons">
+                    <button onclick="uploadJson()" class="upload-btn">Visualizar JSON</button>
+                    <button onclick="validateAndSaveJson()" class="upload-btn" style="background-color: #28a745;">Validar y Guardar</button>
+                </div>
             </div>
             <div id="json-preview"></div>
         </div>
@@ -492,42 +544,44 @@
             }
             
             const urlInput = document.getElementById('jsonUrl');
+            const fileInput = document.getElementById('jsonFile');
             const previewDiv = document.getElementById('json-preview');
             
             try {
-                const user = JSON.parse(sessionStorage.getItem('user'));
-                if (!user) {
-                    throw new Error('Usuario no autenticado');
-                }
-
-                // Hacer la petición GET directamente a la URL proporcionada
-                const response = await fetch(urlInput.value);
-                const jsonData = await response.json();
+                let jsonData;
                 
-                if (response.ok) {
-                    previewDiv.innerHTML = '';
-                    const titleDiv = document.createElement('div');
-                    titleDiv.className = 'json-title';
-                    previewDiv.appendChild(titleDiv);
-
-                    const hierarchyContainer = document.createElement('div');
-                    hierarchyContainer.className = 'hierarchy-container';
-
-                    // Procesar el JSON directamente sin esperar la estructura data
-                    const dataToProcess = jsonData.data || jsonData;
-                    processHierarchy(dataToProcess, hierarchyContainer);
-                    previewDiv.appendChild(hierarchyContainer);
-
-                    // Expandir el primer nivel por defecto
-                    const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
-                    firstLevelItems.forEach(item => {
-                        item.classList.add('expanded');
-                        item.querySelector('.node-item')?.classList.add('expanded');
-                    });
-
+                if (fileInput.files.length > 0) {
+                    // Leer archivo local
+                    const file = fileInput.files[0];
+                    const text = await file.text();
+                    jsonData = JSON.parse(text);
+                } else if (urlInput.value) {
+                    // Hacer la petición GET a la URL proporcionada
+                    const response = await fetch(urlInput.value);
+                    jsonData = await response.json();
                 } else {
-                    previewDiv.innerHTML = `<p style="color: red;">Error: No se pudo cargar el JSON</p>`;
+                    throw new Error('Por favor, proporciona un archivo JSON o una URL');
                 }
+                
+                previewDiv.innerHTML = '';
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'json-title';
+                previewDiv.appendChild(titleDiv);
+
+                const hierarchyContainer = document.createElement('div');
+                hierarchyContainer.className = 'hierarchy-container';
+
+                const dataToProcess = jsonData.data || jsonData;
+                processHierarchy(dataToProcess, hierarchyContainer);
+                previewDiv.appendChild(hierarchyContainer);
+
+                // Expandir el primer nivel por defecto
+                const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
+                firstLevelItems.forEach(item => {
+                    item.classList.add('expanded');
+                    item.querySelector('.node-item')?.classList.add('expanded');
+                });
+
             } catch (error) {
                 previewDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
             }
@@ -587,18 +641,21 @@
             }
             
             const urlInput = document.getElementById('jsonUrl');
-            const previewDiv = document.getElementById('json-preview');
+            const fileInput = document.getElementById('jsonFile');
             const validationStatus = document.getElementById('validationStatus');
+            const jsonPreview = document.getElementById('json-preview');
             
             try {
-                const user = JSON.parse(sessionStorage.getItem('user'));
-                if (!user) {
-                    throw new Error('Usuario no autenticado');
-                }
-
                 const formData = new FormData();
-                formData.append('url', urlInput.value);
                 formData.append('user_data', JSON.stringify(user));
+
+                if (fileInput.files.length > 0) {
+                    formData.append('file', fileInput.files[0]);
+                } else if (urlInput.value) {
+                    formData.append('url', urlInput.value);
+                } else {
+                    throw new Error('Por favor, proporciona un archivo JSON o una URL');
+                }
 
                 const response = await fetch('/upload-json', {
                     method: 'POST',
@@ -608,18 +665,49 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Obtener el primer elemento del JSON
-                    const jsonData = result.data;
-                    const firstKey = Object.keys(jsonData)[0];
-                    const firstValue = jsonData[firstKey];
+                    // Crear elemento volador con el contenido del preview
+                    const previewRect = jsonPreview.getBoundingClientRect();
+                    const jsonListRect = document.getElementById('jsonList').getBoundingClientRect();
                     
-                    // Mostrar el estado de validación
+                    const flyingElement = document.createElement('div');
+                    flyingElement.className = 'flying-json';
+                    flyingElement.innerHTML = jsonPreview.innerHTML;
+                    
+                    // Posicionar el elemento volador sobre el preview
+                    flyingElement.style.width = `${previewRect.width}px`;
+                    flyingElement.style.height = `${previewRect.height}px`;
+                    flyingElement.style.left = `${previewRect.left}px`;
+                    flyingElement.style.top = `${previewRect.top}px`;
+                    
+                    document.body.appendChild(flyingElement);
+                    
+                    // Iniciar animación
+                    setTimeout(() => {
+                        flyingElement.style.left = `${jsonListRect.left}px`;
+                        flyingElement.style.top = `${jsonListRect.top}px`;
+                        flyingElement.classList.add('animate');
+                        
+                        // Destacar la sección de JSONs guardados
+                        document.getElementById('jsonList').classList.add('highlight');
+                    }, 100);
+                    
+                    // Limpiar después de la animación
+                    setTimeout(() => {
+                        flyingElement.remove();
+                        document.getElementById('jsonList').classList.remove('highlight');
+                        
+                        // Limpiar los campos y cargar los JSONs guardados
+                        urlInput.value = '';
+                        fileInput.value = '';
+                        jsonPreview.innerHTML = '';
+                        loadSavedJsons();
+                    }, 1000);
+
                     const jsonName = document.getElementById('jsonName');
+                    const firstKey = Object.keys(result.data)[0];
+                    const firstValue = result.data[firstKey];
                     jsonName.textContent = `${firstKey}: ${typeof firstValue === 'object' ? 'Objeto' : firstValue}`;
-                    validationStatus.style.display = 'flex';  // Asegurarse de que se muestre
-                    
-                    alert('JSON validado y guardado correctamente en: ' + result.saved_path);
-                    await loadSavedJsons(); // Recargar la lista después de guardar
+                    validationStatus.style.display = 'flex';
                 } else {
                     throw new Error(result.detail || 'Error al guardar el JSON');
                 }
@@ -667,11 +755,6 @@
                     const card = document.createElement('div');
                     card.className = 'json-card';
                     
-                    // Crear contenedor para el título y contenido
-                    const titleDiv = document.createElement('div');
-                    titleDiv.className = 'json-title';
-                    titleDiv.textContent = file.filename;
-                    
                     const hierarchyContainer = document.createElement('div');
                     hierarchyContainer.className = 'hierarchy-container';
                     
@@ -682,7 +765,6 @@
                     // Procesar la jerarquía del JSON
                     processHierarchy(jsonData, hierarchyContainer);
                     
-                    card.appendChild(titleDiv);
                     card.appendChild(hierarchyContainer);
                     
                     // Expandir el primer nivel por defecto

@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import pandas as pd
@@ -69,65 +69,65 @@ async def login(request: Request, username: str = Form(...), password: str = For
     raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
 @app.post("/upload-json")
-async def upload_json(request: Request, url: str = Form(...)):
+async def upload_json(
+    file: Optional[UploadFile] = None,
+    url: Optional[str] = Form(None),
+    user_data: str = Form(...)
+):
     try:
-        # Obtener y verificar el token o información del usuario
-        form_data = await request.form()
-        user_data = form_data.get("user_data")
-        
-        if not user_data:
-            raise HTTPException(status_code=401, detail="Usuario no autenticado")
-        
-        # Convertir la cadena JSON a diccionario
         user = json.loads(user_data)
         
-        # Verificar si es superusuario
-        if not user.get('is_superuser'):
-            raise HTTPException(status_code=403, detail="Acceso no autorizado: Se requiere ser superusuario")
-
-        # Proceder con la carga del JSON si es superusuario
-        response = requests.get(url)
-        if response.status_code == 200:
-            json_data = response.json()
-            
-            # Obtener el primer elemento que no sea 'id'
-            first_key = next((key for key in json_data.keys() if key != 'id'), None)
-            if not first_key:
-                first_key = "default"  # En caso de que no haya elementos o solo haya 'id'
-            first_value = json_data[first_key]
-            
-            # Crear un nombre de archivo basado en el primer elemento
-            safe_name = str(first_value)[:30] if not isinstance(first_value, dict) else first_key
-            safe_name = "".join(c if c.isalnum() or c in "._- " else "_" for c in safe_name).strip()
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            json_filename = f"{safe_name}_{timestamp}.json"
-            
-            # Crear path para guardar el JSON
-            base_path = "user_folders"
-            user_folder = os.path.join(base_path, user['username'])
-            
-            # Verificar que la carpeta existe
-            if not os.path.exists(user_folder):
-                raise HTTPException(status_code=400, detail="Carpeta de usuario no encontrada")
-            
-            json_path = os.path.join(user_folder, json_filename)
-            
-            # Guardar el JSON en la carpeta del usuario
-            with open(json_path, 'w', encoding='utf-8') as f:
-                json.dump(json_data, f, ensure_ascii=False, indent=2)
-            
-            return {
-                "success": True, 
-                "data": json_data,
-                "saved_path": json_path
-            }
+        # Determinar la ruta correcta basada en el tipo de usuario
+        base_path = "user_folders"
+        df = pd.read_csv('users.csv')
+        user_info = df[df['username'] == user['username']].iloc[0]
+        
+        if bool(user_info['is_superuser']):
+            # Si es superusuario, usar su propia carpeta
+            save_folder = os.path.join(base_path, user['username'])
         else:
-            raise HTTPException(status_code=400, detail="No se pudo obtener el JSON de la URL")
-            
+            # Si es usuario normal, usar la carpeta de su creador
+            save_folder = os.path.join(base_path, user_info['created_by'], user['username'])
+        
+        # Crear directorio si no existe
+        os.makedirs(save_folder, exist_ok=True)
+        
+        # Procesar archivo o URL
+        if file:
+            # Leer contenido del archivo
+            content = await file.read()
+            json_data = json.loads(content)
+            filename = file.filename
+        elif url:
+            # Descargar JSON de la URL
+            response = requests.get(url)
+            response.raise_for_status()
+            json_data = response.json()
+            filename = url.split('/')[-1] or 'downloaded.json'
+        else:
+            raise HTTPException(status_code=400, detail="Se requiere un archivo o URL")
+
+        # Asegurarse de que el archivo termine en .json
+        if not filename.endswith('.json'):
+            filename += '.json'
+
+        # Guardar el JSON en la ubicación correcta
+        save_path = os.path.join(save_folder, filename)
+        with open(save_path, 'w', encoding='utf-8') as f:
+            json.dump(json_data, f, indent=2, ensure_ascii=False)
+
+        return JSONResponse({
+            "message": "JSON guardado correctamente",
+            "saved_path": save_path,
+            "data": json_data
+        })
+
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Error al procesar la información del usuario")
+        raise HTTPException(status_code=400, detail="JSON inválido")
+    except requests.RequestException as e:
+        raise HTTPException(status_code=400, detail=f"Error al descargar el JSON: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/list-jsons/{username}")
 async def list_jsons(username: str):
