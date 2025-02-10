@@ -206,6 +206,88 @@ async def get_json_content(filename: str, request: Request):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.get("/edit-json/{filename}", response_class=HTMLResponse)
+async def edit_json(request: Request, filename: str):
+    return templates.TemplateResponse("edit-json.html", {"request": request})
+
+@app.get("/add-taxonomy/{filename}", response_class=HTMLResponse)
+async def add_taxonomy(request: Request, filename: str):
+    return templates.TemplateResponse("add-taxonomy.html", {"request": request})
+
+@app.post("/update-json/{filename}")
+async def update_json(filename: str, request: Request):
+    try:
+        data = await request.json()
+        json_content = data.get('content')
+        username = data.get('user')
+        
+        # Validar el JSON
+        try:
+            json_data = json.loads(json_content)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="JSON inválido")
+        
+        # Buscar el archivo en todas las carpetas de usuario
+        base_path = "user_folders"
+        file_found = False
+        
+        for root, dirs, files in os.walk(base_path):
+            if filename in files:
+                file_path = os.path.join(root, filename)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(json_data, f, indent=2, ensure_ascii=False)
+                file_found = True
+                break
+        
+        if not file_found:
+            raise HTTPException(status_code=404, detail="Archivo no encontrado")
+        
+        return {"message": "JSON actualizado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/save-taxonomy/{filename}")
+async def save_taxonomy(filename: str, request: Request):
+    try:
+        # Obtener el JSON-LD de la solicitud
+        json_ld = await request.json()
+        
+        # Obtener el JSON actual
+        base_path = "user_folders"
+        file_path = None
+        
+        # Buscar el archivo en todas las carpetas de usuario
+        for root, dirs, files in os.walk(base_path):
+            if filename in files:
+                file_path = os.path.join(root, filename)
+                break
+        
+        if not file_path:
+            raise HTTPException(status_code=404, detail="Archivo no encontrado")
+        
+        # Leer el JSON actual
+        with open(file_path, 'r', encoding='utf-8') as f:
+            current_json = json.load(f)
+        
+        # Añadir o actualizar la sección de taxonomías
+        if '@context' not in current_json:
+            current_json['@context'] = json_ld['@context']
+        
+        if 'taxonomies' not in current_json:
+            current_json['taxonomies'] = []
+        
+        # Añadir la nueva taxonomía
+        current_json['taxonomies'].append(json_ld)
+        
+        # Guardar el JSON actualizado
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(current_json, f, indent=2, ensure_ascii=False)
+        
+        return {"message": "Taxonomía guardada correctamente"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Crear las carpetas al iniciar la aplicación
 @app.on_event("startup")
 async def startup_event():

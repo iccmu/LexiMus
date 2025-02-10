@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Taxonomía</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .json-preview {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .taxonomy-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .taxonomy-section {
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .taxonomy-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        .save-btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .save-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Añadir los estilos del sistema de jerarquías */
+        .json-hierarchy {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .json-hierarchy li {
+            margin: 5px 0;
+        }
+
+        .node-item {
+            background: #ffffff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 3px solid #3498db;
+            position: relative;
+            padding-right: 30px;
+        }
+
+        .node-item:hover {
+            transform: translateX(5px);
+            background: #f0f0f0;
+        }
+
+        .node-item.has-children {
+            border-left: 3px solid #2ecc71;
+        }
+
+        .key {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .value {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .json-hierarchy ul {
+            position: relative;
+            display: none;
+            padding-left: 20px;
+        }
+
+        .json-hierarchy ul::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+
+        .json-hierarchy li.expanded > ul {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .node-item.has-children::after {
+            content: '▸';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.3s ease;
+        }
+
+        .node-item.has-children.expanded::after {
+            transform: translateY(-50%) rotate(90deg);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Diferentes niveles de profundidad */
+        .json-hierarchy .node-item {
+            border-left-width: 3px;
+        }
+
+        .json-hierarchy ul .node-item {
+            border-left-color: #e74c3c;  /* Rojo */
+        }
+
+        .json-hierarchy ul ul .node-item {
+            border-left-color: #f1c40f;  /* Amarillo */
+        }
+
+        .json-hierarchy ul ul ul .node-item {
+            border-left-color: #9b59b6;  /* Morado */
+        }
+
+        .json-hierarchy ul ul ul ul .node-item {
+            border-left-color: #2ecc71;  /* Verde */
+        }
+
+        .json-hierarchy ul ul ul ul ul .node-item {
+            border-left-color: #e67e22;  /* Naranja */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <h2>Añadir Taxonomía - <span id="filename"></span></h2>
+            <button class="back-btn" onclick="window.location.href='/dashboard'">Volver</button>
+        </div>
+
+        <div class="json-preview" id="jsonPreview">
+            <!-- Aquí se mostrará el JSON actual -->
+        </div>
+
+        <div class="taxonomy-form">
+            <div class="taxonomy-section">
+                <h3>Nueva Taxonomía</h3>
+                <input type="text" class="taxonomy-input" placeholder="Nombre de la taxonomía">
+                <textarea class="taxonomy-input" rows="4" placeholder="Descripción de la taxonomía"></textarea>
+                <input type="text" class="taxonomy-input" placeholder="Palabras clave (separadas por comas)">
+            </div>
+
+            <div class="taxonomy-section">
+                <h3>Relaciones</h3>
+                <select class="taxonomy-input">
+                    <option value="">Seleccionar tipo de relación</option>
+                    <option value="parent">Padre</option>
+                    <option value="child">Hijo</option>
+                    <option value="related">Relacionado</option>
+                </select>
+                <input type="text" class="taxonomy-input" placeholder="Buscar taxonomía existente">
+                <!-- Aquí se mostrarán las taxonomías relacionadas -->
+            </div>
+        </div>
+
+        <button class="save-btn" onclick="saveTaxonomy()">Guardar Taxonomía</button>
+    </div>
+
+    <script>
+        // Verificar si el usuario está autenticado
+        if (!sessionStorage.getItem('user')) {
+            window.location.href = '/';
+        }
+
+        // Obtener el nombre del archivo de la URL
+        const filename = window.location.pathname.split('/').pop();
+        document.getElementById('filename').textContent = filename;
+
+        function processHierarchy(data, container, level = 0) {
+            const ul = document.createElement('ul');
+            ul.className = 'json-hierarchy';
+            ul.style.paddingLeft = level > 0 ? '20px' : '0';
+
+            Object.entries(data).forEach(([key, value]) => {
+                if (key === 'id') return;
+
+                const li = document.createElement('li');
+                const nodeItem = document.createElement('div');
+                nodeItem.className = 'node-item';
+
+                const keySpan = document.createElement('span');
+                keySpan.className = 'key';
+                keySpan.textContent = key;
+
+                nodeItem.appendChild(keySpan);
+
+                if (typeof value === 'object' && value !== null) {
+                    nodeItem.classList.add('has-children');
+                    
+                    nodeItem.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const parentLi = this.parentElement;
+                        parentLi.classList.toggle('expanded');
+                        this.classList.toggle('expanded');
+                    });
+
+                    li.appendChild(nodeItem);
+                    processHierarchy(value, li, level + 1);
+                } else {
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'value';
+                    valueSpan.textContent = value === null ? 
+                        ': ¡Has llegado al final de la rama!' : 
+                        `: ${value}`;
+                    nodeItem.appendChild(valueSpan);
+                    li.appendChild(nodeItem);
+                }
+
+                ul.appendChild(li);
+            });
+
+            container.appendChild(ul);
+        }
+
+        async function loadJsonContent() {
+            try {
+                const response = await fetch(`/get-json-content/${filename}`);
+                const data = await response.json();
+                const jsonPreview = document.getElementById('jsonPreview');
+                jsonPreview.innerHTML = ''; // Limpiar el contenido anterior
+
+                // Crear contenedor para la jerarquía
+                const hierarchyContainer = document.createElement('div');
+                hierarchyContainer.className = 'hierarchy-container';
+                
+                // Procesar la jerarquía del JSON
+                processHierarchy(data, hierarchyContainer);
+                
+                jsonPreview.appendChild(hierarchyContainer);
+                
+                // Expandir el primer nivel por defecto
+                const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
+                firstLevelItems.forEach(item => {
+                    item.classList.add('expanded');
+                    item.querySelector('.node-item')?.classList.add('expanded');
+                });
+            } catch (error) {
+                console.error('Error loading JSON:', error);
+                document.getElementById('jsonPreview').innerHTML = `
+                    <p style="color: red;">Error al cargar el JSON: ${error.message}</p>
+                `;
+            }
+        }
+
+        async function saveTaxonomy() {
+            const taxonomyName = document.querySelector('input[placeholder="Nombre de la taxonomía"]').value;
+            const taxonomyDescription = document.querySelector('textarea[placeholder="Descripción de la taxonomía"]').value;
+            const keywords = document.querySelector('input[placeholder="Palabras clave (separadas por comas)"]').value.split(',').map(k => k.trim());
+            const relationType = document.querySelector('select').value;
+            const relatedTaxonomy = document.querySelector('input[placeholder="Buscar taxonomía existente"]').value;
+
+            // Crear el contexto JSON-LD
+            const jsonLd = {
+                "@context": {
+                    "@vocab": "http://schema.org/",
+                    "skos": "http://www.w3.org/2004/02/skos/core#",
+                    "dct": "http://purl.org/dc/terms/",
+                    "taxonomy": "skos:Concept",
+                    "broader": "skos:broader",
+                    "narrower": "skos:narrower",
+                    "related": "skos:related",
+                    "prefLabel": "skos:prefLabel",
+                    "description": "dct:description",
+                    "keywords": "dct:subject"
+                },
+                "@type": "taxonomy",
+                "@id": `taxonomy:${encodeURIComponent(taxonomyName)}`,
+                "prefLabel": taxonomyName,
+                "description": taxonomyDescription,
+                "keywords": keywords
+            };
+
+            // Añadir relaciones según el tipo seleccionado
+            if (relationType && relatedTaxonomy) {
+                switch (relationType) {
+                    case 'parent':
+                        jsonLd.broader = `taxonomy:${encodeURIComponent(relatedTaxonomy)}`;
+                        break;
+                    case 'child':
+                        jsonLd.narrower = `taxonomy:${encodeURIComponent(relatedTaxonomy)}`;
+                        break;
+                    case 'related':
+                        jsonLd.related = `taxonomy:${encodeURIComponent(relatedTaxonomy)}`;
+                        break;
+                }
+            }
+
+            try {
+                const response = await fetch(`/save-taxonomy/${filename}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonLd)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al guardar la taxonomía');
+                }
+
+                const result = await response.json();
+                alert('Taxonomía guardada correctamente');
+                
+                // Recargar el JSON para mostrar los cambios
+                loadJsonContent();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar la taxonomía: ' + error.message);
+            }
+        }
+
+        // Función para validar que la taxonomía sigue el formato JSON-LD
+        function validateJsonLd(jsonLd) {
+            const requiredProperties = ['@context', '@type', '@id', 'prefLabel'];
+            for (const prop of requiredProperties) {
+                if (!(prop in jsonLd)) {
+                    throw new Error(`Falta la propiedad requerida: ${prop}`);
+                }
+            }
+            return true;
+        }
+
+        // Cargar el contenido del JSON al iniciar
+        loadJsonContent();
+    </script>
+</body>
+</html> 

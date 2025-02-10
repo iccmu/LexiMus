@@ -482,10 +482,10 @@
                     <input type="text" id="jsonUrl" 
                            placeholder="Introduce la URL del JSON (ejemplo: https://raw.githubusercontent.com/...)" 
                            class="url-input">
-                    <input type="file" id="jsonFile" accept=".json" class="file-input">
+                    <input type="file" id="jsonFile" accept=".json" class="file-input" onchange="uploadJson()">
                 </div>
                 <div class="upload-buttons">
-                    <button onclick="uploadJson()" class="upload-btn">Visualizar JSON</button>
+                    <button onclick="uploadJson()" class="upload-btn">Visualizar URL</button>
                     <button onclick="validateAndSaveJson()" class="upload-btn" style="background-color: #28a745;">Validar y Guardar</button>
                 </div>
             </div>
@@ -523,10 +523,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             const user = JSON.parse(sessionStorage.getItem('user'));
             const uploadForm = document.querySelector('.upload-form');
+            const jsonSection = document.querySelector('.json');
             
-            // Ocultar formulario de subida si no es superusuario
+            // Ocultar formulario de subida y sección json si no es superusuario
             if (!user.is_superuser) {
                 uploadForm.style.display = 'none';
+                jsonSection.style.display = 'none';
                 document.querySelector('.input-data').innerHTML = `
                     <h3>Área de Visualización</h3>
                     <p>Como usuario normal, puedes ver los JSONs subidos por tu superusuario: ${user.created_by}</p>
@@ -751,9 +753,62 @@
                     return;
                 }
 
-                for (const file of data.files) {
+                // Ordenar los archivos alfabéticamente por nombre
+                const sortedFiles = data.files.sort((a, b) => 
+                    a.filename.localeCompare(b.filename, undefined, {numeric: true, sensitivity: 'base'})
+                );
+
+                for (const file of sortedFiles) {
                     const card = document.createElement('div');
                     card.className = 'json-card';
+                    
+                    // Añadir header con título y botón de edición
+                    const cardHeader = document.createElement('div');
+                    cardHeader.className = 'json-card-header';
+                    cardHeader.style.display = 'flex';
+                    cardHeader.style.justifyContent = 'space-between';
+                    cardHeader.style.alignItems = 'center';
+                    cardHeader.style.marginBottom = '10px';
+
+                    const title = document.createElement('h4');
+                    title.textContent = file.filename;
+                    title.style.margin = '0';
+
+                    const buttonsContainer = document.createElement('div');
+                    buttonsContainer.style.display = 'flex';
+                    buttonsContainer.style.gap = '10px';
+
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Editar JSON';
+                    editButton.className = 'edit-btn';
+                    editButton.onclick = () => window.location.href = `/edit-json/${file.filename}`;
+                    editButton.style.cssText = `
+                        padding: 6px 12px;
+                        background-color: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    `;
+
+                    const taxonomyButton = document.createElement('button');
+                    taxonomyButton.textContent = 'Añadir Taxonomía';
+                    taxonomyButton.className = 'taxonomy-btn';
+                    taxonomyButton.onclick = () => window.location.href = `/add-taxonomy/${file.filename}`;
+                    taxonomyButton.style.cssText = `
+                        padding: 6px 12px;
+                        background-color: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    `;
+
+                    buttonsContainer.appendChild(editButton);
+                    buttonsContainer.appendChild(taxonomyButton);
+                    cardHeader.appendChild(title);
+                    cardHeader.appendChild(buttonsContainer);
+                    card.appendChild(cardHeader);
                     
                     const hierarchyContainer = document.createElement('div');
                     hierarchyContainer.className = 'hierarchy-container';

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar JSON</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .json-editor {
+            width: 100%;
+            height: 500px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-save {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-cancel {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Editar JSON: <span id="filename"></span></h1>
+            <div class="button-group">
+                <button class="btn btn-save" onclick="saveJson()">Guardar</button>
+                <button class="btn btn-cancel" onclick="goBack()">Cancelar</button>
+            </div>
+        </div>
+        <textarea id="jsonEditor" class="json-editor"></textarea>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        // Verificar autenticación
+        if (!sessionStorage.getItem('user')) {
+            window.location.href = '/';
+        }
+
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        if (!user.is_superuser) {
+            alert('Solo los superusuarios pueden editar JSONs');
+            window.location.href = '/dashboard';
+        }
+
+        // Obtener el nombre del archivo de la URL
+        const filename = window.location.pathname.split('/').pop();
+        document.getElementById('filename').textContent = filename;
+
+        // Cargar el contenido del JSON
+        async function loadJsonContent() {
+            try {
+                const response = await fetch(`/get-json-content/${filename}`);
+                const data = await response.json();
+                document.getElementById('jsonEditor').value = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 
+                    'Error al cargar el JSON: ' + error.message;
+            }
+        }
+
+        // Guardar cambios
+        async function saveJson() {
+            try {
+                const jsonContent = document.getElementById('jsonEditor').value;
+                // Validar que sea JSON válido
+                JSON.parse(jsonContent);
+
+                const response = await fetch(`/update-json/${filename}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: jsonContent,
+                        user: user.username
+                    })
+                });
+
+                if (response.ok) {
+                    alert('JSON guardado correctamente');
+                    window.location.href = '/dashboard';
+                } else {
+                    throw new Error('Error al guardar el JSON');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 
+                    'Error: ' + error.message;
+            }
+        }
+
+        function goBack() {
+            window.location.href = '/dashboard';
+        }
+
+        // Cargar el JSON al iniciar
+        loadJsonContent();
+    </script>
+</body>
+</html> 
