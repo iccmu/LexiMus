@@ -606,7 +606,7 @@
                         smooth: {
                             type: 'cubicBezier',
                             forceDirection: 'vertical',
-                            roundness: 0.2  // Menos curvatura para las líneas originales
+                            roundness: 0.2
                         },
                         color: {
                             color: '#2B7CE9'
@@ -625,23 +625,94 @@
                         },
                         shadow: true
                     },
+                    manipulation: {
+                        enabled: false
+                    },
+                    // Configurar interacción y zoom
                     interaction: {
                         dragNodes: true,
                         dragView: true,
                         zoomView: true,
-                        selectable: true,
-                        multiselect: true,
-                        selectConnectedEdges: false,  // No seleccionar aristas automáticamente
-                        hover: true,                  // Habilitar efecto hover
-                        hoverConnectedEdges: true     // Mostrar aristas conectadas al hacer hover
-                    },
-                    manipulation: {
-                        enabled: false
+                        hover: true
                     }
                 };
                 
                 network = new vis.Network(container, graphData, options);
                 let selectedNodes = [];
+                const GRID_SIZE = 50;
+                const MAX_X = 1000;
+                const MAX_Y = 1000;
+
+                // Fijar las posiciones iniciales y configurar el grid
+                network.once('stabilized', function() {
+                    const positions = network.getPositions();
+                    const levels = {};
+                    
+                    // Agrupar nodos por niveles
+                    Object.keys(positions).forEach(nodeId => {
+                        const y = positions[nodeId].y;
+                        if (!levels[y]) levels[y] = [];
+                        levels[y].push(nodeId);
+                    });
+
+                    // Distribuir los nodos horizontalmente en cada nivel
+                    Object.entries(levels).forEach(([y, nodeIds]) => {
+                        const levelWidth = nodeIds.length * GRID_SIZE;
+                        const startX = Math.max(-MAX_X, Math.min(MAX_X, -levelWidth / 2));
+                        
+                        nodeIds.forEach((nodeId, index) => {
+                            const xPos = Math.max(-MAX_X, Math.min(MAX_X, startX + (index * GRID_SIZE)));
+                            network.body.data.nodes.update({
+                                id: nodeId,
+                                fixed: {
+                                    x: true,
+                                    y: true
+                                },
+                                x: xPos,
+                                y: Math.max(-MAX_Y, Math.min(MAX_Y, parseFloat(y)))
+                            });
+                        });
+                    });
+
+                    // Ajustar el zoom para mostrar todos los nodos
+                    network.fit({
+                        animation: {
+                            duration: 1000,
+                            easingFunction: 'easeInOutQuad'
+                        }
+                    });
+                });
+
+                // Función para mantener los nodos dentro de los límites
+                function constrainPosition(position) {
+                    return {
+                        x: Math.max(-MAX_X, Math.min(MAX_X, position.x)),
+                        y: Math.max(-MAX_Y, Math.min(MAX_Y, position.y))
+                    };
+                }
+
+                // Manejar el movimiento de los nodos
+                network.on("dragEnd", function(params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        const position = network.getPosition(nodeId);
+                        const constrained = constrainPosition(position);
+                        const snapped = {
+                            x: Math.round(constrained.x / GRID_SIZE) * GRID_SIZE,
+                            y: constrained.y
+                        };
+                        
+                        network.body.data.nodes.update({
+                            id: nodeId,
+                            x: snapped.x,
+                            y: snapped.y,
+                            fixed: {
+                                x: true,
+                                y: true
+                            }
+                        });
+                    }
+                });
 
                 // Manejar clicks en los nodos
                 network.on('click', function(params) {
@@ -686,13 +757,12 @@
                             const relation = this.dataset.relation;
                             const [fromNode, toNode] = selectedNodes;
                             
-                            // Colores diferentes para cada tipo de relación
                             const relationColors = {
-                                'Inversa': '#FF4444',           // Rojo
-                                'Transitiva': '#33CC33',        // Verde
-                                'Simétrica': '#9933CC',         // Púrpura
-                                'Funcional': '#FF8C00',         // Naranja
-                                'Inversamente Funcional': '#00CED1'  // Turquesa
+                                'Inversa': '#FF4444',
+                                'Transitiva': '#33CC33',
+                                'Simétrica': '#9933CC',
+                                'Funcional': '#FF8C00',
+                                'Inversamente Funcional': '#00CED1'
                             };
 
                             graphData.edges.add({
@@ -711,16 +781,18 @@
                                 smooth: {
                                     enabled: true,
                                     type: 'curvedCW',
-                                    roundness: 0.5  // Mayor curvatura para las relaciones especiales
+                                    roundness: 0.5,
+                                    forceDirection: 'none'
                                 },
-                                width: 2,  // Línea más gruesa
-                                dashes: false,  // Línea sólida
+                                width: 2,
+                                dashes: false,
+                                physics: false,
                                 font: {
                                     size: 12,
                                     color: relationColors[relation] || '#666666',
                                     face: 'arial',
-                                    background: 'white',  // Fondo blanco para mejor legibilidad
-                                    strokeWidth: 2  // Borde alrededor del texto
+                                    background: 'white',
+                                    strokeWidth: 2
                                 }
                             });
                             
