@@ -383,6 +383,28 @@
             padding: 10px 0;
             flex-shrink: 0;
         }
+
+        /* Añadir estilos para el menú contextual */
+        .context-menu {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            padding: 8px 0;
+            z-index: 1000;
+        }
+
+        .context-menu-option {
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .context-menu-option:hover {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -412,6 +434,15 @@
                 <div id="mynetwork"></div>
             </div>
         </div>
+    </div>
+
+    <!-- Añadir el menú contextual -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-option" data-relation="Inversa">Inversa</div>
+        <div class="context-menu-option" data-relation="Transitiva">Transitiva</div>
+        <div class="context-menu-option" data-relation="Simétrica">Simétrica</div>
+        <div class="context-menu-option" data-relation="Funcional">Funcional</div>
+        <div class="context-menu-option" data-relation="Inversamente Funcional">Inversamente Funcional</div>
     </div>
 
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
@@ -561,14 +592,14 @@
                 const options = {
                     layout: {
                         hierarchical: {
-                            direction: 'UD',     // Up to Down
+                            direction: 'UD',
                             sortMethod: 'directed',
-                            nodeSpacing: 150,    // Espacio horizontal entre nodos
-                            levelSeparation: 150 // Espacio vertical entre niveles
+                            nodeSpacing: 150,
+                            levelSeparation: 150
                         }
                     },
                     physics: {
-                        enabled: false  // Desactivamos la física para mantener la posición jerárquica
+                        enabled: false
                     },
                     edges: {
                         arrows: 'to',
@@ -594,13 +625,92 @@
                         shadow: true
                     },
                     interaction: {
-                        dragNodes: false,  // Previene que los nodos sean arrastrados
-                        zoomView: true,    // Permite zoom
-                        dragView: true     // Permite arrastrar la vista
+                        dragNodes: true,
+                        dragView: true,
+                        zoomView: true,
+                        selectable: true,
+                        multiselect: true,
+                        selectConnectedEdges: false,  // No seleccionar aristas automáticamente
+                        hover: true,                  // Habilitar efecto hover
+                        hoverConnectedEdges: true     // Mostrar aristas conectadas al hacer hover
+                    },
+                    manipulation: {
+                        enabled: false
                     }
                 };
                 
                 network = new vis.Network(container, graphData, options);
+                let selectedNodes = [];
+
+                // Manejar clicks en los nodos
+                network.on('click', function(params) {
+                    if (params.nodes.length > 0) {
+                        const clickedNode = params.nodes[0];
+                        const nodeIndex = selectedNodes.indexOf(clickedNode);
+                        
+                        if (nodeIndex === -1) {
+                            selectedNodes.push(clickedNode);
+                            network.selectNodes(selectedNodes);
+                        } else {
+                            selectedNodes.splice(nodeIndex, 1);
+                            network.selectNodes(selectedNodes);
+                        }
+
+                        if (selectedNodes.length === 2) {
+                            const contextMenu = document.getElementById('contextMenu');
+                            const [pos1, pos2] = selectedNodes.map(nodeId => 
+                                network.getPositions([nodeId])[nodeId]);
+                            
+                            const centerX = (pos1.x + pos2.x) / 2;
+                            const centerY = (pos1.y + pos2.y) / 2;
+                            const canvasPos = network.canvasToDOM({x: centerX, y: centerY});
+                            
+                            contextMenu.style.left = `${canvasPos.x}px`;
+                            contextMenu.style.top = `${canvasPos.y}px`;
+                            contextMenu.style.display = 'block';
+                        } else {
+                            document.getElementById('contextMenu').style.display = 'none';
+                        }
+                    } else {
+                        selectedNodes = [];
+                        network.selectNodes([]);
+                        document.getElementById('contextMenu').style.display = 'none';
+                    }
+                });
+
+                // Manejar selección de relación desde el menú contextual
+                document.querySelectorAll('.context-menu-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        if (selectedNodes.length === 2) {
+                            const relation = this.dataset.relation;
+                            const [fromNode, toNode] = selectedNodes;
+                            
+                            graphData.edges.add({
+                                from: fromNode,
+                                to: toNode,
+                                label: relation,
+                                arrows: 'to',
+                                color: {
+                                    color: '#2B7CE9'
+                                }
+                            });
+                            
+                            document.getElementById('contextMenu').style.display = 'none';
+                            selectedNodes = [];
+                            network.selectNodes([]);
+                        }
+                    });
+                });
+
+                // Ocultar menú al hacer clic en el fondo
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.context-menu') && 
+                        !e.target.closest('.vis-network')) {
+                        document.getElementById('contextMenu').style.display = 'none';
+                        selectedNodes = [];
+                        network.selectNodes([]);
+                    }
+                });
                 
                 // Restaurar la posición de la vista si existía previamente
                 if (viewPosition) {

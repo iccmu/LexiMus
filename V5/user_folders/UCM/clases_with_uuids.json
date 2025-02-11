@@ -1,6 +1,6 @@
 {
   "id": "aee2b934-5393-4f8c-a3ef-c70405144215",
-  "Los nombres de la musica": {
+  "Los nombres de la música": {
     "id": "47283857-a7e7-4008-b72d-0c7c5c15ab01",
     "La faceta eventiva de la música": {
       "id": "ef7698fe-401f-4624-baaf-016615865c0c",
@@ -496,40 +496,5 @@
         }
       }
     }
-  },
-  "@context": {
-    "@vocab": "http://schema.org/",
-    "skos": "http://www.w3.org/2004/02/skos/core#",
-    "dct": "http://purl.org/dc/terms/",
-    "taxonomy": "skos:Concept",
-    "broader": "skos:broader",
-    "narrower": "skos:narrower",
-    "related": "skos:related",
-    "prefLabel": "skos:prefLabel",
-    "description": "dct:description",
-    "keywords": "dct:subject"
-  },
-  "taxonomies": [
-    {
-      "@context": {
-        "@vocab": "http://schema.org/",
-        "skos": "http://www.w3.org/2004/02/skos/core#",
-        "dct": "http://purl.org/dc/terms/",
-        "taxonomy": "skos:Concept",
-        "broader": "skos:broader",
-        "narrower": "skos:narrower",
-        "related": "skos:related",
-        "prefLabel": "skos:prefLabel",
-        "description": "dct:description",
-        "keywords": "dct:subject"
-      },
-      "@type": "taxonomy",
-      "@id": "taxonomy:",
-      "prefLabel": "",
-      "description": "",
-      "keywords": [
-        ""
-      ]
-    }
-  ]
+  }
 }
