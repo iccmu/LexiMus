@@ -10,15 +10,17 @@
             margin: 0;
             padding: 20px;
             background-color: #f0f2f5;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: none;
+            margin: 0;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
         }
 
         .top-bar {
@@ -26,8 +28,9 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #eee;
+            flex-shrink: 0;
         }
 
         .back-btn {
@@ -46,9 +49,151 @@
             margin-bottom: 20px;
         }
 
+        .content-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            flex: 1;
+            height: calc(100% - 70px); /* Altura total menos top-bar */
+            overflow: hidden;
+        }
+
+        .input-section {
+            flex: 0 0 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 10px;
+        }
+
+        #yamlInput {
+            flex: 1;
+            min-height: 0;
+            resize: none;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .button-error-container {
+            position: relative;
+            height: 38px; /* Altura fija igual a la del botón */
+            flex-shrink: 0;
+        }
+
+        .yaml-error {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            color: #dc3545;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            font-size: 0.9em;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 1;
+        }
+
+        .yaml-error.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        button {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        button.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .error-icon {
+            font-size: 1em;
+            margin-right: 5px;
+        }
+
+        .error-message {
+            font-family: 'Consolas', monospace;
+            white-space: pre-wrap;
+            margin-top: 5px;
+            padding: 5px;
+            background-color: #fff;
+            border-radius: 4px;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        .error-line {
+            background-color: #ffebee;
+            font-weight: bold;
+        }
+
+        .error-pointer {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        #jsonOutput {
+            flex: 0 0 30%;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+        }
+
+        .visualization-section {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            height: 100%;
+        }
+
+        #mynetwork {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 15px;
+        }
+
         .taxonomy-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
 
@@ -192,6 +337,52 @@
         .json-hierarchy ul ul ul ul ul .node-item {
             border-left-color: #e67e22;  /* Naranja */
         }
+
+        /* Actualizar estilos del ejemplo */
+        .example {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e1e1e1;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .example pre {
+            margin: 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .example h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 1.2em;
+        }
+
+        /* Actualizar estilos para manejar múltiples ejemplos */
+        .example pre {
+            margin-bottom: 20px;
+        }
+
+        .example h3:not(:first-child) {
+            margin-top: 20px;
+        }
+
+        h3 {
+            margin: 0;
+            padding: 10px 0;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -201,43 +392,291 @@
             <button class="back-btn" onclick="window.location.href='/dashboard'">Volver</button>
         </div>
 
-        <div class="json-preview" id="jsonPreview">
-            <!-- Aquí se mostrará el JSON actual -->
-        </div>
-
-        <div class="taxonomy-form">
-            <div class="taxonomy-section">
-                <h3>Nueva Taxonomía</h3>
-                <input type="text" class="taxonomy-input" placeholder="Nombre de la taxonomía">
-                <textarea class="taxonomy-input" rows="4" placeholder="Descripción de la taxonomía"></textarea>
-                <input type="text" class="taxonomy-input" placeholder="Palabras clave (separadas por comas)">
+        <div class="content-container">
+            <div class="input-section">
+                <div class="content-wrapper">
+                    <textarea id="yamlInput" placeholder="Escribe tu taxonomía usando YAML..."></textarea>
+                    <div class="button-error-container">
+                        <div id="yamlError" class="yaml-error">
+                            <span class="error-icon">⚠️</span>
+                            <span id="errorMessage"></span>
+                        </div>
+                        <button id="visualizeButton" onclick="visualizeGraph()">Visualizar Grafo</button>
+                    </div>
+                    <h3>JSON Resultante:</h3>
+                    <div id="jsonOutput"></div>
+                </div>
             </div>
 
-            <div class="taxonomy-section">
-                <h3>Relaciones</h3>
-                <select class="taxonomy-input">
-                    <option value="">Seleccionar tipo de relación</option>
-                    <option value="parent">Padre</option>
-                    <option value="child">Hijo</option>
-                    <option value="related">Relacionado</option>
-                </select>
-                <input type="text" class="taxonomy-input" placeholder="Buscar taxonomía existente">
-                <!-- Aquí se mostrarán las taxonomías relacionadas -->
+            <div class="visualization-section">
+                <div id="mynetwork"></div>
             </div>
         </div>
-
-        <button class="save-btn" onclick="saveTaxonomy()">Guardar Taxonomía</button>
     </div>
 
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script>
-        // Verificar si el usuario está autenticado
-        if (!sessionStorage.getItem('user')) {
-            window.location.href = '/';
+        // Modificar la función de carga inicial
+        window.onload = function() {
+            if (!sessionStorage.getItem('user')) {
+                window.location.href = '/';
+            }
+
+            const urlParts = window.location.pathname.split('/');
+            const filename = decodeURIComponent(urlParts[urlParts.length - 1]);
+            
+            const filenameElement = document.getElementById('filename');
+            if (filenameElement) {
+                filenameElement.textContent = filename;
+            }
+
+            // Cargar el JSON específico del archivo
+            loadJsonContent(filename);
         }
 
-        // Obtener el nombre del archivo de la URL
-        const filename = window.location.pathname.split('/').pop();
-        document.getElementById('filename').textContent = filename;
+        // Función para filtrar los campos 'id' de un objeto
+        function filterIds(obj) {
+            if (Array.isArray(obj)) {
+                return obj.map(item => filterIds(item));
+            } else if (typeof obj === 'object' && obj !== null) {
+                const filtered = {};
+                for (const [key, value] of Object.entries(obj)) {
+                    if (key !== 'id') {
+                        filtered[key] = filterIds(value);
+                    }
+                }
+                return filtered;
+            }
+            return obj;
+        }
+
+        // Añadir event listener para actualización en tiempo real
+        document.getElementById('yamlInput').addEventListener('input', debounce(function() {
+            visualizeGraph();
+        }, 500)); // Espera 500ms después de la última edición antes de actualizar
+
+        // Función debounce para evitar demasiadas actualizaciones
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function formatYamlError(error) {
+            if (!error.message) return 'Error desconocido';
+
+            // Extraer información del error
+            let errorLine, errorColumn;
+            let customMessage = '';
+
+            if (error.message.includes('bad indentation')) {
+                const match = error.message.match(/bad indentation.+\((\d+):(\d+)\)/i);
+                if (match) {
+                    errorLine = parseInt(match[1]);
+                    errorColumn = parseInt(match[2]);
+                    customMessage = 'Mala indentación!!!';
+                }
+            } else if (error.message.includes('can not read a block mapping entry')) {
+                const match = error.message.match(/block mapping entry.+\((\d+):(\d+)\)/i);
+                if (match) {
+                    errorLine = parseInt(match[1]);
+                    errorColumn = parseInt(match[2]);
+                    customMessage = 'Mala indentación!!!';
+                }
+            } else {
+                return error.message;
+            }
+
+            if (!errorLine || !errorColumn) return error.message;
+            
+            // Obtener el YAML actual
+            const yaml = document.getElementById('yamlInput').value;
+            const lines = yaml.split('\n');
+            
+            // Crear contexto del error (3 líneas antes y después)
+            const start = Math.max(0, errorLine - 4);
+            const end = Math.min(lines.length, errorLine + 3);
+            
+            let contextLines = [];
+            for (let i = start; i < end; i++) {
+                const lineNum = i + 1;
+                const isErrorLine = lineNum === errorLine;
+                
+                // Formatear línea
+                let line = `${lineNum} | ${lines[i]}`;
+                if (isErrorLine) {
+                    line += '\n' + ' '.repeat(errorColumn + 3) + '^'.repeat(20);
+                }
+                
+                contextLines.push({
+                    text: line,
+                    isError: isErrorLine
+                });
+            }
+
+            // Construir mensaje de error formateado
+            let formattedMessage = `${customMessage} (línea ${errorLine}, columna ${errorColumn}):\n\n`;
+            formattedMessage += contextLines.map(line => 
+                line.isError ? 
+                    `<span class="error-line">${line.text}</span>` : 
+                    line.text
+            ).join('\n');
+
+            return formattedMessage;
+        }
+
+        function visualizeGraph() {
+            try {
+                const yamlInput = document.getElementById('yamlInput').value;
+                const jsonData = jsyaml.load(yamlInput);
+                
+                // Filtrar los IDs antes de mostrar el JSON resultante
+                const filteredData = filterIds(jsonData);
+                
+                document.getElementById('jsonOutput').innerHTML = 
+                    `<pre>${JSON.stringify(filteredData, null, 2)}</pre>`;
+                
+                const { nodes, edges } = convertToGraph(filteredData);
+                
+                const container = document.getElementById('mynetwork');
+                const graphData = {
+                    nodes: new vis.DataSet(nodes),
+                    edges: new vis.DataSet(edges)
+                };
+                
+                // Mantener el estado del zoom y la posición de la vista
+                let network = container._network;
+                let viewPosition = network ? {
+                    position: network.getViewPosition(),
+                    scale: network.getScale()
+                } : null;
+                
+                const options = {
+                    layout: {
+                        hierarchical: {
+                            direction: 'UD',     // Up to Down
+                            sortMethod: 'directed',
+                            nodeSpacing: 150,    // Espacio horizontal entre nodos
+                            levelSeparation: 150 // Espacio vertical entre niveles
+                        }
+                    },
+                    physics: {
+                        enabled: false  // Desactivamos la física para mantener la posición jerárquica
+                    },
+                    edges: {
+                        arrows: 'to',
+                        smooth: {
+                            type: 'cubicBezier',
+                            forceDirection: 'vertical'
+                        },
+                        color: {
+                            color: '#2B7CE9'
+                        }
+                    },
+                    nodes: {
+                        shape: 'box',
+                        margin: 10,
+                        font: {
+                            size: 16,
+                            face: 'arial'
+                        },
+                        color: {
+                            background: '#D2E5FF',
+                            border: '#2B7CE9'
+                        },
+                        shadow: true
+                    },
+                    interaction: {
+                        dragNodes: false,  // Previene que los nodos sean arrastrados
+                        zoomView: true,    // Permite zoom
+                        dragView: true     // Permite arrastrar la vista
+                    }
+                };
+                
+                network = new vis.Network(container, graphData, options);
+                
+                // Restaurar la posición de la vista si existía previamente
+                if (viewPosition) {
+                    network.moveTo({
+                        position: viewPosition.position,
+                        scale: viewPosition.scale
+                    });
+                }
+                
+                // Guardar referencia a la red para futuras actualizaciones
+                container._network = network;
+                
+                // Limpiar error y mostrar botón
+                const errorDiv = document.getElementById('yamlError');
+                const visualizeButton = document.getElementById('visualizeButton');
+                errorDiv.classList.remove('show');
+                visualizeButton.classList.remove('hide');
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 300);
+                document.getElementById('yamlInput').classList.remove('error');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                const errorDiv = document.getElementById('yamlError');
+                const visualizeButton = document.getElementById('visualizeButton');
+                
+                errorDiv.style.display = 'block';
+                visualizeButton.classList.add('hide');
+                
+                // Forzar un reflow para que la animación funcione
+                errorDiv.offsetHeight;
+                errorDiv.innerHTML = `
+                    <div>
+                        <span class="error-icon">⚠️</span>
+                        <strong>Mala indentación!!!</strong>
+                    </div>
+                    <div class="error-message">${formatYamlError(error)}</div>
+                `;
+                errorDiv.classList.add('show');
+                document.getElementById('yamlInput').classList.add('error');
+            }
+        }
+
+        // Event listener para Tab y Ctrl+Enter
+        document.getElementById('yamlInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const value = this.value;
+                
+                if (start !== end) {
+                    const beforeSelection = value.substring(0, start);
+                    const selection = value.substring(start, end);
+                    const afterSelection = value.substring(end);
+                    
+                    const indentedText = selection
+                        .split('\n')
+                        .map(line => '  ' + line)
+                        .join('\n');
+                    
+                    this.value = beforeSelection + indentedText + afterSelection;
+                    this.selectionStart = start;
+                    this.selectionEnd = start + indentedText.length;
+                } else {
+                    this.value = value.substring(0, start) + '  ' + value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 2;
+                }
+            }
+            
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                visualizeGraph();
+            }
+        });
 
         function processHierarchy(data, container, level = 0) {
             const ul = document.createElement('ul');
@@ -285,97 +724,141 @@
             container.appendChild(ul);
         }
 
-        async function loadJsonContent() {
+        async function loadJsonContent(filename) {
             try {
                 const response = await fetch(`/get-json-content/${filename}`);
-                const data = await response.json();
-                const jsonPreview = document.getElementById('jsonPreview');
-                jsonPreview.innerHTML = ''; // Limpiar el contenido anterior
-
-                // Crear contenedor para la jerarquía
-                const hierarchyContainer = document.createElement('div');
-                hierarchyContainer.className = 'hierarchy-container';
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const jsonData = await response.json();
                 
-                // Procesar la jerarquía del JSON
-                processHierarchy(data, hierarchyContainer);
+                // Filtrar los IDs antes de mostrar
+                const filteredData = filterIds(jsonData);
                 
-                jsonPreview.appendChild(hierarchyContainer);
+                // Convertir el JSON filtrado a YAML y mostrarlo en el textarea
+                const yamlText = jsyaml.dump(filteredData);
+                document.getElementById('yamlInput').value = yamlText;
                 
-                // Expandir el primer nivel por defecto
-                const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
-                firstLevelItems.forEach(item => {
-                    item.classList.add('expanded');
-                    item.querySelector('.node-item')?.classList.add('expanded');
-                });
+                // Mostrar el JSON filtrado
+                document.getElementById('jsonOutput').innerHTML = 
+                    `<pre>${JSON.stringify(filteredData, null, 2)}</pre>`;
+                
+                // Visualizar el grafo con los datos filtrados
+                visualizeGraph();
+                
             } catch (error) {
                 console.error('Error loading JSON:', error);
-                document.getElementById('jsonPreview').innerHTML = `
-                    <p style="color: red;">Error al cargar el JSON: ${error.message}</p>
-                `;
+                alert('Error al cargar el archivo JSON: ' + error.message);
             }
         }
 
-        async function saveTaxonomy() {
-            const taxonomyName = document.querySelector('input[placeholder="Nombre de la taxonomía"]').value;
-            const taxonomyDescription = document.querySelector('textarea[placeholder="Descripción de la taxonomía"]').value;
-            const keywords = document.querySelector('input[placeholder="Palabras clave (separadas por comas)"]').value.split(',').map(k => k.trim());
-            const relationType = document.querySelector('select').value;
-            const relatedTaxonomy = document.querySelector('input[placeholder="Buscar taxonomía existente"]').value;
+        function convertToGraph(data, parentId = null) {
+            let nodes = [];
+            let edges = [];
+            let counter = 0;
+            
+            function processItem(key, value, parentId) {
+                // Ignorar si la clave es 'id'
+                if (key === 'id') return;
+                
+                counter++;
+                const nodeId = parentId ? `${parentId}_${key}_${counter}` : `${key}_${counter}`;
+                
+                // Si el valor es un objeto y tiene una propiedad 'id', la omitimos
+                if (typeof value === 'object' && value !== null) {
+                    delete value['id'];
+                }
 
-            // Crear el contexto JSON-LD
-            const jsonLd = {
-                "@context": {
-                    "@vocab": "http://schema.org/",
-                    "skos": "http://www.w3.org/2004/02/skos/core#",
-                    "dct": "http://purl.org/dc/terms/",
-                    "taxonomy": "skos:Concept",
-                    "broader": "skos:broader",
-                    "narrower": "skos:narrower",
-                    "related": "skos:related",
-                    "prefLabel": "skos:prefLabel",
-                    "description": "dct:description",
-                    "keywords": "dct:subject"
-                },
-                "@type": "taxonomy",
-                "@id": `taxonomy:${encodeURIComponent(taxonomyName)}`,
-                "prefLabel": taxonomyName,
-                "description": taxonomyDescription,
-                "keywords": keywords
-            };
-
-            // Añadir relaciones según el tipo seleccionado
-            if (relationType && relatedTaxonomy) {
-                switch (relationType) {
-                    case 'parent':
-                        jsonLd.broader = `taxonomy:${encodeURIComponent(relatedTaxonomy)}`;
-                        break;
-                    case 'child':
-                        jsonLd.narrower = `taxonomy:${encodeURIComponent(relatedTaxonomy)}`;
-                        break;
-                    case 'related':
-                        jsonLd.related = `taxonomy:${encodeURIComponent(relatedTaxonomy)}`;
-                        break;
+                // Crear el nodo solo con la clave como etiqueta
+                nodes.push({
+                    id: nodeId,
+                    label: String(key),
+                    shape: 'box'
+                });
+                
+                if (parentId) {
+                    edges.push({
+                        from: parentId,
+                        to: nodeId,
+                        label: ''
+                    });
+                }
+                
+                if (typeof value === 'object' && value !== null) {
+                    Object.entries(value).forEach(([k, v]) => {
+                        // Omitir propiedades que empiezan con '@' o son 'id'
+                        if (!k.startsWith('@') && k !== 'id') {
+                            processItem(k, v, nodeId);
+                        }
+                    });
+                } else if (value !== undefined && value !== null && !String(key).startsWith('@') && key !== 'id') {
+                    const valueId = `${nodeId}_value_${counter}`;
+                    nodes.push({
+                        id: valueId,
+                        label: String(value),
+                        shape: 'box'
+                    });
+                    edges.push({
+                        from: nodeId,
+                        to: valueId,
+                        label: ''
+                    });
                 }
             }
+            
+            Object.entries(data).forEach(([key, value]) => {
+                // Omitir propiedades que empiezan con '@' o son 'id'
+                if (!key.startsWith('@') && key !== 'id') {
+                    processItem(key, value, parentId);
+                }
+            });
+            
+            return { nodes, edges };
+        }
 
+        // Añadir función para convertir entre JSON y YAML
+        function jsonToYaml(jsonData) {
             try {
+                return jsyaml.dump(jsonData);
+            } catch (error) {
+                console.error('Error converting JSON to YAML:', error);
+                return '';
+            }
+        }
+
+        function yamlToJson(yamlData) {
+            try {
+                return jsyaml.load(yamlData);
+            } catch (error) {
+                console.error('Error converting YAML to JSON:', error);
+                return null;
+            }
+        }
+
+        // Modificar saveTaxonomy para manejar YAML
+        async function saveTaxonomy() {
+            try {
+                const yamlData = document.getElementById('yamlInput').value;
+                const jsonData = yamlToJson(yamlData);
+                
+                if (!jsonData) {
+                    throw new Error('Error al convertir YAML a JSON');
+                }
+
                 const response = await fetch(`/save-taxonomy/${filename}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(jsonLd)
+                    body: JSON.stringify(jsonData)
                 });
 
                 if (!response.ok) {
                     throw new Error('Error al guardar la taxonomía');
                 }
 
-                const result = await response.json();
                 alert('Taxonomía guardada correctamente');
-                
-                // Recargar el JSON para mostrar los cambios
-                loadJsonContent();
+                loadJsonContent(filename);
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error al guardar la taxonomía: ' + error.message);
@@ -392,9 +875,6 @@
             }
             return true;
         }
-
-        // Cargar el contenido del JSON al iniciar
-        loadJsonContent();
     </script>
 </body>
 </html> 
