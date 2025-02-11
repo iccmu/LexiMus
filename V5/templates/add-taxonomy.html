@@ -605,7 +605,8 @@
                         arrows: 'to',
                         smooth: {
                             type: 'cubicBezier',
-                            forceDirection: 'vertical'
+                            forceDirection: 'vertical',
+                            roundness: 0.2  // Menos curvatura para las líneas originales
                         },
                         color: {
                             color: '#2B7CE9'
@@ -685,13 +686,41 @@
                             const relation = this.dataset.relation;
                             const [fromNode, toNode] = selectedNodes;
                             
+                            // Colores diferentes para cada tipo de relación
+                            const relationColors = {
+                                'Inversa': '#FF4444',           // Rojo
+                                'Transitiva': '#33CC33',        // Verde
+                                'Simétrica': '#9933CC',         // Púrpura
+                                'Funcional': '#FF8C00',         // Naranja
+                                'Inversamente Funcional': '#00CED1'  // Turquesa
+                            };
+
                             graphData.edges.add({
                                 from: fromNode,
                                 to: toNode,
                                 label: relation,
-                                arrows: 'to',
+                                arrows: {
+                                    to: {
+                                        enabled: true,
+                                        type: 'arrow'
+                                    }
+                                },
                                 color: {
-                                    color: '#2B7CE9'
+                                    color: relationColors[relation] || '#666666'
+                                },
+                                smooth: {
+                                    enabled: true,
+                                    type: 'curvedCW',
+                                    roundness: 0.5  // Mayor curvatura para las relaciones especiales
+                                },
+                                width: 2,  // Línea más gruesa
+                                dashes: false,  // Línea sólida
+                                font: {
+                                    size: 12,
+                                    color: relationColors[relation] || '#666666',
+                                    face: 'arial',
+                                    background: 'white',  // Fondo blanco para mejor legibilidad
+                                    strokeWidth: 2  // Borde alrededor del texto
                                 }
                             });
                             
