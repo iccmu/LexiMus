@@ -8,10 +8,13 @@ import os
 import json
 import requests
 import datetime
+from uuid import uuid4
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+PROPERTIES_FILE = "user_folders/props.json"
 
 def create_user_directories():
     # Leer el CSV
@@ -292,3 +295,89 @@ async def save_taxonomy(filename: str, request: Request):
 @app.on_event("startup")
 async def startup_event():
     create_user_directories()
+
+# Funciones auxiliares para manejar las propiedades
+def load_properties():
+    try:
+        with open(PROPERTIES_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # Convertir la estructura jerárquica a lista plana de propiedades
+            properties = []
+            def process_node(node, parent_id=None):
+                if isinstance(node, dict):
+                    node_id = node.get('id')
+                    for key, value in node.items():
+                        if key != 'id' and isinstance(value, dict):
+                            properties.append({
+                                "id": value.get('id'),
+                                "name": key,
+                                "type": "object" if "value" not in value else "string",
+                                "parent": parent_id
+                            })
+                            process_node(value, value.get('id'))
+            
+            process_node(data)
+            return properties
+    except FileNotFoundError:
+        return []
+
+def save_properties(properties):
+    # Convertir la lista plana de propiedades a estructura jerárquica
+    root = {"id": "root-family-123"}
+    
+    def build_hierarchy(props, parent_id=None):
+        node = {}
+        children = [p for p in props if p["parent"] == parent_id]
+        for child in children:
+            child_node = {"id": child["id"]}
+            if child["type"] == "string":
+                child_node["value"] = None
+            else:
+                child_node.update(build_hierarchy(props, child["id"]))
+            node[child["name"]] = child_node
+        return node
+    
+    hierarchy = build_hierarchy(properties)
+    root.update(hierarchy)
+    
+    with open(PROPERTIES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(root, f, indent=2, ensure_ascii=False)
+
+# Añadir las nuevas rutas
+@app.get("/property-hierarchy", response_class=HTMLResponse)
+async def property_hierarchy(request: Request):
+    return templates.TemplateResponse("property-hierarchy.html", {"request": request})
+
+@app.get("/api/properties")
+async def get_properties():
+    return load_properties()
+
+@app.post("/api/properties")
+async def create_property(request: Request):
+    try:
+        property_data = await request.json()
+        properties = load_properties()
+        
+        new_property = {
+            "id": str(uuid4()),
+            "name": property_data["name"],
+            "type": property_data["type"],
+            "parent": property_data["parent"]
+        }
+        
+        properties.append(new_property)
+        save_properties(properties)
+        
+        return new_property
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/properties/{property_id}")
+async def delete_property(property_id: str):
+    try:
+        properties = load_properties()
+        properties = [p for p in properties if p["id"] != property_id]
+        save_properties(properties)
+        return {"message": "Propiedad eliminada correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

@@ -68,6 +68,7 @@
             flex-direction: column;
             height: 100%;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .content-wrapper {
@@ -75,6 +76,7 @@
             flex-direction: column;
             height: 100%;
             gap: 10px;
+            overflow: hidden;
         }
 
         #yamlInput {
@@ -87,6 +89,9 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            white-space: pre;
+            overflow-x: auto;
+            overflow-y: auto;
         }
 
         .button-error-container {
@@ -405,6 +410,49 @@
         .context-menu-option:hover {
             background-color: #f0f0f0;
         }
+
+        /* Añadir estilos para el minimapa */
+        .minimap-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        #minimap {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Añadir estilo para el indicador de posición */
+        .viewport-indicator {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        .coordinates-display {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1002;
+        }
     </style>
 </head>
 <body>
@@ -432,6 +480,13 @@
 
             <div class="visualization-section">
                 <div id="mynetwork"></div>
+                <div class="minimap-container">
+                    <div id="minimap"></div>
+                    <div class="coordinates-display">
+                        <div>Grid: <span id="gridCoordinates"></span></div>
+                        <div>Nodo central: <span id="centerNode"></span></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -872,6 +927,142 @@
                     errorDiv.style.display = 'none';
                 }, 300);
                 document.getElementById('yamlInput').classList.remove('error');
+                
+                // Añadir el minimapa
+                const minimapContainer = document.getElementById('minimap');
+                const minimapOptions = {
+                    ...options,
+                    interaction: {
+                        dragNodes: false,
+                        dragView: false,
+                        zoomView: false,
+                        selectable: false,
+                        hover: false
+                    },
+                    manipulation: {
+                        enabled: false
+                    },
+                    nodes: {
+                        ...options.nodes,
+                        size: 10,
+                        font: {
+                            size: 8
+                        }
+                    },
+                    edges: {
+                        ...options.edges,
+                        width: 1,
+                        font: {
+                            size: 0
+                        }
+                    },
+                    physics: {
+                        enabled: false
+                    }
+                };
+                
+                const minimap = new vis.Network(minimapContainer, {
+                    nodes: graphData.nodes,
+                    edges: graphData.edges
+                }, minimapOptions);
+                
+                // Añadir el indicador de viewport
+                const indicator = document.createElement('div');
+                indicator.className = 'viewport-indicator';
+                minimapContainer.appendChild(indicator);
+
+                // Modificar la función updateViewportIndicator para incluir la información del grid y nodo central
+                function updateViewportIndicator() {
+                    const mainViewPosition = network.getViewPosition();
+                    const mainScale = network.getScale();
+                    const minimapScale = minimap.getScale();
+                    
+                    // Convertir las coordenadas del grafo principal a coordenadas del minimapa
+                    const minimapPos = minimap.canvasToDOM({
+                        x: mainViewPosition.x,
+                        y: mainViewPosition.y
+                    });
+                    
+                    // Actualizar la posición del indicador
+                    indicator.style.left = `${minimapPos.x}px`;
+                    indicator.style.top = `${minimapPos.y}px`;
+                    
+                    // Calcular coordenadas del grid
+                    const gridX = Math.round(mainViewPosition.x / GRID_SIZE);
+                    const gridY = Math.round(mainViewPosition.y / GRID_SPACING);
+                    document.getElementById('gridCoordinates').textContent = `(${gridX}, ${gridY})`;
+                    
+                    // Encontrar el nodo más cercano al centro
+                    const allNodes = network.body.data.nodes.get();
+                    let closestNode = null;
+                    let minDistance = Infinity;
+                    
+                    allNodes.forEach(node => {
+                        const nodePos = network.getPosition(node.id);
+                        const distance = Math.sqrt(
+                            Math.pow(nodePos.x - mainViewPosition.x, 2) + 
+                            Math.pow(nodePos.y - mainViewPosition.y, 2)
+                        );
+                        
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestNode = node;
+                        }
+                    });
+                    
+                    // Actualizar el nodo central en el display
+                    document.getElementById('centerNode').textContent = 
+                        closestNode ? `${closestNode.label} (${closestNode.id})` : 'Ninguno';
+                }
+
+                // Añadir más eventos para actualizar la información
+                network.on('zoom', updateViewportIndicator);
+                network.on('dragEnd', updateViewportIndicator);
+                network.on('dragStart', updateViewportIndicator);
+                network.on('drag', updateViewportIndicator);
+
+                // Asegurarse de que el minimapa mantenga la misma disposición que el grafo principal
+                minimap.once('afterDrawing', function() {
+                    minimap.fit({
+                        animation: false
+                    });
+                    
+                    // Mantener esta vista completa
+                    const minimapScale = minimap.getScale();
+                    const minimapPosition = minimap.getViewPosition();
+                    
+                    // Copiar las posiciones de los nodos del grafo principal al minimapa
+                    network.once('stabilized', function() {
+                        const positions = network.getPositions();
+                        Object.keys(positions).forEach(nodeId => {
+                            minimap.moveNode(nodeId, positions[nodeId].x, positions[nodeId].y);
+                        });
+                        
+                        // Ajustar la vista del minimapa
+                        minimap.fit({
+                            animation: false
+                        });
+                    });
+                    
+                    // Actualizar el viewport en el minimapa y el indicador
+                    network.on('afterDrawing', function() {
+                        // Mantener las posiciones sincronizadas
+                        const positions = network.getPositions();
+                        Object.keys(positions).forEach(nodeId => {
+                            minimap.moveNode(nodeId, positions[nodeId].x, positions[nodeId].y);
+                        });
+                        
+                        minimap.moveTo({
+                            position: minimapPosition,
+                            scale: minimapScale,
+                            animation: false
+                        });
+                        updateViewportIndicator();
+                    });
+                    
+                    // Actualización inicial del indicador
+                    updateViewportIndicator();
+                });
                 
             } catch (error) {
                 console.error('Error:', error);

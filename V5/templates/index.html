@@ -464,9 +464,14 @@
         </div>
 
         <div class="input-data">
-            <!-- Espacio reservado para futuros inputs -->
             <h3>Área de Entrada de Datos</h3>
-            <p>Esta sección está reservada para futuros formularios o inputs de datos.</p>
+            <button onclick="window.location.href='/property-hierarchy'" class="upload-btn" style="margin-bottom: 20px;">
+                Ver Jerarquía de Propiedades Familiares
+            </button>
+            <div class="hierarchy-container" id="propertiesContainer">
+                <h4>Jerarquía de Propiedades Familiares</h4>
+                <!-- Se llenará dinámicamente -->
+            </div>
         </div>
 
         <div class="validation-status" id="validationStatus">
@@ -525,6 +530,9 @@
             const uploadForm = document.querySelector('.upload-form');
             const jsonSection = document.querySelector('.json');
             
+            // Cargar las propiedades al inicio
+            loadProperties();
+            
             // Ocultar formulario de subida y sección json si no es superusuario
             if (!user.is_superuser) {
                 uploadForm.style.display = 'none';
@@ -532,6 +540,10 @@
                 document.querySelector('.input-data').innerHTML = `
                     <h3>Área de Visualización</h3>
                     <p>Como usuario normal, puedes ver los JSONs subidos por tu superusuario: ${user.created_by}</p>
+                    <div class="hierarchy-container" id="propertiesContainer">
+                        <h4>Jerarquía de Propiedades Familiares</h4>
+                        <!-- Se llenará dinámicamente -->
+                    </div>
                 `;
             }
             
@@ -840,6 +852,64 @@
                 `;
                 console.error('Error loading JSONs:', error);
             }
+        }
+
+        // Añadir la función para cargar las propiedades
+        async function loadProperties() {
+            try {
+                const response = await fetch('/api/properties');
+                const properties = await response.json();
+                
+                const container = document.getElementById('propertiesContainer');
+                const hierarchyContainer = document.createElement('div');
+                hierarchyContainer.className = 'hierarchy-container';
+                
+                // Convertir la lista plana de propiedades a estructura jerárquica
+                const hierarchyData = buildHierarchyFromProperties(properties);
+                processHierarchy(hierarchyData, hierarchyContainer);
+                
+                // Limpiar y añadir el nuevo contenido
+                container.innerHTML = '<h4>Jerarquía de Propiedades Familiares</h4>';
+                container.appendChild(hierarchyContainer);
+                
+                // Expandir el primer nivel por defecto
+                const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
+                firstLevelItems.forEach(item => {
+                    item.classList.add('expanded');
+                    item.querySelector('.node-item')?.classList.add('expanded');
+                });
+            } catch (error) {
+                console.error('Error loading properties:', error);
+            }
+        }
+
+        // Función auxiliar para construir la jerarquía
+        function buildHierarchyFromProperties(properties) {
+            const hierarchy = {};
+            
+            // Primero, encontrar las propiedades raíz (sin padre)
+            const rootProperties = properties.filter(p => !p.parent);
+            
+            function addChildren(parent) {
+                const children = properties.filter(p => p.parent === parent.id);
+                const result = {};
+                
+                children.forEach(child => {
+                    if (child.type === "string") {
+                        result[child.name] = null;
+                    } else {
+                        result[child.name] = addChildren(child);
+                    }
+                });
+                
+                return result;
+            }
+            
+            rootProperties.forEach(root => {
+                hierarchy[root.name] = addChildren(root);
+            });
+            
+            return hierarchy;
         }
     </script>
 </body>

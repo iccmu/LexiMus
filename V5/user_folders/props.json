@@ -1,0 +1,39 @@
+{
+  "id": "root-family-123",
+  "Familia": {
+    "id": "family-root-456",
+    "Padres": {
+      "id": "parents-789",
+      "Padre": {
+        "id": "father-abc",
+        "value": null
+      },
+      "Madre": {
+        "id": "mother-def",
+        "value": null
+      }
+    },
+    "Hijos": {
+      "id": "children-ghi",
+      "Hijo": {
+        "id": "son-jkl",
+        "value": null
+      },
+      "Hija": {
+        "id": "daughter-mno",
+        "value": null
+      }
+    },
+    "Hermanos": {
+      "id": "siblings-pqr",
+      "Hermano": {
+        "id": "brother-stu",
+        "value": null
+      },
+      "Hermana": {
+        "id": "sister-vwx",
+        "value": null
+      }
+    }
+  }
+} 
