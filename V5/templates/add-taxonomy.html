@@ -458,15 +458,15 @@
             position: absolute;
             width: 8px;
             height: 8px;
-            background-color: red;
+            background-color: rgba(255, 0, 0, 0.25); /* Cambiado a 25% de opacidad */
             border-radius: 50%;
             left: 50%;  /* Centrado horizontal */
             top: 50%;   /* Centrado vertical */
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 1000;
-            border: 2px solid white;
-            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255, 255, 255, 0.25); /* También ajustado el borde a 25% de opacidad */
+            box-shadow: 0 0 4px rgba(0,0,0,0.25); /* También ajustada la sombra a 25% de opacidad */
         }
     </style>
 </head>
@@ -638,9 +638,7 @@
                 const yamlInput = document.getElementById('yamlInput').value;
                 const jsonData = jsyaml.load(yamlInput);
                 
-                // Filtrar los IDs antes de mostrar el JSON resultante
                 const filteredData = filterIds(jsonData);
-                
                 document.getElementById('jsonOutput').innerHTML = 
                     `<pre>${JSON.stringify(filteredData, null, 2)}</pre>`;
                 
@@ -764,11 +762,28 @@
                                         nextNodeId = gridNodes[closestUpperY][x];
                                     }
                                 }
+                            } else {
+                                // Efecto de "rebote" hacia arriba
+                                network.moveTo({
+                                    position: { x: currentPos.x, y: currentPos.y - 50 },
+                                    animation: {
+                                        duration: 150,
+                                        easingFunction: 'easeOutQuint'
+                                    }
+                                });
+                                setTimeout(() => {
+                                    network.moveTo({
+                                        position: currentPos,
+                                        animation: {
+                                            duration: 200,
+                                            easingFunction: 'linear'
+                                        }
+                                    });
+                                }, 150);
                             }
                             break;
                             
                         case 'down':
-                            // Buscar el nodo más cercano en el nivel inmediatamente inferior
                             let closestLowerY = Infinity;
                             for (const y in gridNodes) {
                                 const gridY = parseInt(y);
@@ -784,11 +799,28 @@
                                         nextNodeId = gridNodes[closestLowerY][x];
                                     }
                                 }
+                            } else {
+                                // Efecto de "rebote" hacia abajo
+                                network.moveTo({
+                                    position: { x: currentPos.x, y: currentPos.y + 50 },
+                                    animation: {
+                                        duration: 150,
+                                        easingFunction: 'easeOutQuint'
+                                    }
+                                });
+                                setTimeout(() => {
+                                    network.moveTo({
+                                        position: currentPos,
+                                        animation: {
+                                            duration: 200,
+                                            easingFunction: 'linear'
+                                        }
+                                    });
+                                }, 150);
                             }
                             break;
                             
                         case 'left':
-                            // Buscar el nodo más cercano a la izquierda en el mismo nivel
                             let closestLeftX = -Infinity;
                             if (gridNodes[currentY]) {
                                 for (const x in gridNodes[currentY]) {
@@ -799,10 +831,28 @@
                                     }
                                 }
                             }
+                            if (nextNodeId === null) {
+                                // Efecto de "rebote" hacia la izquierda
+                                network.moveTo({
+                                    position: { x: currentPos.x - 50, y: currentPos.y },
+                                    animation: {
+                                        duration: 150,
+                                        easingFunction: 'easeOutQuint'
+                                    }
+                                });
+                                setTimeout(() => {
+                                    network.moveTo({
+                                        position: currentPos,
+                                        animation: {
+                                            duration: 200,
+                                            easingFunction: 'linear'
+                                        }
+                                    });
+                                }, 150);
+                            }
                             break;
                             
                         case 'right':
-                            // Buscar el nodo más cercano a la derecha en el mismo nivel
                             let closestRightX = Infinity;
                             if (gridNodes[currentY]) {
                                 for (const x in gridNodes[currentY]) {
@@ -812,6 +862,25 @@
                                         nextNodeId = gridNodes[currentY][x];
                                     }
                                 }
+                            }
+                            if (nextNodeId === null) {
+                                // Efecto de "rebote" hacia la derecha
+                                network.moveTo({
+                                    position: { x: currentPos.x + 50, y: currentPos.y },
+                                    animation: {
+                                        duration: 150,
+                                        easingFunction: 'easeOutQuint'
+                                    }
+                                });
+                                setTimeout(() => {
+                                    network.moveTo({
+                                        position: currentPos,
+                                        animation: {
+                                            duration: 200,
+                                            easingFunction: 'linear'
+                                        }
+                                    });
+                                }, 150);
                             }
                             break;
                     }
@@ -829,7 +898,7 @@
                     }
                 }
 
-                // Añadir event listener para las teclas de flecha
+                // Añadir event listener para las teclas de flecha y espaciadora
                 document.addEventListener('keydown', function(e) {
                     if (!network) return;
                     
@@ -837,6 +906,21 @@
                     updateGridStructure();
                     
                     switch(e.key) {
+                        case ' ': // Barra espaciadora
+                            e.preventDefault(); // Prevenir el scroll por defecto
+                            const rootNode = network.body.data.nodes.get()[0];
+                            if (rootNode) {
+                                currentNodeId = rootNode.id;
+                                network.selectNodes([currentNodeId]);
+                                network.focus(rootNode.id, {
+                                    scale: 0.8,
+                                    animation: {
+                                        duration: 1000,
+                                        easingFunction: 'easeInOutQuad'
+                                    }
+                                });
+                            }
+                            break;
                         case 'ArrowUp':
                             e.preventDefault();
                             findNextNode('up');
@@ -1088,6 +1172,40 @@
                 // Actualización inicial
                 network.once('stabilized', () => {
                     updateViewportIndicator();
+                });
+
+                // Asegurarnos de que el zoom al nodo principal funcione
+                network.once('afterDrawing', () => {
+                    setTimeout(() => {
+                        const rootNode = nodes[0];
+                        if (rootNode) {
+                            network.focus(rootNode.id, {
+                                scale: 0.8,
+                                animation: {
+                                    duration: 1000,
+                                    easingFunction: 'easeInOutQuad'
+                                }
+                            });
+                            network.selectNodes([rootNode.id]);
+                            currentNodeId = rootNode.id;
+                        }
+                    }, 500); // Pequeño retraso para asegurar que el grafo esté listo
+                });
+
+                // También mantener el evento stabilizationIterationsDone como respaldo
+                network.once('stabilizationIterationsDone', () => {
+                    const rootNode = nodes[0];
+                    if (rootNode) {
+                        network.focus(rootNode.id, {
+                            scale: 0.8,
+                            animation: {
+                                duration: 1000,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                        network.selectNodes([rootNode.id]);
+                        currentNodeId = rootNode.id;
+                    }
                 });
 
                 // Configurar el minimapa
