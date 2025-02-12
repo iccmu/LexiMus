@@ -639,9 +639,11 @@
                 
                 network = new vis.Network(container, graphData, options);
                 let selectedNodes = [];
-                const GRID_SIZE = 50;
-                const MAX_X = 1000;
-                const MAX_Y = 1000;
+                // Definir el tamaño del grid y límites
+                const GRID_SIZE = 50; // Tamaño de cada celda del grid
+                const GRID_SPACING = 150; // Espacio entre niveles jerárquicos
+                const MAX_X = 2000; // Límite horizontal
+                const MAX_Y = 2000; // Límite vertical
 
                 // Fijar las posiciones iniciales y configurar el grid
                 network.once('stabilized', function() {
@@ -650,18 +652,24 @@
                     
                     // Agrupar nodos por niveles
                     Object.keys(positions).forEach(nodeId => {
-                        const y = positions[nodeId].y;
+                        const y = Math.round(positions[nodeId].y / GRID_SPACING) * GRID_SPACING;
                         if (!levels[y]) levels[y] = [];
                         levels[y].push(nodeId);
                     });
 
+                    // Ordenar los niveles por coordenada Y
+                    const sortedLevels = Object.keys(levels).sort((a, b) => parseFloat(a) - parseFloat(b));
+
                     // Distribuir los nodos horizontalmente en cada nivel
-                    Object.entries(levels).forEach(([y, nodeIds]) => {
+                    sortedLevels.forEach((y, levelIndex) => {
+                        const nodeIds = levels[y];
                         const levelWidth = nodeIds.length * GRID_SIZE;
-                        const startX = Math.max(-MAX_X, Math.min(MAX_X, -levelWidth / 2));
+                        const startX = -levelWidth / 2;
                         
                         nodeIds.forEach((nodeId, index) => {
                             const xPos = Math.max(-MAX_X, Math.min(MAX_X, startX + (index * GRID_SIZE)));
+                            const yPos = Math.max(-MAX_Y, Math.min(MAX_Y, levelIndex * GRID_SPACING));
+                            
                             network.body.data.nodes.update({
                                 id: nodeId,
                                 fixed: {
@@ -669,7 +677,7 @@
                                     y: true
                                 },
                                 x: xPos,
-                                y: Math.max(-MAX_Y, Math.min(MAX_Y, parseFloat(y)))
+                                y: yPos
                             });
                         });
                     });
@@ -682,6 +690,14 @@
                         }
                     });
                 });
+
+                // Función para ajustar la posición al grid más cercano
+                function snapToGrid(position) {
+                    return {
+                        x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
+                        y: Math.round(position.y / GRID_SPACING) * GRID_SPACING
+                    };
+                }
 
                 // Función para mantener los nodos dentro de los límites
                 function constrainPosition(position) {
@@ -697,10 +713,7 @@
                         const nodeId = params.nodes[0];
                         const position = network.getPosition(nodeId);
                         const constrained = constrainPosition(position);
-                        const snapped = {
-                            x: Math.round(constrained.x / GRID_SIZE) * GRID_SIZE,
-                            y: constrained.y
-                        };
+                        const snapped = snapToGrid(constrained);
                         
                         network.body.data.nodes.update({
                             id: nodeId,
@@ -757,6 +770,10 @@
                             const relation = this.dataset.relation;
                             const [fromNode, toNode] = selectedNodes;
                             
+                            // Guardar las posiciones actuales de los nodos
+                            const fromPos = network.getPosition(fromNode);
+                            const toPos = network.getPosition(toNode);
+                            
                             const relationColors = {
                                 'Inversa': '#FF4444',
                                 'Transitiva': '#33CC33',
@@ -765,6 +782,7 @@
                                 'Inversamente Funcional': '#00CED1'
                             };
 
+                            // Añadir la nueva arista
                             graphData.edges.add({
                                 from: fromNode,
                                 to: toNode,
@@ -772,29 +790,66 @@
                                 arrows: {
                                     to: {
                                         enabled: true,
-                                        type: 'arrow'
+                                        type: 'arrow',
+                                        scaleFactor: 1.5 // Hacer la flecha un poco más grande
                                     }
                                 },
                                 color: {
-                                    color: relationColors[relation] || '#666666'
+                                    color: relationColors[relation] || '#666666',
+                                    highlight: relationColors[relation] || '#666666',
+                                    hover: relationColors[relation] || '#666666'
                                 },
                                 smooth: {
                                     enabled: true,
                                     type: 'curvedCW',
-                                    roundness: 0.5,
+                                    roundness: 0.2,
                                     forceDirection: 'none'
                                 },
-                                width: 2,
+                                width: 3, // Línea más gruesa
                                 dashes: false,
                                 physics: false,
                                 font: {
-                                    size: 12,
+                                    size: 14, // Texto más grande
                                     color: relationColors[relation] || '#666666',
                                     face: 'arial',
                                     background: 'white',
-                                    strokeWidth: 2
+                                    strokeWidth: 3
+                                },
+                                // Configuración de nivel z
+                                level: 2, // Las relaciones jerárquicas están en nivel 1 por defecto
+                                selectionWidth: 3,
+                                shadow: {
+                                    enabled: true,
+                                    color: 'rgba(0,0,0,0.2)',
+                                    size: 10,
+                                    x: 5,
+                                    y: 5
                                 }
                             });
+
+                            // Asegurar que los nodos mantengan sus posiciones
+                            network.body.data.nodes.update([
+                                {
+                                    id: fromNode,
+                                    x: fromPos.x,
+                                    y: fromPos.y,
+                                    fixed: {
+                                        x: true,
+                                        y: true
+                                    },
+                                    level: 3 // Asegurar que los nodos estén por encima de las aristas
+                                },
+                                {
+                                    id: toNode,
+                                    x: toPos.x,
+                                    y: toPos.y,
+                                    fixed: {
+                                        x: true,
+                                        y: true
+                                    },
+                                    level: 3
+                                }
+                            ]);
                             
                             document.getElementById('contextMenu').style.display = 'none';
                             selectedNodes = [];
