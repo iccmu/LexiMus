@@ -453,6 +453,21 @@
             font-size: 12px;
             z-index: 1002;
         }
+
+        .center-marker {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: red;
+            border-radius: 50%;
+            left: 50%;  /* Centrado horizontal */
+            top: 50%;   /* Centrado vertical */
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1000;
+            border: 2px solid white;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
@@ -480,6 +495,7 @@
 
             <div class="visualization-section">
                 <div id="mynetwork"></div>
+                <div class="center-marker"></div>
                 <div class="minimap-container">
                     <div id="minimap"></div>
                     <div class="coordinates-display">
@@ -971,7 +987,7 @@
                 indicator.className = 'viewport-indicator';
                 minimapContainer.appendChild(indicator);
 
-                // Modificar la función updateViewportIndicator para incluir la información del grid y nodo central
+                // Modificar la función updateViewportIndicator para usar el centro del canvas
                 function updateViewportIndicator() {
                     const mainViewPosition = network.getViewPosition();
                     const mainScale = network.getScale();
@@ -987,12 +1003,12 @@
                     indicator.style.left = `${minimapPos.x}px`;
                     indicator.style.top = `${minimapPos.y}px`;
                     
-                    // Calcular coordenadas del grid
+                    // Calcular coordenadas del grid usando la posición del punto central
                     const gridX = Math.round(mainViewPosition.x / GRID_SIZE);
                     const gridY = Math.round(mainViewPosition.y / GRID_SPACING);
                     document.getElementById('gridCoordinates').textContent = `(${gridX}, ${gridY})`;
                     
-                    // Encontrar el nodo más cercano al centro
+                    // Encontrar el nodo más cercano al centro del canvas
                     const allNodes = network.body.data.nodes.get();
                     let closestNode = null;
                     let minDistance = Infinity;
@@ -1010,7 +1026,6 @@
                         }
                     });
                     
-                    // Actualizar el nodo central en el display
                     document.getElementById('centerNode').textContent = 
                         closestNode ? `${closestNode.label} (${closestNode.id})` : 'Ninguno';
                 }
