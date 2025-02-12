@@ -709,92 +709,156 @@
                 
                 network = new vis.Network(container, graphData, options);
                 let selectedNodes = [];
-                // Definir el tamaño del grid y límites
-                const GRID_SIZE = 50; // Tamaño de cada celda del grid
-                const GRID_SPACING = 150; // Espacio entre niveles jerárquicos
-                const MAX_X = 2000; // Límite horizontal
-                const MAX_Y = 2000; // Límite vertical
+                let currentNodeId = null;
+                let gridNodes = {};
+                const GRID_SIZE = 100;    // Tamaño de la celda del grid en el eje X
+                const GRID_SPACING = 150; // Tamaño de la celda del grid en el eje Y (mayor para jerarquías)
 
-                // Fijar las posiciones iniciales y configurar el grid
-                network.once('stabilized', function() {
+                // Función para organizar los nodos en una estructura de grid
+                function updateGridStructure() {
+                    gridNodes = {};
                     const positions = network.getPositions();
-                    const levels = {};
                     
-                    // Agrupar nodos por niveles
-                    Object.keys(positions).forEach(nodeId => {
-                        const y = Math.round(positions[nodeId].y / GRID_SPACING) * GRID_SPACING;
-                        if (!levels[y]) levels[y] = [];
-                        levels[y].push(nodeId);
-                    });
-
-                    // Ordenar los niveles por coordenada Y
-                    const sortedLevels = Object.keys(levels).sort((a, b) => parseFloat(a) - parseFloat(b));
-
-                    // Distribuir los nodos horizontalmente en cada nivel
-                    sortedLevels.forEach((y, levelIndex) => {
-                        const nodeIds = levels[y];
-                        const levelWidth = nodeIds.length * GRID_SIZE;
-                        const startX = -levelWidth / 2;
+                    Object.entries(positions).forEach(([nodeId, pos]) => {
+                        const x = Math.round(pos.x / GRID_SIZE) * GRID_SIZE;
+                        const y = Math.round(pos.y / GRID_SPACING) * GRID_SPACING;
                         
-                        nodeIds.forEach((nodeId, index) => {
-                            const xPos = Math.max(-MAX_X, Math.min(MAX_X, startX + (index * GRID_SIZE)));
-                            const yPos = Math.max(-MAX_Y, Math.min(MAX_Y, levelIndex * GRID_SPACING));
-                            
-                            network.body.data.nodes.update({
-                                id: nodeId,
-                                fixed: {
-                                    x: true,
-                                    y: true
-                                },
-                                x: xPos,
-                                y: yPos
-                            });
-                        });
+                        if (!gridNodes[y]) gridNodes[y] = {};
+                        gridNodes[y][x] = nodeId;
                     });
+                }
 
-                    // Ajustar el zoom para mostrar todos los nodos
-                    network.fit({
-                        animation: {
-                            duration: 1000,
-                            easingFunction: 'easeInOutQuad'
+                // Función para encontrar el nodo más cercano en la dirección especificada
+                function findNextNode(direction) {
+                    if (!currentNodeId) {
+                        const firstNode = network.body.data.nodes.get()[0];
+                        if (firstNode) {
+                            currentNodeId = firstNode.id;
+                            network.selectNodes([currentNodeId]);
+                            return;
                         }
-                    });
-                });
+                    }
 
-                // Función para ajustar la posición al grid más cercano
-                function snapToGrid(position) {
-                    return {
-                        x: Math.round(position.x / GRID_SIZE) * GRID_SIZE,
-                        y: Math.round(position.y / GRID_SPACING) * GRID_SPACING
-                    };
-                }
+                    const currentPos = network.getPosition(currentNodeId);
+                    const currentX = Math.round(currentPos.x / GRID_SIZE) * GRID_SIZE;
+                    const currentY = Math.round(currentPos.y / GRID_SPACING) * GRID_SPACING;
+                    
+                    let nextNodeId = null;
+                    let minDistance = Infinity;
+                    
+                    switch (direction) {
+                        case 'up':
+                            // Buscar el nodo más cercano en el nivel inmediatamente superior
+                            let closestUpperY = -Infinity;
+                            for (const y in gridNodes) {
+                                const gridY = parseInt(y);
+                                if (gridY < currentY && gridY > closestUpperY) {
+                                    closestUpperY = gridY;
+                                }
+                            }
+                            if (closestUpperY !== -Infinity) {
+                                for (const x in gridNodes[closestUpperY]) {
+                                    const distance = Math.abs(parseInt(x) - currentX);
+                                    if (distance < minDistance) {
+                                        minDistance = distance;
+                                        nextNodeId = gridNodes[closestUpperY][x];
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        case 'down':
+                            // Buscar el nodo más cercano en el nivel inmediatamente inferior
+                            let closestLowerY = Infinity;
+                            for (const y in gridNodes) {
+                                const gridY = parseInt(y);
+                                if (gridY > currentY && gridY < closestLowerY) {
+                                    closestLowerY = gridY;
+                                }
+                            }
+                            if (closestLowerY !== Infinity) {
+                                for (const x in gridNodes[closestLowerY]) {
+                                    const distance = Math.abs(parseInt(x) - currentX);
+                                    if (distance < minDistance) {
+                                        minDistance = distance;
+                                        nextNodeId = gridNodes[closestLowerY][x];
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        case 'left':
+                            // Buscar el nodo más cercano a la izquierda en el mismo nivel
+                            let closestLeftX = -Infinity;
+                            if (gridNodes[currentY]) {
+                                for (const x in gridNodes[currentY]) {
+                                    const gridX = parseInt(x);
+                                    if (gridX < currentX && gridX > closestLeftX) {
+                                        closestLeftX = gridX;
+                                        nextNodeId = gridNodes[currentY][x];
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        case 'right':
+                            // Buscar el nodo más cercano a la derecha en el mismo nivel
+                            let closestRightX = Infinity;
+                            if (gridNodes[currentY]) {
+                                for (const x in gridNodes[currentY]) {
+                                    const gridX = parseInt(x);
+                                    if (gridX > currentX && gridX < closestRightX) {
+                                        closestRightX = gridX;
+                                        nextNodeId = gridNodes[currentY][x];
+                                    }
+                                }
+                            }
+                            break;
+                    }
 
-                // Función para mantener los nodos dentro de los límites
-                function constrainPosition(position) {
-                    return {
-                        x: Math.max(-MAX_X, Math.min(MAX_X, position.x)),
-                        y: Math.max(-MAX_Y, Math.min(MAX_Y, position.y))
-                    };
-                }
-
-                // Manejar el movimiento de los nodos
-                network.on("dragEnd", function(params) {
-                    if (params.nodes.length > 0) {
-                        const nodeId = params.nodes[0];
-                        const position = network.getPosition(nodeId);
-                        const constrained = constrainPosition(position);
-                        const snapped = snapToGrid(constrained);
-                        
-                        network.body.data.nodes.update({
-                            id: nodeId,
-                            x: snapped.x,
-                            y: snapped.y,
-                            fixed: {
-                                x: true,
-                                y: true
+                    if (nextNodeId) {
+                        currentNodeId = nextNodeId;
+                        network.selectNodes([currentNodeId]);
+                        network.focus(currentNodeId, {
+                            scale: network.getScale(),
+                            animation: {
+                                duration: 300,
+                                easingFunction: 'easeInOutQuad'
                             }
                         });
                     }
+                }
+
+                // Añadir event listener para las teclas de flecha
+                document.addEventListener('keydown', function(e) {
+                    if (!network) return;
+                    
+                    // Actualizar la estructura del grid
+                    updateGridStructure();
+                    
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            findNextNode('up');
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            findNextNode('down');
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            findNextNode('left');
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            findNextNode('right');
+                            break;
+                    }
+                });
+
+                // Actualizar la estructura del grid cuando el grafo se estabilice
+                network.once('stabilized', () => {
+                    updateGridStructure();
                 });
 
                 // Manejar clicks en los nodos
