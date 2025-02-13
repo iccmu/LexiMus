@@ -893,7 +893,23 @@
 
                     if (nextNodeId) {
                         currentNodeId = nextNodeId;
-                        network.selectNodes([currentNodeId]);
+                        // Mantener los nodos seleccionados previamente y añadir sombra al nodo actual
+                        network.selectNodes([...selectedNodes, currentNodeId]);
+                        
+                        // Asegurarse de que todos los nodos seleccionados mantengan su sombra
+                        selectedNodes.forEach(nodeId => {
+                            network.body.data.nodes.update({
+                                id: nodeId,
+                                shadow: {
+                                    enabled: true,
+                                    color: 'rgba(0,0,0,0.5)',
+                                    size: 10,
+                                    x: 0,
+                                    y: 5
+                                }
+                            });
+                        });
+                        
                         network.focus(currentNodeId, {
                             scale: network.getScale(),
                             animation: {
@@ -972,11 +988,28 @@
                                 
                                 if (nodeIndex === -1) {
                                     selectedNodes.push(currentNodeId);
-                                    network.selectNodes(selectedNodes);
+                                    // Añadir sombra al nodo seleccionado
+                                    network.body.data.nodes.update({
+                                        id: currentNodeId,
+                                        shadow: {
+                                            enabled: true,
+                                            color: 'rgba(0,0,0,0.5)',
+                                            size: 10,
+                                            x: 0,
+                                            y: 5
+                                        }
+                                    });
                                 } else {
                                     selectedNodes.splice(nodeIndex, 1);
-                                    network.selectNodes(selectedNodes);
+                                    // Remover sombra cuando se deselecciona
+                                    network.body.data.nodes.update({
+                                        id: currentNodeId,
+                                        shadow: {
+                                            enabled: false
+                                        }
+                                    });
                                 }
+                                network.selectNodes(selectedNodes);
 
                                 if (selectedNodes.length === 2) {
                                     const contextMenu = document.getElementById('contextMenu');
@@ -1027,11 +1060,28 @@
                         
                         if (nodeIndex === -1) {
                             selectedNodes.push(clickedNode);
-                            network.selectNodes(selectedNodes);
+                            // Añadir sombra al nodo seleccionado
+                            network.body.data.nodes.update({
+                                id: clickedNode,
+                                shadow: {
+                                    enabled: true,
+                                    color: 'rgba(0,0,0,0.5)',
+                                    size: 10,
+                                    x: 0,
+                                    y: 5
+                                }
+                            });
                         } else {
                             selectedNodes.splice(nodeIndex, 1);
-                            network.selectNodes(selectedNodes);
+                            // Remover sombra cuando se deselecciona
+                            network.body.data.nodes.update({
+                                id: clickedNode,
+                                shadow: {
+                                    enabled: false
+                                }
+                            });
                         }
+                        network.selectNodes(selectedNodes);
 
                         if (selectedNodes.length === 2) {
                             const contextMenu = document.getElementById('contextMenu');
@@ -1049,6 +1099,15 @@
                             document.getElementById('contextMenu').style.display = 'none';
                         }
                     } else {
+                        // Remover sombras de todos los nodos cuando se hace clic en el fondo
+                        selectedNodes.forEach(nodeId => {
+                            network.body.data.nodes.update({
+                                id: nodeId,
+                                shadow: {
+                                    enabled: false
+                                }
+                            });
+                        });
                         selectedNodes = [];
                         network.selectNodes([]);
                         document.getElementById('contextMenu').style.display = 'none';
