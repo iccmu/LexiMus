@@ -389,10 +389,11 @@
             flex-shrink: 0;
         }
 
-        /* Añadir estilos para el menú contextual */
+        /* Actualizar estilos para el menú contextual */
         .context-menu {
-            display: none;
             position: absolute;
+            top: 10px;  /* Margen desde la parte superior del visualization-section */
+            left: 10px; /* Margen desde la parte izquierda del visualization-section */
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
@@ -401,6 +402,7 @@
             min-width: 200px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0,0,0,0.1);
+            display: none; /* Inicialmente oculto */
         }
 
         .context-menu-option {
@@ -727,7 +729,6 @@
                             treeSpacing: 200
                         }
                     },
-                    scale: 0.5,
                     physics: {
                         enabled: false,
                         stabilization: {
@@ -771,6 +772,9 @@
                 };
                 
                 network = new vis.Network(container, graphData, options);
+                network.moveTo({
+                    scale: 0.5
+                });
                 let selectedNodes = [];
                 let currentNodeId = null;
                 let gridNodes = {};
@@ -990,12 +994,18 @@
 
                 // Añadir event listener para las teclas de flecha y espaciadora
                 document.addEventListener('keydown', function(e) {
-                    if (!network) return;
-                    
+                    const yamlInput = document.getElementById('yamlInput');
                     const contextMenu = document.getElementById('contextMenu');
                     const isContextMenuVisible = contextMenu.style.display === 'block';
                     
-                    // Si el menú contextual está visible, manejar la navegación del menú
+                    // Si el foco está en el textarea, no procesar las teclas de flecha para los nodos
+                    if (document.activeElement === yamlInput) {
+                        return;
+                    }
+
+                    if (!network) return;
+                    
+                    // Manejar primero el menú contextual si está visible
                     if (isContextMenuVisible) {
                         const options = contextMenu.querySelectorAll('.context-menu-option');
                         let currentIndex = Array.from(options).findIndex(option => option.classList.contains('active'));
@@ -1027,15 +1037,15 @@
                                 network.selectNodes([]);
                                 break;
                         }
-                        return;
+                        return; // Importante: detener aquí si el menú contextual está visible
                     }
                     
-                    // Si el menú no está visible, mantener la navegación normal del grafo
+                    // Si el menú contextual no está visible, proceder con la navegación normal del grafo
                     updateGridStructure();
                     
                     switch(e.key) {
                         case ' ':
-                            e.preventDefault(); // Prevenir el scroll por defecto
+                            e.preventDefault();
                             const rootNode = network.body.data.nodes.get()[0];
                             if (rootNode) {
                                 currentNodeId = rootNode.id;
@@ -1089,20 +1099,13 @@
                                 }
                                 network.selectNodes(selectedNodes);
 
+                                // Mostrar/ocultar el menú cuando hay exactamente 2 nodos seleccionados
+                                const contextMenu = document.getElementById('contextMenu');
                                 if (selectedNodes.length === 2) {
-                                    const contextMenu = document.getElementById('contextMenu');
-                                    const [pos1, pos2] = selectedNodes.map(nodeId => 
-                                        network.getPositions([nodeId])[nodeId]);
-                                    
-                                    const centerX = (pos1.x + pos2.x) / 2;
-                                    const centerY = (pos1.y + pos2.y) / 2;
-                                    const canvasPos = network.canvasToDOM({x: centerX, y: centerY});
-                                    
-                                    contextMenu.style.left = `${canvasPos.x}px`;
-                                    contextMenu.style.top = `${canvasPos.y}px`;
                                     contextMenu.style.display = 'block';
+                                    // Ya no necesitamos calcular la posición central
                                 } else {
-                                    document.getElementById('contextMenu').style.display = 'none';
+                                    contextMenu.style.display = 'none';
                                 }
                             }
                             break;
@@ -1131,78 +1134,52 @@
                 });
 
                 // Manejar clicks en los nodos
-                network.on('click', function(params) {
+                network.on("click", function(params) {
                     if (params.nodes.length > 0) {
-                        const clickedNode = params.nodes[0];
-                        const nodeIndex = selectedNodes.indexOf(clickedNode);
+                        const nodeId = params.nodes[0];
+                        const nodeIndex = selectedNodes.indexOf(nodeId);
                         
                         if (nodeIndex === -1) {
-                            selectedNodes.push(clickedNode);
+                            selectedNodes.push(nodeId);
                             network.body.data.nodes.update({
-                                id: clickedNode,
+                                id: nodeId,
                                 shadow: {
                                     enabled: true,
-                                    color: 'rgba(46, 204, 113, 0.5)', // Verde #2ecc71 con transparencia
+                                    color: 'rgba(46, 204, 113, 0.5)',
                                     size: 10,
                                     x: 0,
                                     y: 5
-                                },
-                                shapeProperties: {
-                                    borderDashes: false,
-                                    interpolation: true,
-                                    useImageSize: false,
-                                    useBorderWithImage: false,
-                                    animation: {
-                                        enabled: true,
-                                        duration: 2000,
-                                        easingFunction: 'easeInOutQuad'
-                                    }
                                 }
                             });
                         } else {
                             selectedNodes.splice(nodeIndex, 1);
-                            // Remover sombra cuando se deselecciona
-                            network.body.data.nodes.update({
-                                id: clickedNode,
-                                shadow: {
-                                    enabled: false
-                                }
-                            });
-                        }
-                        network.selectNodes(selectedNodes);
-
-                        if (selectedNodes.length === 2) {
-                            const contextMenu = document.getElementById('contextMenu');
-                            const [pos1, pos2] = selectedNodes.map(nodeId => 
-                                network.getPositions([nodeId])[nodeId]);
-                            
-                            const centerX = (pos1.x + pos2.x) / 2;
-                            const centerY = (pos1.y + pos2.y) / 2;
-                            const canvasPos = network.canvasToDOM({x: centerX, y: centerY});
-                            
-                            contextMenu.style.left = `${canvasPos.x}px`;
-                            contextMenu.style.top = `${canvasPos.y}px`;
-                            contextMenu.style.display = 'block';
-                        } else {
-                            document.getElementById('contextMenu').style.display = 'none';
-                        }
-                    } else {
-                        // Remover sombras de todos los nodos cuando se hace clic en el fondo
-                        selectedNodes.forEach(nodeId => {
                             network.body.data.nodes.update({
                                 id: nodeId,
                                 shadow: {
                                     enabled: false
                                 }
                             });
-                        });
+                        }
+                        
+                        network.selectNodes(selectedNodes);
+
+                        // Mostrar/ocultar el menú cuando hay exactamente 2 nodos seleccionados
+                        const contextMenu = document.getElementById('contextMenu');
+                        if (selectedNodes.length === 2) {
+                            contextMenu.style.display = 'block';
+                            // Ya no necesitamos calcular la posición central
+                        } else {
+                            contextMenu.style.display = 'none';
+                        }
+                    } else {
+                        // Click en el fondo
                         selectedNodes = [];
                         network.selectNodes([]);
                         document.getElementById('contextMenu').style.display = 'none';
                     }
                 });
 
-                // Manejar selección de relación desde el menú contextual
+                // Actualizar el manejo de las opciones del menú
                 document.querySelectorAll('.context-menu-option').forEach(option => {
                     option.addEventListener('click', function() {
                         if (selectedNodes.length === 2) {
@@ -1219,7 +1196,7 @@
 
                             const relationColor = relationColors[relation] || '#666666';
 
-                            // Actualizar las sombras de los nodos pasando network como parámetro
+                            // Actualizar las sombras de los nodos
                             updateNodeShadows(fromNode, relationColor, network);
                             updateNodeShadows(toNode, relationColor, network);
 
@@ -1254,45 +1231,14 @@
                                 }
                             });
 
-                            // Asegurar que los nodos mantengan sus posiciones
-                            network.body.data.nodes.update([
-                                {
-                                    id: fromNode,
-                                    x: network.getPosition(fromNode).x,
-                                    y: network.getPosition(fromNode).y,
-                                    fixed: {
-                                        x: true,
-                                        y: true
-                                    }
-                                },
-                                {
-                                    id: toNode,
-                                    x: network.getPosition(toNode).x,
-                                    y: network.getPosition(toNode).y,
-                                    fixed: {
-                                        x: true,
-                                        y: true
-                                    }
-                                }
-                            ]);
-                            
-                            document.getElementById('contextMenu').style.display = 'none';
+                            // Limpiar selección después de añadir la relación
                             selectedNodes = [];
                             network.selectNodes([]);
+                            document.getElementById('contextMenu').style.display = 'none';
                         }
                     });
                 });
 
-                // Ocultar menú al hacer clic en el fondo
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.context-menu') && 
-                        !e.target.closest('.vis-network')) {
-                        document.getElementById('contextMenu').style.display = 'none';
-                        selectedNodes = [];
-                        network.selectNodes([]);
-                    }
-                });
-                
                 // Restaurar la posición de la vista si existía previamente
                 if (viewPosition) {
                     network.moveTo({
@@ -1953,6 +1899,82 @@
                 });
             }
         }
+
+        // Definir la función antes de los event listeners
+        function highlightNodeFromYamlLine(lineNumber, yaml) {
+            const network = document.getElementById('mynetwork')._network;
+            if (!network) return;
+
+            // Limpiar resaltados anteriores
+            const nodes = network.body.data.nodes.get();
+            nodes.forEach(node => {
+                network.body.data.nodes.update({
+                    id: node.id,
+                    shadow: {
+                        enabled: false
+                    }
+                });
+            });
+
+            // Obtener la línea actual y su nivel de indentación
+            const lines = yaml.split('\n');
+            const currentLine = lines[lineNumber - 1];
+            if (!currentLine) return;
+
+            const indentation = currentLine.search(/\S/);
+            const key = currentLine.trim().split(':')[0];
+
+            // Buscar el nodo correspondiente
+            const node = nodes.find(n => n.label === key);
+
+            if (node) {
+                // Aplicar efecto de resaltado
+                network.body.data.nodes.update({
+                    id: node.id,
+                    shadow: {
+                        enabled: true,
+                        color: '#2ecc71',
+                        size: 15,
+                        x: 0,
+                        y: 0
+                    }
+                });
+
+                // Centrar la vista en el nodo
+                network.focus(node.id, {
+                    scale: network.getScale(),
+                    animation: {
+                        duration: 500,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+            }
+        }
+
+        // Ahora añadir los event listeners
+        document.getElementById('yamlInput').addEventListener('keyup', function(e) {
+            const cursorPosition = this.selectionStart;
+            const yaml = this.value;
+            const lines = yaml.substring(0, cursorPosition).split('\n');
+            const currentLine = lines.length;
+            highlightNodeFromYamlLine(currentLine, yaml);
+        });
+
+        document.getElementById('yamlInput').addEventListener('click', function(e) {
+            const cursorPosition = this.selectionStart;
+            const yaml = this.value;
+            const lines = yaml.substring(0, cursorPosition).split('\n');
+            const currentLine = lines.length;
+            highlightNodeFromYamlLine(currentLine, yaml);
+        });
+
+        document.getElementById('yamlInput').addEventListener('select', function(e) {
+            const cursorPosition = this.selectionStart;
+            const yaml = this.value;
+            const lines = yaml.substring(0, cursorPosition).split('\n');
+            const currentLine = lines.length;
+            highlightNodeFromYamlLine(currentLine, yaml);
+        });
     </script>
 </body>
 </html> 
