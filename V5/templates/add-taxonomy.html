@@ -441,6 +441,7 @@
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 1001;
+            transition: all 0.3s ease-out; /* Añadir transición suave */
         }
 
         .coordinates-display {
@@ -473,6 +474,22 @@
         .context-menu-option.active {
             background-color: #f0f0f0;
             outline: 2px solid #2B7CE9;
+        }
+
+        @keyframes shadowPulse {
+            0% {
+                box-shadow: 0 0 0 rgba(43, 124, 233, 0);
+            }
+            50% {
+                box-shadow: 0 5px 10px rgba(43, 124, 233, 0.5);
+            }
+            100% {
+                box-shadow: 0 0 0 rgba(43, 124, 233, 0);
+            }
+        }
+
+        .node-shadow-animation {
+            animation: shadowPulse 2s infinite;
         }
     </style>
 </head>
@@ -893,19 +910,28 @@
 
                     if (nextNodeId) {
                         currentNodeId = nextNodeId;
-                        // Mantener los nodos seleccionados previamente y añadir sombra al nodo actual
                         network.selectNodes([...selectedNodes, currentNodeId]);
                         
-                        // Asegurarse de que todos los nodos seleccionados mantengan su sombra
                         selectedNodes.forEach(nodeId => {
                             network.body.data.nodes.update({
                                 id: nodeId,
                                 shadow: {
                                     enabled: true,
-                                    color: 'rgba(0,0,0,0.5)',
+                                    color: 'rgba(43, 124, 233, 0.5)',
                                     size: 10,
                                     x: 0,
                                     y: 5
+                                },
+                                shapeProperties: {
+                                    borderDashes: false,
+                                    interpolation: true,
+                                    useImageSize: false,
+                                    useBorderWithImage: false,
+                                    animation: {
+                                        enabled: true,
+                                        duration: 2000,
+                                        easingFunction: 'easeInOutQuad'
+                                    }
                                 }
                             });
                         });
@@ -988,15 +1014,25 @@
                                 
                                 if (nodeIndex === -1) {
                                     selectedNodes.push(currentNodeId);
-                                    // Añadir sombra al nodo seleccionado
                                     network.body.data.nodes.update({
                                         id: currentNodeId,
                                         shadow: {
                                             enabled: true,
-                                            color: 'rgba(0,0,0,0.5)',
+                                            color: 'rgba(43, 124, 233, 0.5)',
                                             size: 10,
                                             x: 0,
                                             y: 5
+                                        },
+                                        shapeProperties: {
+                                            borderDashes: false,
+                                            interpolation: true,
+                                            useImageSize: false,
+                                            useBorderWithImage: false,
+                                            animation: {
+                                                enabled: true,
+                                                duration: 2000,
+                                                easingFunction: 'easeInOutQuad'
+                                            }
                                         }
                                     });
                                 } else {
@@ -1060,15 +1096,25 @@
                         
                         if (nodeIndex === -1) {
                             selectedNodes.push(clickedNode);
-                            // Añadir sombra al nodo seleccionado
                             network.body.data.nodes.update({
                                 id: clickedNode,
                                 shadow: {
                                     enabled: true,
-                                    color: 'rgba(0,0,0,0.5)',
+                                    color: 'rgba(43, 124, 233, 0.5)',
                                     size: 10,
                                     x: 0,
                                     y: 5
+                                },
+                                shapeProperties: {
+                                    borderDashes: false,
+                                    interpolation: true,
+                                    useImageSize: false,
+                                    useBorderWithImage: false,
+                                    animation: {
+                                        enabled: true,
+                                        duration: 2000,
+                                        easingFunction: 'easeInOutQuad'
+                                    }
                                 }
                             });
                         } else {
@@ -1263,43 +1309,52 @@
                             centerNodeElement.textContent = closestNode ? closestNode.label : 'Ninguno';
                         }
 
-                        // Actualizar la posición del indicador en el minimapa
-                        const minimapPos = minimap.canvasToDOM({
-                            x: mainViewPosition.x,
-                            y: mainViewPosition.y
+                        // Actualizar la posición del indicador en el minimapa con requestAnimationFrame
+                        requestAnimationFrame(() => {
+                            const minimapPos = minimap.canvasToDOM({
+                                x: mainViewPosition.x,
+                                y: mainViewPosition.y
+                            });
+                            
+                            const indicator = document.querySelector('.viewport-indicator');
+                            if (indicator) {
+                                indicator.style.left = `${minimapPos.x}px`;
+                                indicator.style.top = `${minimapPos.y}px`;
+                            }
                         });
-                        
-                        indicator.style.left = `${minimapPos.x}px`;
-                        indicator.style.top = `${minimapPos.y}px`;
                     } catch (error) {
                         console.error('Error en updateViewportIndicator:', error);
                     }
                 }
 
-                // Configurar los event listeners de manera más robusta
-                const events = ['drag', 'dragEnd', 'zoom', 'animationFinished'];
-                
-                // Primero, eliminar cualquier listener existente
-                events.forEach(eventName => {
-                    network.off(eventName);
-                });
-
-                // Luego, añadir los nuevos listeners
-                events.forEach(eventName => {
-                    network.on(eventName, () => {
-                        requestAnimationFrame(updateViewportIndicator);
-                    });
-                });
-
-                // Añadir un listener para actualización continua durante el arrastre
+                // Actualizar los event listeners para un movimiento más suave
                 network.on('dragStart', () => {
+                    let animationFrameId;
+                    
                     function update() {
                         if (network.dragging) {
                             updateViewportIndicator();
-                            requestAnimationFrame(update);
+                            animationFrameId = requestAnimationFrame(update);
                         }
                     }
-                    requestAnimationFrame(update);
+                    
+                    animationFrameId = requestAnimationFrame(update);
+                    
+                    network.once('dragEnd', () => {
+                        if (animationFrameId) {
+                            cancelAnimationFrame(animationFrameId);
+                        }
+                    });
+                });
+
+                // Asegurar que las actualizaciones sean suaves durante el zoom
+                network.on('zoom', () => {
+                    requestAnimationFrame(updateViewportIndicator);
+                });
+
+                // Asegurar que las actualizaciones sean suaves durante la animación
+                network.on('animationFinished', () => {
+                    requestAnimationFrame(updateViewportIndicator);
                 });
 
                 // Actualización inicial
