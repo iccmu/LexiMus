@@ -572,6 +572,12 @@
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script>
+        // Declaración global de nodeShadows
+        let nodeShadows = new Map();
+
+        // Añadir la variable de configuración al inicio del script
+        const NODE_LABEL_MAX_LENGTH = 20; // Puedes ajustar este valor según necesites
+
         // Modificar la función de carga inicial
         window.onload = function() {
             if (!sessionStorage.getItem('user')) {
@@ -722,7 +728,11 @@
                         }
                     },
                     physics: {
-                        enabled: false
+                        enabled: false,
+                        stabilization: {
+                            enabled: true,
+                            iterations: 1000
+                        }
                     },
                     edges: {
                         arrows: 'to',
@@ -1198,10 +1208,6 @@
                             const relation = this.dataset.relation;
                             const [fromNode, toNode] = selectedNodes;
                             
-                            // Guardar las posiciones actuales de los nodos
-                            const fromPos = network.getPosition(fromNode);
-                            const toPos = network.getPosition(toNode);
-                            
                             const relationColors = {
                                 'Inversa': '#FF4444',
                                 'Transitiva': '#33CC33',
@@ -1212,29 +1218,9 @@
 
                             const relationColor = relationColors[relation] || '#666666';
 
-                            // Actualizar los nodos con sombras del color de la relación
-                            network.body.data.nodes.update([
-                                {
-                                    id: fromNode,
-                                    shadow: {
-                                        enabled: true,
-                                        color: relationColor,
-                                        size: 10,
-                                        x: 0,
-                                        y: 5
-                                    }
-                                },
-                                {
-                                    id: toNode,
-                                    shadow: {
-                                        enabled: true,
-                                        color: relationColor,
-                                        size: 10,
-                                        x: 0,
-                                        y: 5
-                                    }
-                                }
-                            ]);
+                            // Actualizar las sombras de los nodos pasando network como parámetro
+                            updateNodeShadows(fromNode, relationColor, network);
+                            updateNodeShadows(toNode, relationColor, network);
 
                             // Añadir la nueva arista
                             graphData.edges.add({
@@ -1271,8 +1257,8 @@
                             network.body.data.nodes.update([
                                 {
                                     id: fromNode,
-                                    x: fromPos.x,
-                                    y: fromPos.y,
+                                    x: network.getPosition(fromNode).x,
+                                    y: network.getPosition(fromNode).y,
                                     fixed: {
                                         x: true,
                                         y: true
@@ -1280,8 +1266,8 @@
                                 },
                                 {
                                     id: toNode,
-                                    x: toPos.x,
-                                    y: toPos.y,
+                                    x: network.getPosition(toNode).x,
+                                    y: network.getPosition(toNode).y,
                                     fixed: {
                                         x: true,
                                         y: true
@@ -1503,6 +1489,81 @@
                 container._network = network;
                 minimapContainer._network = minimap;
                 
+                // Función para detectar solapamiento entre nodos
+                function checkNodeOverlap() {
+                    const nodes = network.body.nodes;
+                    const nodePositions = {};
+                    const overlappingPairs = [];
+
+                    // Obtener posiciones y dimensiones de todos los nodos
+                    Object.values(nodes).forEach(node => {
+                        const position = network.getPosition(node.id);
+                        const boundingBox = node.shape.boundingBox;
+                        nodePositions[node.id] = {
+                            x: position.x,
+                            y: position.y,
+                            width: boundingBox.right - boundingBox.left,
+                            height: boundingBox.bottom - boundingBox.top
+                        };
+                    });
+
+                    // Comprobar solapamientos
+                    Object.entries(nodePositions).forEach(([id1, pos1]) => {
+                        Object.entries(nodePositions).forEach(([id2, pos2]) => {
+                            if (id1 < id2) { // Evitar comparaciones duplicadas
+                                if (isOverlapping(pos1, pos2)) {
+                                    overlappingPairs.push([id1, id2]);
+                                    
+                                    // Resaltar nodos solapados
+                                    network.body.data.nodes.update([
+                                        {
+                                            id: id1,
+                                            color: {
+                                                background: '#ffcccb',
+                                                border: '#ff0000'
+                                            }
+                                        },
+                                        {
+                                            id: id2,
+                                            color: {
+                                                background: '#ffcccb',
+                                                border: '#ff0000'
+                                            }
+                                        }
+                                    ]);
+                                }
+                            }
+                        });
+                    });
+
+                    return overlappingPairs;
+                }
+
+                // Función auxiliar para detectar si dos nodos se solapan
+                function isOverlapping(pos1, pos2) {
+                    const horizontalOverlap = Math.abs(pos1.x - pos2.x) < (pos1.width + pos2.width) / 2;
+                    const verticalOverlap = Math.abs(pos1.y - pos2.y) < (pos1.height + pos2.height) / 2;
+                    return horizontalOverlap && verticalOverlap;
+                }
+
+                // Añadir evento para detectar solapamientos después de mover nodos
+                network.on('dragEnd', function(params) {
+                    if (params.nodes && params.nodes.length > 0) {
+                        const overlappingPairs = checkNodeOverlap();
+                        if (overlappingPairs.length > 0) {
+                            console.log('Nodos solapados:', overlappingPairs);
+                        }
+                    }
+                });
+
+                // Comprobar solapamientos después de que el grafo se estabilice
+                network.once('stabilizationIterationsDone', function() {
+                    const overlappingPairs = checkNodeOverlap();
+                    if (overlappingPairs.length > 0) {
+                        console.log('Nodos solapados inicialmente:', overlappingPairs);
+                    }
+                });
+                
             } catch (error) {
                 console.error('Error:', error);
                 const errorDiv = document.getElementById('yamlError');
@@ -1637,6 +1698,18 @@
             let edges = [];
             let counter = 0;
             
+            // Función auxiliar para truncar texto solo cuando hay solapamiento
+            function truncateLabel(text, hasOverlap) {
+                return hasOverlap && text.length > NODE_LABEL_MAX_LENGTH ? 
+                    text.substring(0, NODE_LABEL_MAX_LENGTH) + '...' : 
+                    text;
+            }
+            
+            // Función para verificar si hay nodos en el mismo nivel que podrían solaparse
+            function checkLevelOverlap(currentLevel) {
+                return nodes.filter(node => node.level === currentLevel).length > 3;
+            }
+            
             function processItem(key, value, parentId, currentLevel) {
                 if (key === 'id') return;
                 
@@ -1649,16 +1722,22 @@
                     delete value['id'];
                 }
 
-                // Añadir color gris para los nodos 'definiciones'
+                // Verificar si hay potencial solapamiento en este nivel
+                const hasOverlap = checkLevelOverlap(currentLevel);
+                
+                // Truncar la etiqueta del nodo solo si hay solapamiento
+                const nodeLabel = key === 'value' ? 'definiciones' : truncateLabel(String(key), hasOverlap);
+
                 nodes.push({
                     id: nodeId,
-                    label: key === 'value' ? 'definiciones' : String(key),
+                    label: nodeLabel,
                     shape: 'box',
                     level: currentLevel,
                     color: key === 'value' ? {
                         background: '#E8E8E8',
                         border: '#A9A9A9'
-                    } : undefined
+                    } : undefined,
+                    title: key === 'value' ? 'definiciones' : String(key) // Tooltip con el texto completo
                 });
                 
                 if (parentId) {
@@ -1677,16 +1756,19 @@
                     });
                 } else if (value !== undefined && value !== null && !String(key).startsWith('@') && key !== 'id') {
                     const valueId = `${nodeId}_definiciones_${counter}`;
-                    // También aplicar el color gris a los nodos de definición
+                    // Truncar el valor también solo si hay solapamiento
+                    const truncatedValue = truncateLabel(String(value), hasOverlap);
+                    
                     nodes.push({
                         id: valueId,
-                        label: String(value),
+                        label: truncatedValue,
                         shape: 'box',
                         level: currentLevel + 1,
                         color: {
                             background: '#E8E8E8',
                             border: '#A9A9A9'
-                        }
+                        },
+                        title: String(value) // Tooltip con el texto completo
                     });
                     edges.push({
                         from: nodeId,
@@ -1776,6 +1858,46 @@
             const options = contextMenu.querySelectorAll('.context-menu-option');
             options.forEach(option => option.classList.remove('active'));
             options[0]?.classList.add('active');
+        }
+
+        // Modificar la función de actualización de sombras para recibir network como parámetro
+        function updateNodeShadows(nodeId, relationColor, network, add = true) {
+            if (!nodeShadows.has(nodeId)) {
+                nodeShadows.set(nodeId, new Set());
+            }
+            
+            const nodeShadowSet = nodeShadows.get(nodeId);
+            if (add) {
+                nodeShadowSet.add(relationColor);
+            } else {
+                nodeShadowSet.delete(relationColor);
+            }
+
+            // Crear efecto de sombras múltiples
+            if (nodeShadowSet.size > 0) {
+                const shadowsArray = Array.from(nodeShadowSet);
+                const multipleShadows = shadowsArray.map((color, index) => ({
+                    enabled: true,
+                    color: color,
+                    size: 10,
+                    x: index * 3,
+                    y: 5 + (index * 3)
+                }));
+
+                network.body.data.nodes.update({
+                    id: nodeId,
+                    shadow: multipleShadows[0],
+                    shadowMultiple: multipleShadows
+                });
+            } else {
+                network.body.data.nodes.update({
+                    id: nodeId,
+                    shadow: {
+                        enabled: false
+                    },
+                    shadowMultiple: []
+                });
+            }
         }
     </script>
 </body>
