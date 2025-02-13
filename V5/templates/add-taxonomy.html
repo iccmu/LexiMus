@@ -1210,6 +1210,32 @@
                                 'Inversamente Funcional': '#00CED1'
                             };
 
+                            const relationColor = relationColors[relation] || '#666666';
+
+                            // Actualizar los nodos con sombras del color de la relación
+                            network.body.data.nodes.update([
+                                {
+                                    id: fromNode,
+                                    shadow: {
+                                        enabled: true,
+                                        color: relationColor,
+                                        size: 10,
+                                        x: 0,
+                                        y: 5
+                                    }
+                                },
+                                {
+                                    id: toNode,
+                                    shadow: {
+                                        enabled: true,
+                                        color: relationColor,
+                                        size: 10,
+                                        x: 0,
+                                        y: 5
+                                    }
+                                }
+                            ]);
+
                             // Añadir la nueva arista
                             graphData.edges.add({
                                 from: fromNode,
@@ -1222,7 +1248,7 @@
                                     }
                                 },
                                 color: {
-                                    color: relationColors[relation] || '#666666'
+                                    color: relationColor
                                 },
                                 smooth: {
                                     enabled: true,
@@ -1231,10 +1257,10 @@
                                 },
                                 width: 2,
                                 dashes: false,
-                                physics: false, // Deshabilitamos la física para evitar movimientos no deseados
+                                physics: false,
                                 font: {
                                     size: 12,
-                                    color: relationColors[relation] || '#666666',
+                                    color: relationColor,
                                     face: 'arial',
                                     background: 'white',
                                     strokeWidth: 2
