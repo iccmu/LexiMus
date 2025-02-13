@@ -727,6 +727,7 @@
                             treeSpacing: 200
                         }
                     },
+                    scale: 0.5,
                     physics: {
                         enabled: false,
                         stabilization: {
@@ -1411,7 +1412,7 @@
                         const rootNode = nodes[0];
                         if (rootNode) {
                             network.focus(rootNode.id, {
-                                scale: 0.8,
+                                scale: 0.5,
                                 animation: {
                                     duration: 1000,
                                     easingFunction: 'easeInOutQuad'
@@ -1428,7 +1429,7 @@
                     const rootNode = nodes[0];
                     if (rootNode) {
                         network.focus(rootNode.id, {
-                            scale: 0.8,
+                            scale: 0.5,
                             animation: {
                                 duration: 1000,
                                 easingFunction: 'easeInOutQuad'
@@ -1564,6 +1565,59 @@
                     }
                 });
                 
+                // Función para centrar en el nodo raíz
+                function centerOnRootNode() {
+                    const allNodes = network.body.data.nodes.get();
+                    if (allNodes.length > 0) {
+                        const rootNode = allNodes[0];
+                        const position = network.getPosition(rootNode.id);
+                        
+                        network.moveTo({
+                            position: position,
+                            scale: 0.5,
+                            animation: {
+                                duration: 1000,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                        
+                        // Actualizar el nodo central
+                        const centerNodeElement = document.getElementById('centerNode');
+                        if (centerNodeElement) {
+                            centerNodeElement.textContent = rootNode.label;
+                        }
+                    }
+                }
+
+                // Centrar en el nodo raíz después de la estabilización
+                network.once("stabilizationIterationsDone", function() {
+                    centerOnRootNode();
+                    updateCenterMarker();
+                });
+
+                // Resto de eventos existentes...
+                network.on("afterDrawing", function() {
+                    // ... existing afterDrawing code ...
+                });
+
+                // Modificar el evento click para mantener la escala actual
+                network.on("click", function(params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        const position = network.getPosition(nodeId);
+                        const currentScale = network.getScale();
+                        
+                        network.moveTo({
+                            position: position,
+                            scale: currentScale,
+                            animation: {
+                                duration: 500,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                    }
+                });
+
             } catch (error) {
                 console.error('Error:', error);
                 const errorDiv = document.getElementById('yamlError');
