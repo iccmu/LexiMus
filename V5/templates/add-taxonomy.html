@@ -394,21 +394,43 @@
             display: none;
             position: absolute;
             background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             padding: 8px 0;
             z-index: 1000;
+            min-width: 200px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
         }
 
         .context-menu-option {
-            padding: 8px 16px;
+            padding: 10px 16px;
             cursor: pointer;
             transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            font-size: 14px;
         }
 
         .context-menu-option:hover {
-            background-color: #f0f0f0;
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .context-menu-option.active {
+            background-color: rgba(43, 124, 233, 0.1);
+            outline: none;
+            border-left: 3px solid #2B7CE9;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 0 4px rgba(0,0,0,0.2);
         }
 
         /* Añadir estilos para el minimapa */
@@ -470,12 +492,6 @@
             box-shadow: 0 0 4px rgba(0,0,0,0.25); /* También ajustada la sombra a 25% de opacidad */
         }
 
-        /* Añadir estilos CSS para la opción activa del menú */
-        .context-menu-option.active {
-            background-color: #f0f0f0;
-            outline: 2px solid #2B7CE9;
-        }
-
         @keyframes shadowPulse {
             0% {
                 box-shadow: 0 0 0 rgba(46, 204, 113, 0);
@@ -531,11 +547,26 @@
 
     <!-- Añadir el menú contextual -->
     <div id="contextMenu" class="context-menu">
-        <div class="context-menu-option" data-relation="Inversa">Inversa</div>
-        <div class="context-menu-option" data-relation="Transitiva">Transitiva</div>
-        <div class="context-menu-option" data-relation="Simétrica">Simétrica</div>
-        <div class="context-menu-option" data-relation="Funcional">Funcional</div>
-        <div class="context-menu-option" data-relation="Inversamente Funcional">Inversamente Funcional</div>
+        <div class="context-menu-option" data-relation="Inversa">
+            <span class="color-dot" style="background-color: #FF4444"></span>
+            Inversa
+        </div>
+        <div class="context-menu-option" data-relation="Transitiva">
+            <span class="color-dot" style="background-color: #33CC33"></span>
+            Transitiva
+        </div>
+        <div class="context-menu-option" data-relation="Simétrica">
+            <span class="color-dot" style="background-color: #9933CC"></span>
+            Simétrica
+        </div>
+        <div class="context-menu-option" data-relation="Funcional">
+            <span class="color-dot" style="background-color: #FF8C00"></span>
+            Funcional
+        </div>
+        <div class="context-menu-option" data-relation="Inversamente Funcional">
+            <span class="color-dot" style="background-color: #00CED1"></span>
+            Inversamente Funcional
+        </div>
     </div>
 
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
