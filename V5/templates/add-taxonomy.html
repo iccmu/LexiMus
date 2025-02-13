@@ -468,6 +468,12 @@
             border: 2px solid rgba(255, 255, 255, 0.25); /* También ajustado el borde a 25% de opacidad */
             box-shadow: 0 0 4px rgba(0,0,0,0.25); /* También ajustada la sombra a 25% de opacidad */
         }
+
+        /* Añadir estilos CSS para la opción activa del menú */
+        .context-menu-option.active {
+            background-color: #f0f0f0;
+            outline: 2px solid #2B7CE9;
+        }
     </style>
 </head>
 <body>
@@ -902,11 +908,49 @@
                 document.addEventListener('keydown', function(e) {
                     if (!network) return;
                     
-                    // Actualizar la estructura del grid
+                    const contextMenu = document.getElementById('contextMenu');
+                    const isContextMenuVisible = contextMenu.style.display === 'block';
+                    
+                    // Si el menú contextual está visible, manejar la navegación del menú
+                    if (isContextMenuVisible) {
+                        const options = contextMenu.querySelectorAll('.context-menu-option');
+                        let currentIndex = Array.from(options).findIndex(option => option.classList.contains('active'));
+                        if (currentIndex === -1) currentIndex = 0;
+
+                        switch(e.key) {
+                            case 'ArrowUp':
+                                e.preventDefault();
+                                options[currentIndex]?.classList.remove('active');
+                                currentIndex = (currentIndex - 1 + options.length) % options.length;
+                                options[currentIndex].classList.add('active');
+                                break;
+                            case 'ArrowDown':
+                                e.preventDefault();
+                                options[currentIndex]?.classList.remove('active');
+                                currentIndex = (currentIndex + 1) % options.length;
+                                options[currentIndex].classList.add('active');
+                                break;
+                            case 'Enter':
+                                e.preventDefault();
+                                if (options[currentIndex]) {
+                                    options[currentIndex].click();
+                                }
+                                break;
+                            case 'Escape':
+                                e.preventDefault();
+                                contextMenu.style.display = 'none';
+                                selectedNodes = [];
+                                network.selectNodes([]);
+                                break;
+                        }
+                        return;
+                    }
+                    
+                    // Si el menú no está visible, mantener la navegación normal del grafo
                     updateGridStructure();
                     
                     switch(e.key) {
-                        case ' ': // Barra espaciadora
+                        case ' ':
                             e.preventDefault(); // Prevenir el scroll por defecto
                             const rootNode = network.body.data.nodes.get()[0];
                             if (rootNode) {
@@ -919,6 +963,36 @@
                                         easingFunction: 'easeInOutQuad'
                                     }
                                 });
+                            }
+                            break;
+                        case 'Enter':
+                            e.preventDefault();
+                            if (currentNodeId) {
+                                const nodeIndex = selectedNodes.indexOf(currentNodeId);
+                                
+                                if (nodeIndex === -1) {
+                                    selectedNodes.push(currentNodeId);
+                                    network.selectNodes(selectedNodes);
+                                } else {
+                                    selectedNodes.splice(nodeIndex, 1);
+                                    network.selectNodes(selectedNodes);
+                                }
+
+                                if (selectedNodes.length === 2) {
+                                    const contextMenu = document.getElementById('contextMenu');
+                                    const [pos1, pos2] = selectedNodes.map(nodeId => 
+                                        network.getPositions([nodeId])[nodeId]);
+                                    
+                                    const centerX = (pos1.x + pos2.x) / 2;
+                                    const centerY = (pos1.y + pos2.y) / 2;
+                                    const canvasPos = network.canvasToDOM({x: centerX, y: centerY});
+                                    
+                                    contextMenu.style.left = `${canvasPos.x}px`;
+                                    contextMenu.style.top = `${canvasPos.y}px`;
+                                    contextMenu.style.display = 'block';
+                                } else {
+                                    document.getElementById('contextMenu').style.display = 'none';
+                                }
                             }
                             break;
                         case 'ArrowUp':
@@ -1393,23 +1467,27 @@
             let counter = 0;
             
             function processItem(key, value, parentId, currentLevel) {
-                // Ignorar si la clave es 'id'
                 if (key === 'id') return;
                 
                 counter++;
-                const nodeId = parentId ? `${parentId}_${key}_${counter}` : `${key}_${counter}`;
+                const nodeId = parentId ? 
+                    (key === 'value' ? `${parentId}_definiciones_${counter}` : `${parentId}_${key}_${counter}`) : 
+                    (key === 'value' ? `definiciones_${counter}` : `${key}_${counter}`);
                 
-                // Si el valor es un objeto y tiene una propiedad 'id', la omitimos
                 if (typeof value === 'object' && value !== null) {
                     delete value['id'];
                 }
 
-                // Crear el nodo con la clave como etiqueta y el nivel asignado
+                // Añadir color gris para los nodos 'definiciones'
                 nodes.push({
                     id: nodeId,
-                    label: String(key),
+                    label: key === 'value' ? 'definiciones' : String(key),
                     shape: 'box',
-                    level: currentLevel // Asignar el nivel actual
+                    level: currentLevel,
+                    color: key === 'value' ? {
+                        background: '#E8E8E8',
+                        border: '#A9A9A9'
+                    } : undefined
                 });
                 
                 if (parentId) {
@@ -1422,18 +1500,22 @@
                 
                 if (typeof value === 'object' && value !== null) {
                     Object.entries(value).forEach(([k, v]) => {
-                        // Omitir propiedades que empiezan con '@' o son 'id'
                         if (!k.startsWith('@') && k !== 'id') {
                             processItem(k, v, nodeId, currentLevel + 1);
                         }
                     });
                 } else if (value !== undefined && value !== null && !String(key).startsWith('@') && key !== 'id') {
-                    const valueId = `${nodeId}_value_${counter}`;
+                    const valueId = `${nodeId}_definiciones_${counter}`;
+                    // También aplicar el color gris a los nodos de definición
                     nodes.push({
                         id: valueId,
                         label: String(value),
                         shape: 'box',
-                        level: currentLevel + 1 // Asignar nivel para nodos de valor
+                        level: currentLevel + 1,
+                        color: {
+                            background: '#E8E8E8',
+                            border: '#A9A9A9'
+                        }
                     });
                     edges.push({
                         from: nodeId,
@@ -1444,7 +1526,6 @@
             }
             
             Object.entries(data).forEach(([key, value]) => {
-                // Omitir propiedades que empiezan con '@' o son 'id'
                 if (!key.startsWith('@') && key !== 'id') {
                     processItem(key, value, parentId, level);
                 }
@@ -1511,6 +1592,19 @@
                 }
             }
             return true;
+        }
+
+        // Modificar la función que muestra el menú contextual para inicializar la selección
+        function showContextMenu(x, y) {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
+            contextMenu.style.display = 'block';
+            
+            // Activar la primera opción por defecto
+            const options = contextMenu.querySelectorAll('.context-menu-option');
+            options.forEach(option => option.classList.remove('active'));
+            options[0]?.classList.add('active');
         }
     </script>
 </body>
