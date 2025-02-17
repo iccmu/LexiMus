@@ -448,6 +448,16 @@
         .json-list.highlight {
             animation: flash 1s ease-out;
         }
+
+        .json-textarea {
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
     </style>
 </head>
 <body>
@@ -489,8 +499,12 @@
                            class="url-input">
                     <input type="file" id="jsonFile" accept=".json" class="file-input" onchange="uploadJson()">
                 </div>
+                <textarea id="jsonText" 
+                          placeholder="O pega tu JSON aquí..." 
+                          class="json-textarea"
+                          rows="5"></textarea>
                 <div class="upload-buttons">
-                    <button onclick="uploadJson()" class="upload-btn">Visualizar URL</button>
+                    <button onclick="uploadJson()" class="upload-btn">Visualizar</button>
                     <button onclick="validateAndSaveJson()" class="upload-btn" style="background-color: #28a745;">Validar y Guardar</button>
                 </div>
             </div>
@@ -559,6 +573,7 @@
             
             const urlInput = document.getElementById('jsonUrl');
             const fileInput = document.getElementById('jsonFile');
+            const jsonText = document.getElementById('jsonText');
             const previewDiv = document.getElementById('json-preview');
             
             try {
@@ -573,8 +588,11 @@
                     // Hacer la petición GET a la URL proporcionada
                     const response = await fetch(urlInput.value);
                     jsonData = await response.json();
+                } else if (jsonText.value.trim()) {
+                    // Parsear el JSON pegado
+                    jsonData = JSON.parse(jsonText.value);
                 } else {
-                    throw new Error('Por favor, proporciona un archivo JSON o una URL');
+                    throw new Error('Por favor, proporciona un JSON válido (archivo, URL o texto)');
                 }
                 
                 previewDiv.innerHTML = '';
@@ -656,6 +674,7 @@
             
             const urlInput = document.getElementById('jsonUrl');
             const fileInput = document.getElementById('jsonFile');
+            const jsonText = document.getElementById('jsonText');
             const validationStatus = document.getElementById('validationStatus');
             const jsonPreview = document.getElementById('json-preview');
             
@@ -667,8 +686,12 @@
                     formData.append('file', fileInput.files[0]);
                 } else if (urlInput.value) {
                     formData.append('url', urlInput.value);
+                } else if (jsonText.value.trim()) {
+                    // Crear un Blob con el JSON pegado
+                    const jsonBlob = new Blob([jsonText.value], { type: 'application/json' });
+                    formData.append('file', jsonBlob, 'manual_input.json');
                 } else {
-                    throw new Error('Por favor, proporciona un archivo JSON o una URL');
+                    throw new Error('Por favor, proporciona un JSON válido (archivo, URL o texto)');
                 }
 
                 const response = await fetch('/upload-json', {
@@ -713,6 +736,7 @@
                         // Limpiar los campos y cargar los JSONs guardados
                         urlInput.value = '';
                         fileInput.value = '';
+                        jsonText.value = '';
                         jsonPreview.innerHTML = '';
                         loadSavedJsons();
                     }, 1000);
