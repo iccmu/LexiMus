@@ -392,8 +392,8 @@
         /* Actualizar estilos para el menú contextual */
         .context-menu {
             position: absolute;
-            top: 10px;  /* Margen desde la parte superior del visualization-section */
-            left: 10px; /* Margen desde la parte izquierda del visualization-section */
+            top: 10px;  /* Mantener margen superior */
+            right: 10px; /* Cambiar left por right para posicionar en la esquina derecha */
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
@@ -772,9 +772,39 @@
                 };
                 
                 network = new vis.Network(container, graphData, options);
-                network.moveTo({
-                    scale: 0.5
+
+                // Asegurarnos de que el zoom inicial se aplique después de que el grafo esté listo
+                network.once('stabilized', () => {
+                    const rootNode = nodes[0];
+                    if (rootNode) {
+                        network.focus(rootNode.id, {
+                            scale: 0.5,
+                            animation: {
+                                duration: 1000,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                        network.selectNodes([rootNode.id]);
+                        currentNodeId = rootNode.id;
+                    }
                 });
+
+                // Añadir un respaldo por si 'stabilized' no se dispara
+                setTimeout(() => {
+                    const rootNode = nodes[0];
+                    if (rootNode && (!network.getScale() || network.getScale() === 1)) {
+                        network.focus(rootNode.id, {
+                            scale: 0.5,
+                            animation: {
+                                duration: 1000,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                        network.selectNodes([rootNode.id]);
+                        currentNodeId = rootNode.id;
+                    }
+                }, 1000);
+
                 let selectedNodes = [];
                 let currentNodeId = null;
                 let gridNodes = {};
@@ -1133,11 +1163,14 @@
                     updateGridStructure();
                 });
 
-                // Manejar clicks en los nodos
+                // Modificar el manejador de clicks en los nodos
                 network.on("click", function(params) {
                     if (params.nodes.length > 0) {
                         const nodeId = params.nodes[0];
                         const nodeIndex = selectedNodes.indexOf(nodeId);
+                        
+                        // Actualizar currentNodeId cuando se hace clic en un nodo
+                        currentNodeId = nodeId;
                         
                         if (nodeIndex === -1) {
                             selectedNodes.push(nodeId);
@@ -1167,7 +1200,6 @@
                         const contextMenu = document.getElementById('contextMenu');
                         if (selectedNodes.length === 2) {
                             contextMenu.style.display = 'block';
-                            // Ya no necesitamos calcular la posición central
                         } else {
                             contextMenu.style.display = 'none';
                         }
@@ -1577,7 +1609,7 @@
                 errorDiv.innerHTML = `
                     <div>
                         <span class="error-icon">⚠️</span>
-                        <strong>Mala indentación!!!</strong>
+                        <strong>Nodo duplicado detectado</strong>
                     </div>
                     <div class="error-message">${formatYamlError(error)}</div>
                 `;
@@ -1847,11 +1879,10 @@
             return true;
         }
 
-        // Modificar la función que muestra el menú contextual para inicializar la selección
+        // Modificar la función que muestra el menú contextual
         function showContextMenu(x, y) {
             const contextMenu = document.getElementById('contextMenu');
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
+            // Eliminar el posicionamiento dinámico
             contextMenu.style.display = 'block';
             
             // Activar la primera opción por defecto
