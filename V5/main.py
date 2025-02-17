@@ -9,6 +9,7 @@ import json
 import requests
 import datetime
 from uuid import uuid4
+from pathlib import Path
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -291,10 +292,38 @@ async def save_taxonomy(filename: str, request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Crear las carpetas al iniciar la aplicación
+# Función para descargar y guardar las librerías
+def download_libraries():
+    # Crear directorio static/js si no existe
+    static_js_path = Path("static/js")
+    static_js_path.mkdir(parents=True, exist_ok=True)
+    
+    # Definir las librerías necesarias
+    libraries = {
+        "vis-network.min.js": "https://unpkg.com/vis-network/standalone/umd/vis-network.min.js",
+        "js-yaml.min.js": "https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"
+    }
+    
+    for filename, url in libraries.items():
+        file_path = static_js_path / filename
+        
+        # Descargar solo si el archivo no existe
+        if not file_path.exists():
+            try:
+                print(f"Descargando {filename}...")
+                response = requests.get(url)
+                response.raise_for_status()
+                
+                with open(file_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"✓ {filename} descargado correctamente")
+            except Exception as e:
+                print(f"Error descargando {filename}: {str(e)}")
+
 @app.on_event("startup")
 async def startup_event():
     create_user_directories()
+    download_libraries()
 
 # Funciones auxiliares para manejar las propiedades
 def load_properties():
