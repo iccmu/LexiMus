@@ -1133,7 +1133,15 @@
                                 const contextMenu = document.getElementById('contextMenu');
                                 if (selectedNodes.length === 2) {
                                     contextMenu.style.display = 'block';
-                                    // Ya no necesitamos calcular la posición central
+                                    // Asegurarnos de que la primera opción esté seleccionada visualmente
+                                    const options = contextMenu.querySelectorAll('.context-menu-option');
+                                    options.forEach((option, index) => {
+                                        if (index === 0) {
+                                            option.classList.add('active');
+                                        } else {
+                                            option.classList.remove('active');
+                                        }
+                                    });
                                 } else {
                                     contextMenu.style.display = 'none';
                                 }
@@ -1169,7 +1177,6 @@
                         const nodeId = params.nodes[0];
                         const nodeIndex = selectedNodes.indexOf(nodeId);
                         
-                        // Actualizar currentNodeId cuando se hace clic en un nodo
                         currentNodeId = nodeId;
                         
                         if (nodeIndex === -1) {
@@ -1200,6 +1207,15 @@
                         const contextMenu = document.getElementById('contextMenu');
                         if (selectedNodes.length === 2) {
                             contextMenu.style.display = 'block';
+                            // Asegurarnos de que la primera opción esté seleccionada visualmente
+                            const options = contextMenu.querySelectorAll('.context-menu-option');
+                            options.forEach((option, index) => {
+                                if (index === 0) {
+                                    option.classList.add('active');
+                                } else {
+                                    option.classList.remove('active');
+                                }
+                            });
                         } else {
                             contextMenu.style.display = 'none';
                         }
@@ -1390,7 +1406,7 @@
                         const rootNode = nodes[0];
                         if (rootNode) {
                             network.focus(rootNode.id, {
-                                scale: 0.5,
+                                scale: 1.0,
                                 animation: {
                                     duration: 1000,
                                     easingFunction: 'easeInOutQuad'
@@ -1399,15 +1415,15 @@
                             network.selectNodes([rootNode.id]);
                             currentNodeId = rootNode.id;
                         }
-                    }, 500); // Pequeño retraso para asegurar que el grafo esté listo
+                    }, 500);
                 });
 
-                // También mantener el evento stabilizationIterationsDone como respaldo
+                // Actualizar también el respaldo de estabilización
                 network.once('stabilizationIterationsDone', () => {
                     const rootNode = nodes[0];
                     if (rootNode) {
                         network.focus(rootNode.id, {
-                            scale: 0.5,
+                            scale: 1.0,
                             animation: {
                                 duration: 1000,
                                 easingFunction: 'easeInOutQuad'
@@ -1552,7 +1568,7 @@
                         
                         network.moveTo({
                             position: position,
-                            scale: 0.5,
+                            scale: 1.0,
                             animation: {
                                 duration: 1000,
                                 easingFunction: 'easeInOutQuad'
@@ -1882,13 +1898,17 @@
         // Modificar la función que muestra el menú contextual
         function showContextMenu(x, y) {
             const contextMenu = document.getElementById('contextMenu');
-            // Eliminar el posicionamiento dinámico
             contextMenu.style.display = 'block';
             
-            // Activar la primera opción por defecto
+            // Asegurarnos de que la primera opción esté seleccionada visualmente
             const options = contextMenu.querySelectorAll('.context-menu-option');
-            options.forEach(option => option.classList.remove('active'));
-            options[0]?.classList.add('active');
+            options.forEach((option, index) => {
+                if (index === 0) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
         }
 
         // Modificar la función de actualización de sombras para recibir network como parámetro
