@@ -250,17 +250,41 @@ async def update_json(filename: str, request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+def generate_uuid():
+    return str(uuid4())
+
+def add_uuids_to_object(obj):
+    """Añade UUIDs a un objeto de forma recursiva si no los tiene."""
+    if not isinstance(obj, dict):
+        return obj
+    
+    # Añadir ID al objeto actual si no tiene
+    if 'id' not in obj:
+        obj['id'] = generate_uuid()
+    
+    # Procesar recursivamente todos los valores que son diccionarios
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            obj[key] = add_uuids_to_object(value)
+        elif isinstance(value, list):
+            obj[key] = [add_uuids_to_object(item) if isinstance(item, dict) else item 
+                       for item in value]
+    
+    return obj
+
 @app.post("/save-taxonomy/{filename}")
 async def save_taxonomy(filename: str, request: Request):
     try:
-        # Obtener el JSON-LD de la solicitud
-        json_ld = await request.json()
+        # Obtener el YAML convertido a JSON de la solicitud
+        data = await request.json()
         
-        # Obtener el JSON actual
+        # Añadir UUIDs a todos los objetos que no los tengan
+        data_with_uuids = add_uuids_to_object(data)
+        
+        # Buscar el archivo en todas las carpetas de usuario
         base_path = "user_folders"
         file_path = None
         
-        # Buscar el archivo en todas las carpetas de usuario
         for root, dirs, files in os.walk(base_path):
             if filename in files:
                 file_path = os.path.join(root, filename)
@@ -269,25 +293,15 @@ async def save_taxonomy(filename: str, request: Request):
         if not file_path:
             raise HTTPException(status_code=404, detail="Archivo no encontrado")
         
-        # Leer el JSON actual
-        with open(file_path, 'r', encoding='utf-8') as f:
-            current_json = json.load(f)
-        
-        # Añadir o actualizar la sección de taxonomías
-        if '@context' not in current_json:
-            current_json['@context'] = json_ld['@context']
-        
-        if 'taxonomies' not in current_json:
-            current_json['taxonomies'] = []
-        
-        # Añadir la nueva taxonomía
-        current_json['taxonomies'].append(json_ld)
-        
-        # Guardar el JSON actualizado
+        # Guardar el JSON actualizado con los UUIDs
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(current_json, f, indent=2, ensure_ascii=False)
+            json.dump(data_with_uuids, f, indent=2, ensure_ascii=False)
         
-        return {"message": "Taxonomía guardada correctamente"}
+        # Devolver el JSON actualizado con los UUIDs para actualizar el frontend
+        return {
+            "message": "Taxonomía guardada correctamente",
+            "data": data_with_uuids
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
