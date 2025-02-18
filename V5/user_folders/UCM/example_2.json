@@ -1,15 +1,12 @@
 {
-  "Clasificación de Cocinas del Mundo": {
-    "Técnicas Culinarias": {
-      "Métodos de Cocción": {
-        "Calor Seco": null,
-        "Calor Húmedo": null,
-        "Lol": null,
-        "id": "15b7fd47-fab7-4797-975e-01b47816a82f"
-      },
-      "id": "245250c7-85c9-44df-8ef0-4aefd79b4d4f"
+  "Uno": {
+    "dos": null,
+    "cuatro": null,
+    "DOS": {
+      "siete": "ocho",
+      "id": "cd2fa552-342b-4ffb-8825-ea2241159a2e"
     },
-    "id": "801f7254-44b2-4b9b-bd3f-e94b567fcf90"
+    "id": "a8aafebf-241a-44b4-aa39-ceaefc843824"
   },
-  "id": "7053089d-eecf-42ee-af7d-0ce811315c12"
+  "id": "8a1da179-1010-4b38-b00d-20dcc3011728"
 }

@@ -500,6 +500,32 @@
         .node-shadow-animation {
             animation: shadowPulse 2s infinite;
         }
+
+        .format-selector {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .format-selector select {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .format-selector select:hover {
+            border-color: #2B7CE9;
+        }
+
+        .format-selector select:focus {
+            outline: none;
+            border-color: #2B7CE9;
+            box-shadow: 0 0 0 2px rgba(43, 124, 233, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -520,8 +546,15 @@
                         </div>
                         <button id="saveButton" onclick="saveTaxonomy()">Guardar Modificación</button>
                     </div>
-                    <h3>JSON Resultante:</h3>
-                    <div id="jsonOutput"></div>
+                    <div class="format-selector">
+                        <h3>JSON Resultante:</h3>
+                        <select id="formatSelector" onchange="updateOutputFormat()">
+                            <option value="json">JSON</option>
+                            <option value="jsonld">JSON-LD</option>
+                            <option value="rdf">XML/RDF</option>
+                        </select>
+                    </div>
+                    <div id="jsonOutput" style="white-space: pre; font-family: monospace;"></div>
                 </div>
             </div>
 
@@ -619,16 +652,13 @@
                 const jsonData = yamlToJson(yamlData);
                 
                 if (jsonData) {
-                    document.getElementById('jsonOutput').innerHTML = 
-                        `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`;
-                    
+                    updateOutputFormat(); // Usar el formato seleccionado
                     visualizeGraph();
                     
                     errorDiv.classList.remove('show');
                     saveButton.classList.remove('hide');
                 }
             } catch (error) {
-                // Manejar el error silenciosamente
                 errorDiv.style.display = 'block';
                 errorDiv.innerHTML = formatYamlError(error);
                 errorDiv.classList.add('show');
@@ -2116,14 +2146,167 @@
             });
         }
 
-        function updateJsonView(jsonData) {
-            try {
-                // Mostrar el JSON crudo, sin formato adicional
-                const jsonString = JSON.stringify(jsonData);
-                document.getElementById('json-view').value = jsonString;
-            } catch (error) {
-                console.error('Error updating JSON view:', error);
-                document.getElementById('json-view').value = '';
+        // Definir la función updateOutputFormat fuera de cualquier otro contexto
+        function updateOutputFormat() {
+            const format = document.getElementById('formatSelector').value;
+            const yamlData = document.getElementById('yamlInput').value;
+            const jsonData = yamlToJson(yamlData);
+
+            if (!jsonData) return;
+
+            const jsonOutput = document.getElementById('jsonOutput');
+            const mainKey = Object.keys(jsonData).find(key => key !== 'id'); // Definir mainKey una sola vez
+            
+            switch (format) {
+                case 'json':
+                    jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`;
+                    break;
+                
+                case 'jsonld':
+                    // Convertir la estructura a JSON-LD
+                    const jsonLdData = {
+                        "@context": {
+                            "@vocab": "http://www.w3.org/2004/02/skos/core#",
+                            "skos": "http://www.w3.org/2004/02/skos/core#",
+                            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+                            "dct": "http://purl.org/dc/terms/",
+                            "hasTopConcept": "skos:hasTopConcept",
+                            "broader": "skos:broader",
+                            "narrower": "skos:narrower",
+                            "prefLabel": "skos:prefLabel"
+                        },
+                        "@type": "skos:ConceptScheme",
+                        "@id": jsonData.id || "_:taxonomy",
+                        "dct:title": mainKey || "Untitled Taxonomy",
+                        "hasTopConcept": []
+                    };
+
+                    // Función recursiva para convertir la estructura
+                    function convertToSkos(obj, parentId = null) {
+                        const concepts = [];
+                        
+                        if (!obj || typeof obj !== 'object') {
+                            return concepts;
+                        }
+
+                        Object.entries(obj).forEach(([key, value]) => {
+                            if (key === 'id') return;
+                            
+                            if (!value || typeof value !== 'object') {
+                                return;
+                            }
+
+                            const concept = {
+                                "@type": "skos:Concept",
+                                "@id": (value && value.id) || `_:concept_${Math.random().toString(36).substr(2, 9)}`,
+                                "prefLabel": { "@value": key, "@language": "es" }
+                            };
+
+                            if (parentId) {
+                                concept.broader = { "@id": parentId };
+                            }
+
+                            if (value.value === null) {
+                                concepts.push(concept);
+                            } else {
+                                const children = Object.entries(value)
+                                    .filter(([k, v]) => k !== 'id' && v && typeof v === 'object');
+                                
+                                if (children.length > 0) {
+                                    const childConcepts = convertToSkos(value, concept["@id"]);
+                                    if (childConcepts.length > 0) {
+                                        concept.narrower = childConcepts.map(c => ({ "@id": c["@id"] }));
+                                        concepts.push(concept, ...childConcepts);
+                                    }
+                                } else {
+                                    concepts.push(concept);
+                                }
+                            }
+                        });
+
+                        return concepts;
+                    }
+
+                    if (mainKey && jsonData[mainKey]) {
+                        const concepts = convertToSkos(jsonData[mainKey]);
+                        jsonLdData.hasTopConcept = concepts
+                            .filter(c => !c.broader)
+                            .map(c => ({ "@id": c["@id"] }));
+                        jsonLdData["@graph"] = concepts;
+                    }
+
+                    jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonLdData, null, 2)}</pre>`;
+                    break;
+                
+                case 'rdf':
+                    let rdfXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+    xmlns:dct="http://purl.org/dc/terms/"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    
+    <skos:ConceptScheme rdf:about="${jsonData.id || '_:taxonomy'}">
+        <dct:title>${mainKey || "Untitled Taxonomy"}</dct:title>`;
+
+                    function convertToRdfXml(obj, parentId = null, indent = '        ') {
+                        let xml = '';
+                        
+                        if (!obj || typeof obj !== 'object') {
+                            return xml;
+                        }
+
+                        Object.entries(obj).forEach(([key, value]) => {
+                            if (key === 'id') return;
+                            
+                            if (!value || typeof value !== 'object') {
+                                return;
+                            }
+
+                            const conceptId = (value && value.id) || `_:concept_${Math.random().toString(36).substr(2, 9)}`;
+                            
+                            xml += `\n${indent}<skos:Concept rdf:about="${conceptId}">
+${indent}    <skos:prefLabel xml:lang="es">${key}</skos:prefLabel>`;
+
+                            if (parentId) {
+                                xml += `\n${indent}    <skos:broader rdf:resource="${parentId}"/>`;
+                            }
+
+                            if (value.value === null) {
+                                // Es un nodo hoja
+                            } else {
+                                const children = Object.entries(value)
+                                    .filter(([k, v]) => k !== 'id' && v && typeof v === 'object');
+                                
+                                children.forEach(([childKey, childValue]) => {
+                                    if (childValue && childValue.id) {
+                                        xml += `\n${indent}    <skos:narrower rdf:resource="${childValue.id}"/>`;
+                                    }
+                                });
+
+                                children.forEach(([childKey, childValue]) => {
+                                    xml += convertToRdfXml({[childKey]: childValue}, conceptId, indent + '    ');
+                                });
+                            }
+
+                            xml += `\n${indent}</skos:Concept>`;
+                        });
+
+                        return xml;
+                    }
+
+                    if (mainKey && jsonData[mainKey]) {
+                        rdfXml += convertToRdfXml({[mainKey]: jsonData[mainKey]});
+                    }
+
+                    rdfXml += '\n</rdf:RDF>';
+
+                    const formattedXml = rdfXml
+                        .replace(/></g, '>\n<')
+                        .replace(/\s+$/gm, '');
+
+                    jsonOutput.innerHTML = `<pre>${formattedXml}</pre>`;
+                    break;
             }
         }
     </script>
