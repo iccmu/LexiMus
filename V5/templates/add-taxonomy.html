@@ -1283,6 +1283,23 @@
                                 }
                             });
 
+                            // Calcular el punto medio entre los dos nodos
+                            const fromNodePosition = network.getPosition(fromNode);
+                            const toNodePosition = network.getPosition(toNode);
+                            const centerPoint = {
+                                x: (fromNodePosition.x + toNodePosition.x) / 2,
+                                y: (fromNodePosition.y + toNodePosition.y) / 2
+                            };
+
+                            // Centrar la vista en el punto medio de la nueva relación
+                            network.moveTo({
+                                position: centerPoint,
+                                animation: {
+                                    duration: 1000,
+                                    easingFunction: 'easeInOutQuad'
+                                }
+                            });
+
                             // Limpiar selección después de añadir la relación
                             selectedNodes = [];
                             network.selectNodes([]);
