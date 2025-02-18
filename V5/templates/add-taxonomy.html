@@ -574,6 +574,10 @@
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script>
+        // Añadir al inicio del script, junto con las otras variables globales
+        const DEFAULT_ZOOM = 0.8; // Puedes ajustar este valor según necesites
+        let currentZoom = DEFAULT_ZOOM;
+
         // Declaración global de nodeShadows
         let nodeShadows = new Map();
 
@@ -778,7 +782,7 @@
                     const rootNode = nodes[0];
                     if (rootNode) {
                         network.focus(rootNode.id, {
-                            scale: 0.5,
+                            scale: currentZoom,
                             animation: {
                                 duration: 1000,
                                 easingFunction: 'easeInOutQuad'
@@ -794,7 +798,7 @@
                     const rootNode = nodes[0];
                     if (rootNode && (!network.getScale() || network.getScale() === 1)) {
                         network.focus(rootNode.id, {
-                            scale: 0.5,
+                            scale: currentZoom,
                             animation: {
                                 duration: 1000,
                                 easingFunction: 'easeInOutQuad'
@@ -1081,7 +1085,7 @@
                                 currentNodeId = rootNode.id;
                                 network.selectNodes([currentNodeId]);
                                 network.focus(rootNode.id, {
-                                    scale: 0.8,
+                                    scale: currentZoom,
                                     animation: {
                                         duration: 1000,
                                         easingFunction: 'easeInOutQuad'
@@ -1406,7 +1410,7 @@
                         const rootNode = nodes[0];
                         if (rootNode) {
                             network.focus(rootNode.id, {
-                                scale: 1.0,
+                                scale: currentZoom,
                                 animation: {
                                     duration: 1000,
                                     easingFunction: 'easeInOutQuad'
@@ -1423,7 +1427,7 @@
                     const rootNode = nodes[0];
                     if (rootNode) {
                         network.focus(rootNode.id, {
-                            scale: 1.0,
+                            scale: currentZoom,
                             animation: {
                                 duration: 1000,
                                 easingFunction: 'easeInOutQuad'
@@ -1568,7 +1572,7 @@
                         
                         network.moveTo({
                             position: position,
-                            scale: 1.0,
+                            scale: currentZoom,
                             animation: {
                                 duration: 1000,
                                 easingFunction: 'easeInOutQuad'
