@@ -1,31 +1,31 @@
 {
-  "id": "b7d45f12-8e39-4f2a-b123-456789abcdef",
   "Taxonomía de Videojuegos": {
-    "id": "a1b2c3d4-5e6f-7g8h-9i0j-klmnopqrstuv",
     "Mecánicas de Juego": {
-      "id": "fff12345-6789-abcd-efgh-ijklmnopqrst",
       "Sistemas de Control": {
-        "id": "aaa98765-4321-zyxw-vuts-rqponmlkjihg",
         "Movimiento": {
-          "id": "bbb11111-2222-3333-4444-555555555555",
-          "value": null
+          "value": null,
+          "id": "4d6ed259-b3ba-4baf-8444-1c1d563b953d"
         },
         "Interacción": {
-          "id": "ccc22222-3333-4444-5555-666666666666",
-          "value": null
-        }
+          "value": null,
+          "id": "e308d71b-1108-49ff-a7a8-ec84eaa03d9d"
+        },
+        "id": "066b1db0-72d9-42e7-97e2-f7ac6c048603"
       },
       "Objetivos": {
-        "id": "ddd33333-4444-5555-6666-777777777777",
         "Principales": {
-          "id": "eee44444-5555-6666-7777-888888888888",
-          "value": null
+          "value": null,
+          "id": "e0640549-2096-490c-bb81-15e2e2d673fb"
         },
         "Secundarios": {
-          "id": "fff55555-6666-7777-8888-999999999999",
-          "value": null
-        }
-      }
-    }
-  }
+          "value": null,
+          "id": "b3f7a1fe-88cc-4766-912c-e04ec52963c7"
+        },
+        "id": "9b692f49-af6c-4e7a-bf5e-417e14b548d6"
+      },
+      "id": "3595480d-c838-43fc-a97f-f85dc10737ef"
+    },
+    "id": "f24f7652-abfb-4e76-b7a7-733b18da3d9d"
+  },
+  "id": "76d5568b-8908-4292-bcad-2742a33c8a75"
 }

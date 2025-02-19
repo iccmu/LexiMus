@@ -10,6 +10,8 @@ import requests
 import datetime
 from uuid import uuid4
 from pathlib import Path
+from rdflib import Graph, Namespace, Literal, URIRef
+from rdflib.namespace import RDF, RDFS, OWL, XSD
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -424,3 +426,90 @@ async def delete_property(property_id: str):
         return {"message": "Propiedad eliminada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/save-rdf/{filename}")
+async def save_rdf(filename: str, request: Request):
+    try:
+        # Obtener el JSON de la solicitud
+        data = await request.json()
+        json_data = data.get('json')
+        
+        if not json_data:
+            raise HTTPException(status_code=400, detail="No se proporcionó contenido JSON")
+        
+        print("JSON recibido:", json_data)  # Debug
+        
+        # Obtener el nombre base del archivo sin extensión
+        base_filename = filename.rsplit('.', 1)[0]
+        owl_filename = f"{base_filename}.owl"
+        
+        # Buscar la carpeta del usuario
+        base_path = "user_folders"
+        owl_file_path = None
+        
+        for root, dirs, files in os.walk(base_path):
+            if filename in files:
+                owl_file_path = os.path.join(root, owl_filename)
+                print(f"Path encontrado: {owl_file_path}")  # Debug
+                break
+        
+        if not owl_file_path:
+            raise HTTPException(status_code=404, detail="No se encontró el directorio del usuario")
+        
+        try:
+            # Crear un grafo RDF
+            g = Graph()
+            
+            # Definir namespaces
+            onto = Namespace("http://www.semanticweb.org/ontology#")
+            g.bind("owl", OWL)
+            g.bind("rdfs", RDFS)
+            g.bind("rdf", RDF)
+            g.bind("xsd", XSD)
+            g.bind("", onto)
+            
+            # Crear la ontología
+            ontology = URIRef("")
+            g.add((ontology, RDF.type, OWL.Ontology))
+            
+            # Procesar el JSON y crear las clases y propiedades
+            def process_json_to_owl(data, parent=None):
+                for key, value in data.items():
+                    if key == 'id':
+                        continue
+                        
+                    # Crear clase
+                    class_uri = onto[key.replace(" ", "_")]
+                    g.add((class_uri, RDF.type, OWL.Class))
+                    g.add((class_uri, RDFS.label, Literal(key)))
+                    
+                    # Añadir subclase si hay padre
+                    if parent:
+                        g.add((class_uri, RDFS.subClassOf, parent))
+                    
+                    # Procesar hijos recursivamente
+                    if isinstance(value, dict):
+                        process_json_to_owl(value, class_uri)
+            
+            # Procesar el JSON
+            process_json_to_owl(json_data)
+            
+            # Serializar a OWL/XML
+            owl_content = g.serialize(format='pretty-xml')
+            
+            # Guardar el archivo
+            with open(owl_file_path, 'w', encoding='utf-8') as f:
+                f.write(owl_content)
+            
+            return {
+                "message": "Archivo OWL guardado correctamente",
+                "path": owl_file_path
+            }
+            
+        except Exception as e:
+            print(f"Error en el procesamiento OWL: {str(e)}")  # Debug
+            raise HTTPException(status_code=400, detail=f"Error en el procesamiento OWL: {str(e)}")
+        
+    except Exception as e:
+        print(f"Error general: {str(e)}")  # Debug
+        raise HTTPException(status_code=500, detail=str(e))

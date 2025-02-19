@@ -2148,166 +2148,307 @@
 
         // Definir la función updateOutputFormat fuera de cualquier otro contexto
         function updateOutputFormat() {
-            const format = document.getElementById('formatSelector').value;
-            const yamlData = document.getElementById('yamlInput').value;
-            const jsonData = yamlToJson(yamlData);
-
-            if (!jsonData) return;
-
+            const formatSelector = document.getElementById('formatSelector');
+            const selectedFormat = formatSelector.value;
             const jsonOutput = document.getElementById('jsonOutput');
-            const mainKey = Object.keys(jsonData).find(key => key !== 'id'); // Definir mainKey una sola vez
+            const yamlInput = document.getElementById('yamlInput').value;
             
-            switch (format) {
-                case 'json':
-                    jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`;
-                    break;
+            try {
+                const jsonData = jsyaml.load(yamlInput);
+                // Obtener la primera clave que no sea 'id'
+                const mainKey = Object.keys(jsonData).find(key => key !== 'id');
                 
-                case 'jsonld':
-                    // Convertir la estructura a JSON-LD
-                    const jsonLdData = {
-                        "@context": {
-                            "@vocab": "http://www.w3.org/2004/02/skos/core#",
-                            "skos": "http://www.w3.org/2004/02/skos/core#",
-                            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-                            "dct": "http://purl.org/dc/terms/",
-                            "hasTopConcept": "skos:hasTopConcept",
-                            "broader": "skos:broader",
-                            "narrower": "skos:narrower",
-                            "prefLabel": "skos:prefLabel"
-                        },
-                        "@type": "skos:ConceptScheme",
-                        "@id": jsonData.id || "_:taxonomy",
-                        "dct:title": mainKey || "Untitled Taxonomy",
-                        "hasTopConcept": []
-                    };
+                switch(selectedFormat) {
+                    case 'json':
+                        jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`;
+                        break;
+                    
+                    case 'jsonld':
+                        // Convertir la estructura a JSON-LD
+                        const jsonLdData = {
+                            "@context": {
+                                "@vocab": "http://www.w3.org/2004/02/skos/core#",
+                                "skos": "http://www.w3.org/2004/02/skos/core#",
+                                "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+                                "dct": "http://purl.org/dc/terms/",
+                                "owl": "http://www.w3.org/2002/07/owl#",
+                                "hasTopConcept": "skos:hasTopConcept",
+                                "broader": "skos:broader",
+                                "narrower": "skos:narrower",
+                                "prefLabel": "skos:prefLabel",
+                                "inverseOf": "owl:inverseOf",
+                                "transitiveProperty": "owl:TransitiveProperty",
+                                "symmetricProperty": "owl:SymmetricProperty",
+                                "functionalProperty": "owl:FunctionalProperty",
+                                "inverseFunctionalProperty": "owl:InverseFunctionalProperty"
+                            },
+                            "@type": "skos:ConceptScheme",
+                            "@id": jsonData.id || "_:taxonomy",
+                            "dct:title": mainKey || "Untitled Taxonomy",
+                            "hasTopConcept": []
+                        };
 
-                    // Función recursiva para convertir la estructura
-                    function convertToSkos(obj, parentId = null) {
-                        const concepts = [];
-                        
-                        if (!obj || typeof obj !== 'object') {
+                        // Obtener las relaciones del grafo
+                        const network = document.getElementById('mynetwork')._network;
+                        const edges = network.body.data.edges.get();
+                        const customRelations = edges.filter(edge => edge.label && ['Inversa', 'Transitiva', 'Simétrica', 'Funcional', 'Inversamente Funcional'].includes(edge.label));
+
+                        // Función recursiva para convertir la estructura
+                        function convertToSkos(obj, parentId = null) {
+                            const concepts = [];
+                            
+                            if (!obj || typeof obj !== 'object') {
+                                return concepts;
+                            }
+
+                            Object.entries(obj).forEach(([key, value]) => {
+                                if (key === 'id') return;
+                                
+                                if (!value || typeof value !== 'object') {
+                                    return;
+                                }
+
+                                const concept = {
+                                    "@type": "skos:Concept",
+                                    "@id": (value && value.id) || `_:concept_${Math.random().toString(36).substr(2, 9)}`,
+                                    "prefLabel": { "@value": key, "@language": "es" }
+                                };
+
+                                // Buscar relaciones personalizadas para este concepto
+                                const conceptRelations = customRelations.filter(edge => 
+                                    edge.from === concept["@id"] || edge.to === concept["@id"]);
+
+                                // Añadir las relaciones al concepto
+                                conceptRelations.forEach(relation => {
+                                    if (relation.from === concept["@id"]) {
+                                        switch (relation.label) {
+                                            case 'Inversa':
+                                                concept.inverseOf = { "@id": relation.to };
+                                                break;
+                                            case 'Transitiva':
+                                                concept["@type"] = ["skos:Concept", "owl:TransitiveProperty"];
+                                                break;
+                                            case 'Simétrica':
+                                                concept["@type"] = ["skos:Concept", "owl:SymmetricProperty"];
+                                                break;
+                                            case 'Funcional':
+                                                concept["@type"] = ["skos:Concept", "owl:FunctionalProperty"];
+                                                break;
+                                            case 'Inversamente Funcional':
+                                                concept["@type"] = ["skos:Concept", "owl:InverseFunctionalProperty"];
+                                                break;
+                                        }
+                                    }
+                                });
+
+                                if (parentId) {
+                                    concept.broader = { "@id": parentId };
+                                }
+
+                                if (value.value === null) {
+                                    concepts.push(concept);
+                                } else {
+                                    const children = Object.entries(value)
+                                        .filter(([k, v]) => k !== 'id' && v && typeof v === 'object');
+                                    
+                                    if (children.length > 0) {
+                                        const childConcepts = convertToSkos(value, concept["@id"]);
+                                        if (childConcepts.length > 0) {
+                                            concept.narrower = childConcepts.map(c => ({ "@id": c["@id"] }));
+                                            concepts.push(concept, ...childConcepts);
+                                        }
+                                    } else {
+                                        concepts.push(concept);
+                                    }
+                                }
+                            });
+
                             return concepts;
                         }
 
-                        Object.entries(obj).forEach(([key, value]) => {
-                            if (key === 'id') return;
-                            
-                            if (!value || typeof value !== 'object') {
-                                return;
-                            }
-
-                            const concept = {
-                                "@type": "skos:Concept",
-                                "@id": (value && value.id) || `_:concept_${Math.random().toString(36).substr(2, 9)}`,
-                                "prefLabel": { "@value": key, "@language": "es" }
-                            };
-
-                            if (parentId) {
-                                concept.broader = { "@id": parentId };
-                            }
-
-                            if (value.value === null) {
-                                concepts.push(concept);
-                            } else {
-                                const children = Object.entries(value)
-                                    .filter(([k, v]) => k !== 'id' && v && typeof v === 'object');
-                                
-                                if (children.length > 0) {
-                                    const childConcepts = convertToSkos(value, concept["@id"]);
-                                    if (childConcepts.length > 0) {
-                                        concept.narrower = childConcepts.map(c => ({ "@id": c["@id"] }));
-                                        concepts.push(concept, ...childConcepts);
-                                    }
-                                } else {
-                                    concepts.push(concept);
-                                }
-                            }
-                        });
-
-                        return concepts;
-                    }
-
-                    if (mainKey && jsonData[mainKey]) {
-                        const concepts = convertToSkos(jsonData[mainKey]);
-                        jsonLdData.hasTopConcept = concepts
-                            .filter(c => !c.broader)
-                            .map(c => ({ "@id": c["@id"] }));
-                        jsonLdData["@graph"] = concepts;
-                    }
-
-                    jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonLdData, null, 2)}</pre>`;
-                    break;
-                
-                case 'rdf':
-                    let rdfXml = `<?xml version="1.0" encoding="UTF-8"?>
-<rdf:RDF
-    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-    xmlns:skos="http://www.w3.org/2004/02/skos/core#"
-    xmlns:dct="http://purl.org/dc/terms/"
-    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
-    
-    <skos:ConceptScheme rdf:about="${jsonData.id || '_:taxonomy'}">
-        <dct:title>${mainKey || "Untitled Taxonomy"}</dct:title>`;
-
-                    function convertToRdfXml(obj, parentId = null, indent = '        ') {
-                        let xml = '';
-                        
-                        if (!obj || typeof obj !== 'object') {
-                            return xml;
+                        if (mainKey && jsonData[mainKey]) {
+                            const concepts = convertToSkos(jsonData[mainKey]);
+                            jsonLdData.hasTopConcept = concepts
+                                .filter(c => !c.broader)
+                                .map(c => ({ "@id": c["@id"] }));
+                            jsonLdData["@graph"] = concepts;
                         }
 
-                        Object.entries(obj).forEach(([key, value]) => {
-                            if (key === 'id') return;
-                            
-                            if (!value || typeof value !== 'object') {
-                                return;
-                            }
+                        jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonLdData, null, 2)}</pre>`;
+                        break;
+                    
+                    case 'rdf':
+                        let rdfXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns="http://www.example.org/ontology#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
 
-                            const conceptId = (value && value.id) || `_:concept_${Math.random().toString(36).substr(2, 9)}`;
-                            
-                            xml += `\n${indent}<skos:Concept rdf:about="${conceptId}">
-${indent}    <skos:prefLabel xml:lang="es">${key}</skos:prefLabel>`;
+    <owl:Ontology rdf:about="${jsonData.id || '_:taxonomy'}">
+        <rdfs:label>${mainKey || "Untitled Taxonomy"}</rdfs:label>
+        <owl:versionInfo>1.0</owl:versionInfo>
+    </owl:Ontology>`;
 
-                            if (parentId) {
-                                xml += `\n${indent}    <skos:broader rdf:resource="${parentId}"/>`;
-                            }
+                        // Añadir clases y propiedades base
+                        rdfXml += `
+    <!-- Clases base -->
+    <owl:Class rdf:about="#Descriptor">
+        <rdfs:label>Descriptor</rdfs:label>
+    </owl:Class>
 
-                            if (value.value === null) {
-                                // Es un nodo hoja
-                            } else {
-                                const children = Object.entries(value)
-                                    .filter(([k, v]) => k !== 'id' && v && typeof v === 'object');
-                                
-                                children.forEach(([childKey, childValue]) => {
-                                    if (childValue && childValue.id) {
-                                        xml += `\n${indent}    <skos:narrower rdf:resource="${childValue.id}"/>`;
-                                    }
-                                });
+    <!-- Propiedades base -->
+    <owl:ObjectProperty rdf:about="#hasProperty">
+        <rdfs:label>tiene propiedad</rdfs:label>
+        <rdfs:domain rdf:resource="#Thing"/>
+        <rdfs:range rdf:resource="#Descriptor"/>
+    </owl:ObjectProperty>`;
 
-                                children.forEach(([childKey, childValue]) => {
-                                    xml += convertToRdfXml({[childKey]: childValue}, conceptId, indent + '    ');
-                                });
-                            }
+                        // Convertir la taxonomía
+                        if (mainKey && jsonData[mainKey]) {
+                            rdfXml += convertToRdfXml({[mainKey]: jsonData[mainKey]});
+                        }
 
-                            xml += `\n${indent}</skos:Concept>`;
-                        });
+                        rdfXml += '\n</rdf:RDF>';
 
-                        return xml;
-                    }
-
-                    if (mainKey && jsonData[mainKey]) {
-                        rdfXml += convertToRdfXml({[mainKey]: jsonData[mainKey]});
-                    }
-
-                    rdfXml += '\n</rdf:RDF>';
-
-                    const formattedXml = rdfXml
-                        .replace(/></g, '>\n<')
-                        .replace(/\s+$/gm, '');
-
-                    jsonOutput.innerHTML = `<pre>${formattedXml}</pre>`;
-                    break;
+                        jsonOutput.innerHTML = `<pre>${rdfXml}</pre>`;
+                        
+                        // Añadir botón para guardar RDF si no existe
+                        if (!document.getElementById('saveRdfButton')) {
+                            const saveButton = document.createElement('button');
+                            saveButton.id = 'saveRdfButton';
+                            saveButton.textContent = 'Guardar RDF';
+                            saveButton.onclick = saveRdfFile;
+                            saveButton.style.marginTop = '10px';
+                            jsonOutput.appendChild(saveButton);
+                        }
+                        break;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                jsonOutput.innerHTML = `<pre class="error">Error: ${error.message}</pre>`;
             }
+        }
+
+        async function saveRdfFile() {
+            try {
+                // Obtener el JSON actual
+                const yamlInput = document.getElementById('yamlInput').value;
+                const jsonData = jsyaml.load(yamlInput);
+                
+                const urlParts = window.location.pathname.split('/');
+                const filename = decodeURIComponent(urlParts[urlParts.length - 1]);
+                
+                console.log("Enviando JSON para conversión:", jsonData); // Debug
+                
+                const response = await fetch(`/save-rdf/${filename}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        json: jsonData // Enviamos el JSON en lugar del RDF
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Error desconocido al guardar el archivo RDF');
+                }
+                
+                console.log("Respuesta del servidor:", result);
+                alert('Archivo OWL guardado correctamente');
+                
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert('Error al guardar el archivo OWL: ' + error.message);
+            }
+        }
+
+        function convertToRdfXml(obj, parentId = null, indent = '    ') {
+            let xml = '';
+            
+            if (!obj || typeof obj !== 'object') {
+                return xml;
+            }
+
+            // Obtener las relaciones del grafo
+            const network = document.getElementById('mynetwork')._network;
+            const edges = network.body.data.edges.get();
+
+            Object.entries(obj).forEach(([key, value]) => {
+                if (key === 'id') return;
+                
+                const conceptId = (value && value.id) || `_:concept_${Math.random().toString(36).substr(2, 9)}`;
+                
+                xml += `\n${indent}<owl:Class rdf:about="${conceptId}">
+${indent}    <rdfs:label xml:lang="es">${key}</rdfs:label>`;
+
+                // Añadir owl:equivalentClass si hay restricciones
+                const restrictions = edges.filter(edge => edge.from === conceptId && edge.label);
+                if (restrictions.length > 0) {
+                    xml += `\n${indent}    <owl:equivalentClass>
+${indent}        <owl:Class>
+${indent}            <owl:intersectionOf rdf:parseType="Collection">
+${indent}                <rdf:Description rdf:about="${parentId || conceptId}"/>`;
+
+                    restrictions.forEach(restriction => {
+                        xml += `\n${indent}                <owl:Restriction>
+${indent}                    <owl:onProperty rdf:resource="#${restriction.label}"/>`;
+
+                        if (restriction.type === 'hasValue') {
+                            xml += `\n${indent}                    <owl:hasValue rdf:resource="#${restriction.to}"/>`;
+                        } else if (restriction.type === 'someValuesFrom') {
+                            xml += `\n${indent}                    <owl:someValuesFrom rdf:resource="#${restriction.to}"/>`;
+                        } else if (restriction.type === 'allValuesFrom') {
+                            xml += `\n${indent}                    <owl:allValuesFrom>
+${indent}                        <owl:Class>
+${indent}                            <owl:oneOf rdf:parseType="Collection">
+${indent}                                <rdf:Description rdf:about="#${restriction.to}"/>
+${indent}                            </owl:oneOf>
+${indent}                        </owl:Class>
+${indent}                    </owl:allValuesFrom>`;
+                        }
+
+                        xml += `\n${indent}                </owl:Restriction>`;
+                    });
+
+                    xml += `\n${indent}            </owl:intersectionOf>
+${indent}        </owl:Class>
+${indent}    </owl:equivalentClass>`;
+                }
+
+                // Añadir rdfs:subClassOf para la jerarquía
+                if (parentId) {
+                    xml += `\n${indent}    <rdfs:subClassOf rdf:resource="${parentId}"/>`;
+                }
+
+                // Procesar propiedades específicas del dominio
+                if (value.properties) {
+                    Object.entries(value.properties).forEach(([propName, propValue]) => {
+                        xml += `\n${indent}    <rdfs:subClassOf>
+${indent}        <owl:Restriction>
+${indent}            <owl:onProperty rdf:resource="#${propName}"/>
+${indent}            <owl:hasValue rdf:resource="#${propValue}"/>
+${indent}        </owl:Restriction>
+${indent}    </rdfs:subClassOf>`;
+                    });
+                }
+
+                // Procesar nodos hijos recursivamente
+                if (value.value !== null) {
+                    Object.entries(value)
+                        .filter(([k, v]) => k !== 'id' && k !== 'properties' && v && typeof v === 'object')
+                        .forEach(([childKey, childValue]) => {
+                            xml += convertToRdfXml({[childKey]: childValue}, conceptId, indent + '    ');
+                        });
+                }
+
+                xml += `\n${indent}</owl:Class>`;
+            });
+
+            return xml;
         }
     </script>
 </body>
