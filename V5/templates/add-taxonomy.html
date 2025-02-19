@@ -384,7 +384,7 @@
         .context-menu {
             position: absolute;
             top: 10px;  /* Mantener margen superior */
-            right: 10px; /* Cambiar left por right para posicionar en la esquina derecha */
+            right: 620px; /* Cambiar de 10px a 320px para mover 300px a la izquierda */
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
@@ -526,6 +526,67 @@
             border-color: #2B7CE9;
             box-shadow: 0 0 0 2px rgba(43, 124, 233, 0.2);
         }
+
+        .properties-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .properties-panel.minimized .properties-content {
+            display: none;
+        }
+
+        .properties-panel.minimized .minimize-btn {
+            transform: rotate(180deg);
+        }
+
+        .properties-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .properties-header h4 {
+            margin: 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .minimize-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            padding: 0 5px;
+        }
+
+        .minimize-btn:hover {
+            color: #333;
+        }
+
+        .properties-content {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        /* Estilos heredados del index.html para la jerarquía */
+        .properties-content .hierarchy-container {
+            margin-top: 0;
+            padding: 5px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -592,6 +653,17 @@
         <div class="context-menu-option" data-relation="Inversamente Funcional">
             <span class="color-dot" style="background-color: #00CED1"></span>
             Inversamente Funcional
+        </div>
+    </div>
+
+    <!-- Añadir después del div del minimapa -->
+    <div class="properties-panel">
+        <div class="properties-header">
+            <h4>Jerarquía de Propiedades</h4>
+            <button class="minimize-btn">−</button>
+        </div>
+        <div class="properties-content" id="propertiesContainer">
+            <!-- Se llenará dinámicamente -->
         </div>
     </div>
 
@@ -2450,6 +2522,70 @@ ${indent}    </rdfs:subClassOf>`;
 
             return xml;
         }
+
+        // Función para cargar las propiedades
+        async function loadProperties() {
+            try {
+                const response = await fetch('/api/properties');
+                const properties = await response.json();
+                
+                const container = document.getElementById('propertiesContainer');
+                const hierarchyContainer = document.createElement('div');
+                hierarchyContainer.className = 'hierarchy-container';
+                
+                const hierarchyData = buildHierarchyFromProperties(properties);
+                processHierarchy(hierarchyData, hierarchyContainer);
+                
+                container.innerHTML = '';
+                container.appendChild(hierarchyContainer);
+                
+                // Expandir el primer nivel por defecto
+                const firstLevelItems = hierarchyContainer.querySelectorAll(':scope > ul > li');
+                firstLevelItems.forEach(item => {
+                    item.classList.add('expanded');
+                    item.querySelector('.node-item')?.classList.add('expanded');
+                });
+            } catch (error) {
+                console.error('Error loading properties:', error);
+            }
+        }
+
+        // Función auxiliar para construir la jerarquía (igual que en index.html)
+        function buildHierarchyFromProperties(properties) {
+            const hierarchy = {};
+            const rootProperties = properties.filter(p => !p.parent);
+            
+            function addChildren(parent) {
+                const children = properties.filter(p => p.parent === parent.id);
+                const result = {};
+                
+                children.forEach(child => {
+                    if (child.type === "string") {
+                        result[child.name] = null;
+                    } else {
+                        result[child.name] = addChildren(child);
+                    }
+                });
+                
+                return result;
+            }
+            
+            rootProperties.forEach(root => {
+                hierarchy[root.name] = addChildren(root);
+            });
+            
+            return hierarchy;
+        }
+
+        // Añadir funcionalidad para minimizar/maximizar el panel
+        document.querySelector('.minimize-btn').addEventListener('click', function() {
+            const panel = document.querySelector('.properties-panel');
+            panel.classList.toggle('minimized');
+            this.textContent = panel.classList.contains('minimized') ? '+' : '−';
+        });
+
+        // Cargar las propiedades cuando se carga la página
+        document.addEventListener('DOMContentLoaded', loadProperties);
     </script>
 </body>
 </html> 

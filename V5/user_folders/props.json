@@ -1,37 +1,37 @@
 {
-  "id": "root-family-123",
-  "Familia": {
-    "id": "family-root-456",
-    "Padres": {
-      "id": "parents-789",
-      "Padre": {
-        "id": "father-abc",
+  "id": "root-game-123",
+  "VideoJuego": {
+    "id": "game-root-456",
+    "Personajes": {
+      "id": "characters-789",
+      "Heroe": {
+        "id": "hero-abc",
         "value": null
       },
-      "Madre": {
-        "id": "mother-def",
+      "Villano": {
+        "id": "villain-def",
         "value": null
       }
     },
-    "Hijos": {
-      "id": "children-ghi",
-      "Hijo": {
-        "id": "son-jkl",
+    "Items": {
+      "id": "items-ghi",
+      "Arma": {
+        "id": "weapon-jkl",
         "value": null
       },
-      "Hija": {
-        "id": "daughter-mno",
+      "Pocion": {
+        "id": "potion-mno",
         "value": null
       }
     },
-    "Hermanos": {
-      "id": "siblings-pqr",
-      "Hermano": {
-        "id": "brother-stu",
+    "Aliados": {
+      "id": "allies-pqr",
+      "Guerrero": {
+        "id": "warrior-stu",
         "value": null
       },
-      "Hermana": {
-        "id": "sister-vwx",
+      "Mago": {
+        "id": "mage-vwx",
         "value": null
       }
     }
