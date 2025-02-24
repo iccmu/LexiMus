@@ -383,8 +383,8 @@
         /* Actualizar estilos para el menú contextual */
         .context-menu {
             position: absolute;
-            top: 10px;  /* Mantener margen superior */
-            right: 620px; /* Cambiar de 10px a 320px para mover 300px a la izquierda */
+            top: 10px;
+            right: 620px; /* Mantener la distancia desde la derecha */
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
@@ -587,6 +587,56 @@
             background-color: #f8f9fa;
             border-radius: 4px;
         }
+
+        .relation-info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 620px; /* Cambiado de right a left y ajustado para alinearse con el menú contextual */
+            width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .relation-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .relation-info-content {
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .relation-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .relation-item:last-child {
+            border-bottom: none;
+        }
+
+        .delete-relation {
+            color: #dc3545;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .delete-relation:hover {
+            background-color: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -665,6 +715,17 @@
         <div class="properties-content" id="propertiesContainer">
             <!-- Se llenará dinámicamente -->
         </div>
+    </div>
+
+    <!-- Añadir después de la definición del panel de propiedades -->
+
+    <!-- Añadir panel de información de relaciones -->
+    <div class="relation-info-panel">
+        <div class="relation-info-header">
+            <h4>Relaciones Seleccionadas</h4>
+            <button class="minimize-btn">−</button>
+        </div>
+        <div class="relation-info-content"></div>
     </div>
 
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
@@ -857,6 +918,21 @@
                             },
                             color: {
                                 color: '#2B7CE9'
+                            },
+                            selectionWidth: 3, // Aumentado para mayor visibilidad
+                            chosen: {
+                                edge: function(values, id, selected, hovering) {
+                                    if (selected) {
+                                        values.width = 4; // Hacer la línea más gruesa
+                                        values.color = '#2ecc71'; // Verde más vibrante
+                                        values.shadow = true;
+                                        values.shadowColor = 'rgba(46, 204, 113, 0.6)';
+                                        values.shadowSize = 15;
+                                        values.shadowX = 0;
+                                        values.shadowY = 0;
+                                        values.glow = true; // Añadir efecto de brillo
+                                    }
+                                }
                             }
                         },
                         nodes: {
@@ -1762,6 +1838,163 @@
                                     easingFunction: 'easeInOutQuad'
                                 }
                             });
+                        }
+                    });
+
+                    // Actualizar el manejador de selección para mostrar información en el panel
+                    network.on("select", function(params) {
+                        const selectedEdges = params.edges;
+                        const content = document.querySelector('.relation-info-content');
+                        
+                        // Remover animaciones previas
+                        network.body.data.edges.forEach(edge => {
+                            network.body.data.edges.update({
+                                id: edge.id,
+                                shadow: false,
+                                width: 1
+                            });
+                        });
+                        
+                        if (selectedEdges.length > 0) {
+                            const edgeData = network.body.data.edges.get(selectedEdges);
+                            content.innerHTML = edgeData.map(edge => {
+                                const fromNode = network.body.data.nodes.get(edge.from);
+                                const toNode = network.body.data.nodes.get(edge.to);
+                                
+                                network.body.data.edges.update({
+                                    id: edge.id,
+                                    shadow: {
+                                        enabled: true,
+                                        color: 'rgba(46, 204, 113, 0.6)',
+                                        size: 15,
+                                        x: 0,
+                                        y: 0
+                                    },
+                                    width: 4,
+                                    animation: {
+                                        enabled: true,
+                                        duration: 2000,
+                                        easingFunction: 'easeInOutQuad'
+                                    }
+                                });
+
+                                return `
+                                    <div class="relation-item">
+                                        <span>${fromNode.label} → ${edge.label} → ${toNode.label}</span>
+                                        <span class="delete-relation" data-edge-id="${edge.id}">×</span>
+                                    </div>
+                                `;
+                            }).join('');
+
+                            // Actualizar manejadores para eliminar relaciones
+                            content.querySelectorAll('.delete-relation').forEach(btn => {
+                                btn.onclick = function() {
+                                    const edgeId = this.dataset.edgeId;
+                                    if (confirm('¿Deseas eliminar esta relación?')) {
+                                        // Obtener los nodos conectados por esta arista antes de eliminarla
+                                        const edge = network.body.data.edges.get(edgeId);
+                                        const fromNode = edge.from;
+                                        const toNode = edge.to;
+                                        
+                                        // Eliminar la arista
+                                        network.body.data.edges.remove(edgeId);
+                                        
+                                        // Limpiar las sombras de los nodos conectados
+                                        network.body.data.nodes.update([
+                                            { id: fromNode, shadow: false },
+                                            { id: toNode, shadow: false }
+                                        ]);
+                                        
+                                        // Actualizar la selección después de eliminar
+                                        const remainingEdges = selectedEdges.filter(id => id !== edgeId);
+                                        network.setSelection({ edges: remainingEdges });
+                                        
+                                        // Actualizar el panel de relaciones seleccionadas
+                                        const relationContent = document.querySelector('.relation-info-content');
+                                        if (remainingEdges.length === 0) {
+                                            relationContent.innerHTML = '<div style="padding: 8px;">No hay relaciones seleccionadas</div>';
+                                        } else {
+                                            // Actualizar el panel solo con las relaciones restantes
+                                            const remainingEdgeData = network.body.data.edges.get(remainingEdges);
+                                            relationContent.innerHTML = remainingEdgeData.map(edge => {
+                                                const fromNode = network.body.data.nodes.get(edge.from);
+                                                const toNode = network.body.data.nodes.get(edge.to);
+                                                return `
+                                                    <div class="relation-item">
+                                                        <span>${fromNode.label} → ${edge.label} → ${toNode.label}</span>
+                                                        <span class="delete-relation" data-edge-id="${edge.id}">×</span>
+                                                    </div>
+                                                `;
+                                            }).join('');
+                                            
+                                            // Reenlazar los eventos de eliminación para las relaciones restantes
+                                            relationContent.querySelectorAll('.delete-relation').forEach(newBtn => {
+                                                newBtn.onclick = btn.onclick;
+                                            });
+                                        }
+                                        
+                                        updateOutputFormat();
+                                    }
+                                };
+                            });
+                        } else {
+                            content.innerHTML = '<div style="padding: 8px;">No hay relaciones seleccionadas</div>';
+                        }
+                    });
+
+                    // Actualizar el manejador de tecla Delete
+                    document.addEventListener('keydown', function(e) {
+                        if (e.key === 'Delete' || e.key === 'Backspace') {
+                            const selectedEdges = network.getSelectedEdges();
+                            if (selectedEdges.length > 0) {
+                                if (confirm('¿Deseas eliminar las relaciones seleccionadas?')) {
+                                    // Obtener todos los nodos afectados antes de eliminar las aristas
+                                    const affectedNodes = new Set();
+                                    selectedEdges.forEach(edgeId => {
+                                        const edge = network.body.data.edges.get(edgeId);
+                                        affectedNodes.add(edge.from);
+                                        affectedNodes.add(edge.to);
+                                    });
+                                    
+                                    // Eliminar las aristas
+                                    network.body.data.edges.remove(selectedEdges);
+                                    
+                                    // Limpiar las sombras de todos los nodos afectados
+                                    Array.from(affectedNodes).forEach(nodeId => {
+                                        network.body.data.nodes.update({
+                                            id: nodeId,
+                                            shadow: false
+                                        });
+                                    });
+                                    
+                                    // Limpiar la selección después de eliminar
+                                    network.setSelection({ edges: [] });
+                                    updateOutputFormat();
+                                }
+                            }
+                        }
+                    });
+
+                    // Actualizar el manejador de selección
+                    network.on("click", function(params) {
+                        // Si no se hizo clic en ningún nodo ni arista, limpiar la selección
+                        if (params.nodes.length === 0 && params.edges.length === 0) {
+                            network.unselectAll();
+                            
+                            // Limpiar los efectos visuales de todas las aristas
+                            network.body.data.edges.forEach(edge => {
+                                network.body.data.edges.update({
+                                    id: edge.id,
+                                    shadow: false,
+                                    width: 1
+                                });
+                            });
+                            
+                            // Limpiar el panel de relaciones
+                            const content = document.querySelector('.relation-info-content');
+                            if (content) {
+                                content.innerHTML = '<div style="padding: 8px;">No hay relaciones seleccionadas</div>';
+                            }
                         }
                     });
 
