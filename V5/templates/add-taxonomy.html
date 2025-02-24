@@ -1287,7 +1287,73 @@
                     network.on("click", function(params) {
                         if (params.nodes.length > 0) {
                             const nodeId = params.nodes[0];
-                            toggleChildNodes(nodeId, network);
+                            currentNodeId = nodeId;
+                            
+                            const nodeIndex = selectedNodes.indexOf(nodeId);
+                            
+                            // Si ya hay 2 nodos seleccionados y se intenta seleccionar un tercero diferente
+                            if (selectedNodes.length === 2 && nodeIndex === -1) {
+                                // Deseleccionar todos los nodos
+                                selectedNodes.forEach(id => {
+                                    network.body.data.nodes.update({
+                                        id: id,
+                                        shadow: {
+                                            enabled: false
+                                        }
+                                    });
+                                });
+                                selectedNodes = [nodeId]; // Comenzar nueva selección con el nodo actual
+                                network.body.data.nodes.update({
+                                    id: nodeId,
+                                    shadow: {
+                                        enabled: true,
+                                        color: 'rgba(46, 204, 113, 0.5)',
+                                        size: 10,
+                                        x: 0,
+                                        y: 5
+                                    }
+                                });
+                            } else if (nodeIndex === -1) {
+                                // Añadir a la selección si no está seleccionado
+                                selectedNodes.push(nodeId);
+                                network.body.data.nodes.update({
+                                    id: nodeId,
+                                    shadow: {
+                                        enabled: true,
+                                        color: 'rgba(46, 204, 113, 0.5)',
+                                        size: 10,
+                                        x: 0,
+                                        y: 5
+                                    }
+                                });
+                            } else {
+                                // Quitar de la selección si ya estaba seleccionado
+                                selectedNodes.splice(nodeIndex, 1);
+                                network.body.data.nodes.update({
+                                    id: nodeId,
+                                    shadow: {
+                                        enabled: false
+                                    }
+                                });
+                            }
+                            
+                            network.selectNodes(selectedNodes);
+
+                            // Mostrar/ocultar el menú contextual cuando hay exactamente 2 nodos seleccionados
+                            const contextMenu = document.getElementById('contextMenu');
+                            if (selectedNodes.length === 2) {
+                                contextMenu.style.display = 'block';
+                                const options = contextMenu.querySelectorAll('.context-menu-option');
+                                options.forEach((option, index) => {
+                                    if (index === 0) {
+                                        option.classList.add('active');
+                                    } else {
+                                        option.classList.remove('active');
+                                    }
+                                });
+                            } else {
+                                contextMenu.style.display = 'none';
+                            }
                         } else {
                             // Click en el fondo
                             selectedNodes = [];
@@ -2179,6 +2245,7 @@
         function toggleChildNodes(nodeId, network) {
             const connectedEdges = network.getConnectedEdges(nodeId);
             const childNodes = new Set();
+            const positions = network.getPositions(); // Guardar posiciones actuales
             
             // Encontrar todos los nodos hijos directos
             connectedEdges.forEach(edgeId => {
@@ -2198,13 +2265,23 @@
             const shouldShow = visibleChildren.length === 0;
             let counter = 0;
             
+            // Desactivar física temporalmente
+            const physics = network.physics.options.enabled;
+            network.setOptions({ physics: { enabled: false } });
+            
             childNodes.forEach(childId => {
                 const shouldHide = shouldShow ? counter >= 4 : true;
                 counter++;
                 
+                // Mantener la posición original del nodo
+                const position = positions[childId];
+                
                 network.body.data.nodes.update({
                     id: childId,
-                    hidden: shouldHide
+                    hidden: shouldHide,
+                    x: position ? position.x : undefined,
+                    y: position ? position.y : undefined,
+                    physics: false // Desactivar física para este nodo
                 });
                 
                 // También actualizar la visibilidad de las aristas
@@ -2216,6 +2293,11 @@
                     });
                 }
             });
+            
+            // Restaurar la física después de un breve retraso
+            setTimeout(() => {
+                network.setOptions({ physics: { enabled: physics } });
+            }, 500);
         }
 
         // Definir la función updateOutputFormat fuera de cualquier otro contexto
@@ -2586,6 +2668,23 @@ ${indent}    </rdfs:subClassOf>`;
 
         // Cargar las propiedades cuando se carga la página
         document.addEventListener('DOMContentLoaded', loadProperties);
+
+        // Añadir event listener para cuando el foco sale del textarea
+        document.getElementById('yamlInput').addEventListener('blur', function() {
+            const network = document.getElementById('mynetwork')._network;
+            if (!network) return;
+
+            // Limpiar resaltados de todos los nodos
+            const nodes = network.body.data.nodes.get();
+            nodes.forEach(node => {
+                network.body.data.nodes.update({
+                    id: node.id,
+                    shadow: {
+                        enabled: false
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html> 

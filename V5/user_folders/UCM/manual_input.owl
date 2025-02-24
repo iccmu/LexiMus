@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+>
+  <owl:Ontology rdf:about=""/>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#value">
+    <rdfs:label>value</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Movimiento"/>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Interacción"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Sistema_1_de_Control">
+    <rdfs:label>Sistema 1 de Control</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Mecánicas_de_Juego"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Mecánicas_de_Juego">
+    <rdfs:label>Mecánicas de Juego</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Taxonomía_de_Videojuegos"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Interacción">
+    <rdfs:label>Interacción</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Sistema_1_de_Control"/>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Sistema_2_de_Control"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Movimiento">
+    <rdfs:label>Movimiento</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Sistema_1_de_Control"/>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Sistema_2_de_Control"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Sistema_2_de_Control">
+    <rdfs:label>Sistema 2 de Control</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Mecánicas_de_Juego"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Taxonomía_de_Videojuegos">
+    <rdfs:label>Taxonomía de Videojuegos</rdfs:label>
+  </owl:Class>
+</rdf:RDF>
