@@ -4,28 +4,84 @@
       "Sistema 1 de Control": {
         "Movimiento": {
           "value": null,
-          "id": "9fe2108a-c0a5-479a-8175-60ab4ac74b4e"
+          "id": "65c2855b-1ffa-4aba-b342-355e2c543c4d"
         },
         "Interacción": {
           "value": null,
-          "id": "0b668893-f70c-4a15-9cc9-8431ac609f0e"
+          "id": "bec22a65-f6db-406b-ad03-a5c13be28bef"
         },
-        "id": "162a97b8-a42a-4186-85ec-3036a76630c8"
+        "id": "e74f55d1-62bf-44ff-afd5-ca1ed95bc3ce"
       },
       "Sistema 2 de Control": {
         "Movimiento": {
           "value": null,
-          "id": "78d03e62-28f6-429a-8c99-01c29ea15043"
+          "id": "e9fdb06b-6522-4540-b30a-a75549231762"
         },
         "Interacción": {
           "value": null,
-          "id": "23cd5e7a-6679-4e1c-8408-f4b6a995ca02"
+          "id": "6b0d3eed-535a-4575-94c8-685613cb3089"
         },
-        "id": "6f96ddd2-1af3-4497-8b68-247e9bf664ad"
+        "id": "8af344ba-73a9-4faa-8fa1-2efbc885d971"
       },
-      "id": "29732d50-d4a6-40e1-9b90-a178dc69d4cc"
+      "id": "af094535-8ac7-4290-bafa-621480f641cf"
     },
-    "id": "c70b249c-ced7-4991-b9d0-53dbf605cc5b"
+    "id": "195bb80b-b4d8-48e8-9320-8415d1429848"
   },
-  "id": "e5117adc-5087-4004-9011-5ddae752fa5f"
+  "relationships": [
+    {
+      "type": "Inversa",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 1 de Control_3",
+      "id": "eb8c4c7d-8156-4263-a127-ec43918ac26f"
+    },
+    {
+      "type": "Inversamente Funcional",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8_Movimiento_9",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8_Interacción_11",
+      "id": "5b575965-1213-4c51-9265-68fd38cbd13b"
+    },
+    {
+      "type": "Simétrica",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 1 de Control_3_Interacción_6",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8_Interacción_11",
+      "id": "f26aaf82-293e-4993-b304-0eb04d009414"
+    },
+    {
+      "type": "Inversamente Funcional",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 1 de Control_3",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 1 de Control_3_Interacción_6",
+      "id": "a9c29006-222a-46d1-8d29-9aa619f4e9e0"
+    },
+    {
+      "type": "Inversa",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8",
+      "id": "d69c4e3d-65c0-4c1a-9d05-7e72c7e4d5c7"
+    },
+    {
+      "type": "Inversamente Funcional",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8_Interacción_11_definiciones_12",
+      "id": "4587bd48-1fcc-46cd-869c-4ed2a28c5692"
+    },
+    {
+      "type": "Inversa",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8_Movimiento_9_definiciones_10",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 1 de Control_3_Movimiento_4",
+      "id": "2eb402f0-a4e1-411c-a9e4-4eace6567240"
+    },
+    {
+      "type": "Inversa",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 1 de Control_3_Movimiento_4_definiciones_5",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8_Interacción_11",
+      "id": "eb04bc27-3a21-4b90-b4c5-78156145a390"
+    },
+    {
+      "type": "Inversamente Funcional",
+      "from": "Taxonomía de Videojuegos_1",
+      "to": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistema 2 de Control_8_Interacción_11_definiciones_12",
+      "id": "51a537ab-c7e3-4843-bb51-1d7963dbdf4d"
+    }
+  ],
+  "id": "58323679-bde5-49d7-9c65-4b10812def11"
 }
