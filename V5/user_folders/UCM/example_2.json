@@ -4,9 +4,44 @@
     "cuatro": null,
     "DOS": {
       "siete": "ochods",
-      "id": "23656003-2335-46ed-a173-bbce11c6f0dc"
+      "id": "9e2b04a9-2a47-4df4-8e32-2743c5819965"
     },
-    "id": "1bad11f1-028f-4b0a-9ac6-bf742bd4f287"
+    "dods": null,
+    "cuatrdso": null,
+    "DOSdw": "siete",
+    "id": "73fb569d-9522-4c87-a92b-025c2cfb9f3d"
   },
-  "id": "fa6b9fa3-1cea-45d4-9b4e-8e30cbe88b21"
+  "relationships": [
+    {
+      "type": "Simétrica",
+      "from": "Uno_1_DOS_4_siete_5_definiciones_5",
+      "to": "Uno_1_DOS_4_siete_5",
+      "id": "b884a8c1-5ccc-46b8-8c0a-ec26d9ccbdb6"
+    },
+    {
+      "type": "Inversamente Funcional",
+      "from": "Uno_1_DOS_4_siete_5_definiciones_5",
+      "to": "Uno_1_dods_6",
+      "id": "354ff73e-4d40-498b-8fa4-7dd8ac741315"
+    },
+    {
+      "type": "Simétrica",
+      "from": "Uno_1",
+      "to": "Uno_1_dods_6",
+      "id": "cca5a668-4e88-47a0-ac89-6d18c99634f0"
+    },
+    {
+      "type": "Funcional",
+      "from": "Uno_1_dods_6",
+      "to": "Uno_1_cuatro_3",
+      "id": "89779380-196d-4665-afdc-8219858ca2b7"
+    },
+    {
+      "type": "Funcional",
+      "from": "Uno_1_cuatro_3",
+      "to": "Uno_1",
+      "id": "e78f42b8-564c-49eb-abdb-1b72c7d40601"
+    }
+  ],
+  "id": "975718c1-de7f-47a3-884c-a03fe6e35cf5"
 }

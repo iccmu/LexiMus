@@ -919,18 +919,18 @@
                             color: {
                                 color: '#2B7CE9'
                             },
-                            selectionWidth: 3, // Aumentado para mayor visibilidad
+                            selectionWidth: 3,
                             chosen: {
                                 edge: function(values, id, selected, hovering) {
                                     if (selected) {
-                                        values.width = 4; // Hacer la línea más gruesa
-                                        values.color = '#2ecc71'; // Verde más vibrante
+                                        values.width = 4;
+                                        values.color = '#2ecc71';
                                         values.shadow = true;
                                         values.shadowColor = 'rgba(46, 204, 113, 0.6)';
                                         values.shadowSize = 15;
                                         values.shadowX = 0;
                                         values.shadowY = 0;
-                                        values.glow = true; // Añadir efecto de brillo
+                                        values.glow = true;
                                     }
                                 }
                             }
@@ -955,7 +955,19 @@
                             dragNodes: true,
                             dragView: true,
                             zoomView: true,
-                            hover: true
+                            hover: false,  // Desactivar hover
+                            hoverConnectedEdges: false,  // Desactivar resaltado de bordes al pasar el ratón
+                            selectConnectedEdges: true,  // Mantener la selección de bordes al hacer clic
+                            tooltipDelay: 300,  // Aumentar el retraso del tooltip para evitar apariciones no deseadas
+                            keyboard: {
+                                enabled: true,
+                                speed: {
+                                    x: 10,
+                                    y: 10,
+                                    zoom: 0.02
+                                },
+                                bindToWindow: false
+                            }
                         }
                     };
                     
@@ -1933,7 +1945,29 @@
                                             });
                                         }
                                         
+                                        // Actualizar inmediatamente el formato de salida
                                         updateOutputFormat();
+                                        
+                                        // Obtener las relaciones personalizadas actuales
+                                        const currentEdges = network.body.data.edges.get();
+                                        const currentCustomRelations = currentEdges
+                                            .filter(e => e.label && [
+                                                'Inversa', 'Transitiva', 'Simétrica', 'Funcional', 
+                                                'Inversamente Funcional'
+                                            ].includes(e.label))
+                                            .map(e => ({
+                                                type: e.label,
+                                                from: e.from,
+                                                to: e.to
+                                            }));
+                                        
+                                        // Forzar la actualización del YAML en el textarea
+                                        const currentJson = yamlToJson(document.getElementById('yamlInput').value);
+                                        delete currentJson.relationships;
+                                        if (currentCustomRelations.length > 0) {
+                                            currentJson.relationships = currentCustomRelations;
+                                        }
+                                        document.getElementById('yamlInput').value = jsonToYaml(currentJson);
                                     }
                                 };
                             });
@@ -2124,24 +2158,10 @@
             let nodes = [];
             let edges = [];
             let counter = 0;
-            
-            // Añadir un Map para rastrear las conexiones por nodo
             let nodeConnections = new Map();
             
-            // Función auxiliar para truncar texto solo cuando hay solapamiento
-            function truncateLabel(text, hasOverlap) {
-                return hasOverlap && text.length > NODE_LABEL_MAX_LENGTH ? 
-                    text.substring(0, NODE_LABEL_MAX_LENGTH) + '...' : 
-                    text;
-            }
-            
-            // Función para verificar si hay nodos en el mismo nivel que podrían solaparse
-            function checkLevelOverlap(currentLevel) {
-                return nodes.filter(node => node.level === currentLevel).length > 3;
-            }
-            
             function processItem(key, value, parentId, currentLevel) {
-                if (key === 'id') return;
+                if (key === 'id' || key === 'relationships') return; // Ignorar relationships en el procesamiento normal
                 
                 counter++;
                 const nodeId = parentId ? 
@@ -2224,13 +2244,71 @@
                 }
             }
             
+            // Procesar la estructura principal
             Object.entries(data).forEach(([key, value]) => {
-                if (!key.startsWith('@') && key !== 'id') {
+                if (!key.startsWith('@') && key !== 'id' && key !== 'relationships') {
                     processItem(key, value, parentId, level);
                 }
             });
             
+            // Procesar las relaciones si existen
+            if (data.relationships && Array.isArray(data.relationships)) {
+                data.relationships.forEach(relation => {
+                    edges.push({
+                        from: relation.from,
+                        to: relation.to,
+                        label: relation.type,
+                        arrows: {
+                            to: {
+                                enabled: true,
+                                type: 'arrow'
+                            }
+                        },
+                        color: {
+                            color: getRelationColor(relation.type)
+                        },
+                        smooth: {
+                            enabled: true,
+                            type: 'curvedCW',
+                            roundness: 0.2
+                        },
+                        width: 2,
+                        dashes: false,
+                        physics: false,
+                        font: {
+                            size: 12,
+                            color: getRelationColor(relation.type),
+                            face: 'arial',
+                            background: 'white',
+                            strokeWidth: 2
+                        }
+                    });
+                    
+                    // Posponer la actualización de sombras hasta que la red esté inicializada
+                    setTimeout(() => {
+                        const network = document.getElementById('mynetwork')._network;
+                        if (network && network.body) {
+                            const relationColor = getRelationColor(relation.type);
+                            updateNodeShadows(relation.from, relationColor, network);
+                            updateNodeShadows(relation.to, relationColor, network);
+                        }
+                    }, 100);
+                });
+            }
+            
             return { nodes, edges };
+        }
+
+        // Añadir función auxiliar para obtener el color de cada tipo de relación
+        function getRelationColor(relationType) {
+            const relationColors = {
+                'Inversa': '#FF4444',
+                'Transitiva': '#33CC33',
+                'Simétrica': '#9933CC',
+                'Funcional': '#FF8C00',
+                'Inversamente Funcional': '#00CED1'
+            };
+            return relationColors[relationType] || '#666666';
         }
 
         // Añadir función para convertir entre JSON y YAML
@@ -2279,6 +2357,28 @@
                 
                 if (!jsonData) {
                     throw new Error('Error al convertir YAML a JSON');
+                }
+
+                // Obtener las relaciones actuales del grafo
+                const network = document.getElementById('mynetwork')._network;
+                const edges = network.body.data.edges.get();
+                
+                // Filtrar solo las relaciones personalizadas que aún existen
+                const customRelations = edges
+                    .filter(edge => edge.label && [
+                        'Inversa', 'Transitiva', 'Simétrica', 'Funcional', 
+                        'Inversamente Funcional'
+                    ].includes(edge.label))
+                    .map(edge => ({
+                        type: edge.label,
+                        from: edge.from,
+                        to: edge.to
+                    }));
+
+                // Eliminar las relaciones anteriores y añadir solo las actuales
+                delete jsonData.relationships;
+                if (customRelations.length > 0) {
+                    jsonData.relationships = customRelations;
                 }
 
                 // Obtener el nombre del archivo de la URL
@@ -2858,6 +2958,77 @@ ${indent}    </rdfs:subClassOf>`;
                 });
             });
         });
+
+        // Añadir función para verificar solapamiento en un nivel
+        function checkLevelOverlap(level) {
+            const nodesInLevel = [];
+            const network = document.getElementById('mynetwork')._network;
+            
+            if (!network) return false;
+            
+            // Obtener todos los nodos en el nivel actual
+            network.body.data.nodes.get().forEach(node => {
+                if (node.level === level) {
+                    nodesInLevel.push(node);
+                }
+            });
+            
+            // Si hay más de 5 nodos en el mismo nivel, consideramos que hay solapamiento
+            return nodesInLevel.length > 5;
+        }
+
+        // Función auxiliar para truncar etiquetas largas
+        function truncateLabel(label, hasOverlap) {
+            const maxLength = hasOverlap ? NODE_LABEL_MAX_LENGTH : NODE_LABEL_MAX_LENGTH * 2;
+            if (label.length > maxLength) {
+                return label.substring(0, maxLength - 3) + '...';
+            }
+            return label;
+        }
+
+        // Función para manejar las sombras de los nodos
+        function updateNodeShadows(nodeId, color, network) {
+            // Verificar que la red y sus componentes estén inicializados
+            if (!network || !network.body || !network.body.data || !network.body.data.nodes) {
+                console.warn('Red no inicializada completamente al intentar actualizar sombras');
+                return;
+            }
+
+            try {
+                // Obtener el nodo
+                const node = network.body.data.nodes.get(nodeId);
+                if (!node) {
+                    console.warn(`Nodo ${nodeId} no encontrado`);
+                    return;
+                }
+
+                // Actualizar la sombra del nodo
+                network.body.data.nodes.update({
+                    id: nodeId,
+                    shadow: {
+                        enabled: true,
+                        color: color + '80', // Añadir transparencia (50%)
+                        size: 10,
+                        x: 0,
+                        y: 5
+                    }
+                });
+
+                // Guardar la sombra en el mapa de sombras
+                if (!nodeShadows.has(nodeId)) {
+                    nodeShadows.set(nodeId, []);
+                }
+                nodeShadows.get(nodeId).push(color);
+
+            } catch (error) {
+                console.error('Error al actualizar sombras del nodo:', error);
+            }
+        }
+
+        // Asegurarse de que nodeShadows esté definido globalmente
+        if (typeof nodeShadows === 'undefined') {
+            let nodeShadows = new Map();
+        }
     </script>
 </body>
 </html> 
