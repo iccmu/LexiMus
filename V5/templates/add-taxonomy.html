@@ -659,6 +659,146 @@
             background-color: #888;
             border-radius: 3px;
         }
+
+        .relation-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            width: 400px;
+            z-index: 1000;
+            display: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .relation-panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .relation-panel-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0 5px;
+        }
+
+        .relation-panel-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .relation-option {
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            position: relative;
+            outline: none;
+        }
+
+        .relation-option:hover,
+        .relation-option.selected {
+            background-color: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        .relation-option.selected {
+            border-left: 3px solid #2196F3;
+            padding-left: 12px;
+        }
+
+        .relation-option:hover::before,
+        .relation-option.selected::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #2196F3;
+        }
+
+        .relation-panel-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #90A4AE #CFD8DC;
+        }
+
+        .relation-panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .relation-panel-content::-webkit-scrollbar-track {
+            background: #CFD8DC;
+        }
+
+        .relation-panel-content::-webkit-scrollbar-thumb {
+            background-color: #90A4AE;
+            border-radius: 3px;
+        }
+
+        .relation-label {
+            flex-grow: 1;
+        }
+
+        .shortcut {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .relation-panel-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-nodes {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .cancel-btn {
+            padding: 8px 15px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cancel-btn:hover {
+            background: #eee;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -48%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
     </style>
 </head>
 <body>
@@ -753,9 +893,34 @@
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script>
-        // Añadir al inicio del script, junto con las otras variables globales
-        const DEFAULT_ZOOM = 0.8; // Puedes ajustar este valor según necesites
-        let currentZoom = DEFAULT_ZOOM;
+        // Constantes de navegación
+        const NAVIGATION = {
+            GRID_SIZE: 150,
+            GRID_SPACING: 150,
+            ANIMATION_DURATION: 500,
+            SHAKE_OFFSET: 10,
+            ZOOM_DEFAULT: 1
+        };
+
+        // Estado global de navegación
+        let currentNodeId = null;
+        let currentZoom = NAVIGATION.ZOOM_DEFAULT;
+        let gridNodes = {};
+
+        // Monitor de navegación
+        const navigationMonitor = {
+            movementCount: { up: 0, down: 0, left: 0, right: 0 },
+            logMovement: function(direction, nodeId) {
+                this.movementCount[direction]++;
+                console.log('=== Estado de Navegación ===');
+                console.log('Dirección:', direction);
+                console.log('Nodo actual:', nodeId);
+                if (nodeId && network) {
+                    console.log('Posición actual:', network.getPosition(nodeId));
+                }
+                console.log('Contador de movimientos:', this.movementCount);
+            }
+        };
 
         // Declaración global de nodeShadows
         let nodeShadows = new Map();
@@ -769,6 +934,26 @@
 
         // Declarar network como variable global
         let network;
+
+        // Añadir variables de monitoreo
+        let navigationState = {
+            currentNodeId: null,
+            lastDirection: null,
+            movementCount: {
+                up: 0,
+                down: 0,
+                left: 0,
+                right: 0
+            },
+            gridState: {}
+        };
+
+        // Añadir un estado global para el control de sincronización
+        const syncState = {
+            isUpdatingFromYaml: false,
+            isUpdatingFromGraph: false,
+            lastUpdate: null
+        };
 
         // Modificar la función de carga inicial
         window.onload = function() {
@@ -805,17 +990,15 @@
         }
 
         // Función de autoguardado centralizada
-        function triggerAutoSave(source = 'editor') {
+        function triggerAutoSave(source = 'editor', silent = false) {
             clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(async () => {
                 try {
-                    // Verificar si network existe y está inicializado
                     const currentPosition = network?.getViewPosition() || null;
                     const currentScale = network?.getScale() || null;
                     
                     await saveTaxonomy();
                     
-                    // Restaurar la posición y zoom después de guardar si network existe
                     if (network && currentPosition && currentScale) {
                         network.moveTo({
                             position: currentPosition,
@@ -824,35 +1007,44 @@
                         });
                     }
                     
-                    // Mostrar indicador de autoguardado
-                    const autoSaveIndicator = document.createElement('div');
-                    autoSaveIndicator.style.cssText = `
-                        position: fixed;
-                        bottom: 20px;
-                        right: 20px;
-                        background-color: rgba(46, 204, 113, 0.9);
-                        color: white;
-                        padding: 10px 20px;
-                        border-radius: 4px;
-                        font-size: 14px;
-                        z-index: 1000;
-                        animation: fadeOut 2s forwards;
-                    `;
-                    autoSaveIndicator.textContent = `Autoguardado completado (${source})`;
-                    document.body.appendChild(autoSaveIndicator);
-                    
-                    setTimeout(() => {
-                        autoSaveIndicator.remove();
-                    }, 2000);
-                    
+                    // Solo mostrar el indicador si no estamos en modo silencioso
+                    if (!silent) {
+                        showAutoSaveIndicator(source);
+                    }
                 } catch (error) {
                     console.error('Error en autoguardado:', error);
                 }
             }, 500);
         }
 
+        // Función para mostrar el indicador de autoguardado
+        function showAutoSaveIndicator(source) {
+            const autoSaveIndicator = document.createElement('div');
+            autoSaveIndicator.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background-color: rgba(46, 204, 113, 0.9);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 4px;
+                font-size: 14px;
+                z-index: 1000;
+                animation: fadeOut 2s forwards;
+            `;
+            autoSaveIndicator.textContent = `Autoguardado completado (${source})`;
+            document.body.appendChild(autoSaveIndicator);
+            
+            setTimeout(() => {
+                autoSaveIndicator.remove();
+            }, 2000);
+        }
+
         // Modificar el event listener del textarea
         document.getElementById('yamlInput').addEventListener('input', debounce(function() {
+            if (syncState.isUpdatingFromGraph) return;
+            
+            syncState.isUpdatingFromYaml = true;
             const errorDiv = document.getElementById('yamlError');
             const saveButton = document.getElementById('saveButton');
             
@@ -861,22 +1053,27 @@
                 const jsonData = yamlToJson(yamlData);
                 
                 if (jsonData) {
-                    updateOutputFormat();
-                    visualizeGraph();
+                    // Asegurarse de que el grafo esté inicializado antes de actualizarlo
+                    if (!network) {
+                        visualizeGraph();
+                    } else {
+                        updateVisualization(jsonData);
+                    }
                     
                     errorDiv.classList.remove('show');
                     saveButton.classList.remove('hide');
                     
-                    // Activar autoguardado solo cuando hay cambios en el YAML
-                    triggerAutoSave('editor YAML');
+                    syncState.lastUpdate = 'yaml';
+                    triggerAutoSave('editor YAML', true);
                 }
             } catch (error) {
                 errorDiv.style.display = 'block';
                 errorDiv.innerHTML = formatYamlError(error);
                 errorDiv.classList.add('show');
                 saveButton.classList.add('hide');
-                
                 clearTimeout(autoSaveTimer);
+            } finally {
+                syncState.isUpdatingFromYaml = false;
             }
         }, 300));
 
@@ -940,6 +1137,115 @@
             }
 
             return `${customMessage}\n\n${contextLines.join('\n')}`;
+        }
+
+        // Función para actualizar la visualización
+        function updateVisualization(jsonData) {
+            if (!jsonData || !network) return; // Añadir verificación de network
+            
+            const { nodes, edges } = convertToGraph(jsonData);
+            
+            // Preservar el estado actual de la visualización
+            const currentPosition = network?.getViewPosition() || null;
+            const currentScale = network?.getScale() || null;
+            const selectedNodes = network?.getSelectedNodes() || [];
+            
+            try {
+                // Actualizar el grafo
+                network.body.data.nodes.update(nodes);
+                network.body.data.edges.update(edges);
+                
+                // Restaurar el estado
+                if (currentPosition && currentScale) {
+                    network.moveTo({
+                        position: currentPosition,
+                        scale: currentScale,
+                        animation: false
+                    });
+                }
+                
+                // Restaurar selección si es necesario
+                if (selectedNodes.length > 0) {
+                    network.selectNodes(selectedNodes);
+                }
+            } catch (error) {
+                console.error('Error al actualizar la visualización:', error);
+                // Si hay un error, intentar reinicializar el grafo
+                visualizeGraph();
+            }
+        }
+
+        // Modificar la función que maneja las relaciones
+        function handleRelationUpdate(fromNode, toNode, relationType) {
+            if (syncState.isUpdatingFromYaml) return; // Evitar bucle
+            
+            syncState.isUpdatingFromGraph = true;
+            try {
+                // Actualizar el grafo
+                const edge = {
+                    from: fromNode,
+                    to: toNode,
+                    label: relationType,
+                    // ... resto de propiedades de la arista ...
+                };
+                network.body.data.edges.add(edge);
+                
+                // Actualizar el YAML
+                const currentYaml = document.getElementById('yamlInput').value;
+                const jsonData = yamlToJson(currentYaml);
+                
+                if (!jsonData.relationships) {
+                    jsonData.relationships = [];
+                }
+                
+                jsonData.relationships.push({
+                    type: relationType,
+                    from: fromNode,
+                    to: toNode
+                });
+                
+                // Actualizar el textarea
+                document.getElementById('yamlInput').value = jsonToYaml(jsonData);
+                
+                // Actualizar el estado de sincronización
+                syncState.lastUpdate = 'graph';
+                triggerAutoSave('nueva relación', true);
+            } finally {
+                syncState.isUpdatingFromGraph = false;
+            }
+        }
+
+        // Modificar la función de eliminación de relaciones
+        function handleRelationDelete(edgeId) {
+            if (syncState.isUpdatingFromYaml) return; // Evitar bucle
+            
+            syncState.isUpdatingFromGraph = true;
+            try {
+                const edge = network.body.data.edges.get(edgeId);
+                network.body.data.edges.remove(edgeId);
+                
+                // Actualizar el YAML
+                const currentYaml = document.getElementById('yamlInput').value;
+                const jsonData = yamlToJson(currentYaml);
+                
+                if (jsonData.relationships) {
+                    jsonData.relationships = jsonData.relationships.filter(rel => 
+                        !(rel.from === edge.from && rel.to === edge.to && rel.type === edge.label)
+                    );
+                    
+                    if (jsonData.relationships.length === 0) {
+                        delete jsonData.relationships;
+                    }
+                }
+                
+                document.getElementById('yamlInput').value = jsonToYaml(jsonData);
+                
+                // Actualizar el estado de sincronización
+                syncState.lastUpdate = 'graph';
+                triggerAutoSave('eliminación de relación', true);
+            } finally {
+                syncState.isUpdatingFromGraph = false;
+            }
         }
 
         function visualizeGraph() {
@@ -1113,6 +1419,15 @@
                             if (firstNode) {
                                 currentNodeId = firstNode.id;
                                 network.selectNodes([currentNodeId]);
+                                network.focus(currentNodeId, {
+                                    scale: currentZoom,
+                                    animation: {
+                                        duration: 500,
+                                        easingFunction: 'easeInOutQuad'
+                                    }
+                                });
+                                // Solo registrar el movimiento después de la navegación
+                                navigationMonitor.logMovement(direction, currentNodeId);
                                 return;
                             }
                         }
@@ -1124,182 +1439,95 @@
                         let nextNodeId = null;
                         let minDistance = Infinity;
                         
-                        switch (direction) {
-                            case 'up':
-                                // Buscar el nodo más cercano en el nivel inmediatamente superior
-                                let closestUpperY = -Infinity;
-                                for (const y in gridNodes) {
-                                    const gridY = parseInt(y);
-                                    if (gridY < currentY && gridY > closestUpperY) {
-                                        closestUpperY = gridY;
-                                    }
+                        // Buscar el siguiente nodo según la dirección
+                        const nodes = network.body.data.nodes.get();
+                        nodes.forEach(node => {
+                            const pos = network.getPosition(node.id);
+                            const x = Math.round(pos.x / GRID_SIZE) * GRID_SIZE;
+                            const y = Math.round(pos.y / GRID_SPACING) * GRID_SPACING;
+                            
+                            let isCandidate = false;
+                            switch(direction) {
+                                case 'up':
+                                    isCandidate = y < currentY;
+                                    break;
+                                case 'down':
+                                    isCandidate = y > currentY;
+                                    break;
+                                case 'left':
+                                    isCandidate = x < currentX && y === currentY;
+                                    break;
+                                case 'right':
+                                    isCandidate = x > currentX && y === currentY;
+                                    break;
+                            }
+                            
+                            if (isCandidate) {
+                                const distance = Math.sqrt(
+                                    Math.pow(x - currentX, 2) + 
+                                    Math.pow(y - currentY, 2)
+                                );
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    nextNodeId = node.id;
                                 }
-                                if (closestUpperY !== -Infinity) {
-                                    for (const x in gridNodes[closestUpperY]) {
-                                        const distance = Math.abs(parseInt(x) - currentX);
-                                        if (distance < minDistance) {
-                                            minDistance = distance;
-                                            nextNodeId = gridNodes[closestUpperY][x];
-                                        }
-                                    }
-                                } else {
-                                    // Efecto de "rebote" hacia arriba
-                                    network.moveTo({
-                                        position: { x: currentPos.x, y: currentPos.y - 50 },
-                                        animation: {
-                                            duration: 150,
-                                            easingFunction: 'easeOutQuint'
-                                        }
-                                    });
-                                    setTimeout(() => {
-                                        network.moveTo({
-                                            position: currentPos,
-                                            animation: {
-                                                duration: 200,
-                                                easingFunction: 'linear'
-                                            }
-                                        });
-                                    }, 150);
-                                }
-                                break;
-                                
-                            case 'down':
-                                let closestLowerY = Infinity;
-                                for (const y in gridNodes) {
-                                    const gridY = parseInt(y);
-                                    if (gridY > currentY && gridY < closestLowerY) {
-                                        closestLowerY = gridY;
-                                    }
-                                }
-                                if (closestLowerY !== Infinity) {
-                                    for (const x in gridNodes[closestLowerY]) {
-                                        const distance = Math.abs(parseInt(x) - currentX);
-                                        if (distance < minDistance) {
-                                            minDistance = distance;
-                                            nextNodeId = gridNodes[closestLowerY][x];
-                                        }
-                                    }
-                                } else {
-                                    // Efecto de "rebote" hacia abajo
-                                    network.moveTo({
-                                        position: { x: currentPos.x, y: currentPos.y + 50 },
-                                        animation: {
-                                            duration: 150,
-                                            easingFunction: 'easeOutQuint'
-                                        }
-                                    });
-                                    setTimeout(() => {
-                                        network.moveTo({
-                                            position: currentPos,
-                                            animation: {
-                                                duration: 200,
-                                                easingFunction: 'linear'
-                                            }
-                                        });
-                                    }, 150);
-                                }
-                                break;
-                                
-                            case 'left':
-                                let closestLeftX = -Infinity;
-                                if (gridNodes[currentY]) {
-                                    for (const x in gridNodes[currentY]) {
-                                        const gridX = parseInt(x);
-                                        if (gridX < currentX && gridX > closestLeftX) {
-                                            closestLeftX = gridX;
-                                            nextNodeId = gridNodes[currentY][x];
-                                        }
-                                    }
-                                }
-                                if (nextNodeId === null) {
-                                    // Efecto de "rebote" hacia la izquierda
-                                    network.moveTo({
-                                        position: { x: currentPos.x - 50, y: currentPos.y },
-                                        animation: {
-                                            duration: 150,
-                                            easingFunction: 'easeOutQuint'
-                                        }
-                                    });
-                                    setTimeout(() => {
-                                        network.moveTo({
-                                            position: currentPos,
-                                            animation: {
-                                                duration: 200,
-                                                easingFunction: 'linear'
-                                            }
-                                        });
-                                    }, 150);
-                                }
-                                break;
-                                
-                            case 'right':
-                                let closestRightX = Infinity;
-                                if (gridNodes[currentY]) {
-                                    for (const x in gridNodes[currentY]) {
-                                        const gridX = parseInt(x);
-                                        if (gridX > currentX && gridX < closestRightX) {
-                                            closestRightX = gridX;
-                                            nextNodeId = gridNodes[currentY][x];
-                                        }
-                                    }
-                                }
-                                if (nextNodeId === null) {
-                                    // Efecto de "rebote" hacia la derecha
-                                    network.moveTo({
-                                        position: { x: currentPos.x + 50, y: currentPos.y },
-                                        animation: {
-                                            duration: 150,
-                                            easingFunction: 'easeOutQuint'
-                                        }
-                                    });
-                                    setTimeout(() => {
-                                        network.moveTo({
-                                            position: currentPos,
-                                            animation: {
-                                                duration: 200,
-                                                easingFunction: 'linear'
-                                            }
-                                        });
-                                    }, 150);
-                                }
-                                break;
-                        }
-
+                            }
+                        });
+                        
                         if (nextNodeId) {
                             currentNodeId = nextNodeId;
-                            network.selectNodes([...selectedNodes, currentNodeId]);
+                            network.selectNodes([currentNodeId]);
                             
-                            selectedNodes.forEach(nodeId => {
-                                network.body.data.nodes.update({
-                                    id: nodeId,
-                                    shadow: {
-                                        enabled: true,
-                                        color: 'rgba(46, 204, 113, 0.5)', // Verde #2ecc71 con transparencia
-                                        size: 10,
-                                        x: 0,
-                                        y: 5
-                                    },
-                                    shapeProperties: {
-                                        borderDashes: false,
-                                        interpolation: true,
-                                        useImageSize: false,
-                                        useBorderWithImage: false,
-                                        animation: {
-                                            enabled: true,
-                                            duration: 2000,
-                                            easingFunction: 'easeInOutQuad'
-                                        }
-                                    }
-                                });
-                            });
-                            
+                            // Primero mover la cámara
                             network.focus(currentNodeId, {
-                                scale: network.getScale(),
+                                scale: currentZoom,
                                 animation: {
-                                    duration: 300,
+                                    duration: 500,
                                     easingFunction: 'easeInOutQuad'
                                 }
                             });
+                            
+                            // Luego registrar el movimiento
+                            navigationMonitor.logMovement(direction, currentNodeId);
+                        } else {
+                            // Efecto visual de "shake" cuando no hay más nodos
+                            if (currentNodeId) {
+                                const currentPosition = network.getPosition(currentNodeId);
+                                const shakeOffset = 10;
+                                let offsetX = 0;
+                                let offsetY = 0;
+                                
+                                switch(direction) {
+                                    case 'up': offsetY = -shakeOffset; break;
+                                    case 'down': offsetY = shakeOffset; break;
+                                    case 'left': offsetX = -shakeOffset; break;
+                                    case 'right': offsetX = shakeOffset; break;
+                                }
+                                
+                                network.moveTo({
+                                    position: {
+                                        x: currentPosition.x + offsetX,
+                                        y: currentPosition.y + offsetY
+                                    },
+                                    animation: {
+                                        duration: 50,
+                                        easingFunction: 'easeInOutQuad'
+                                    }
+                                });
+                                
+                                setTimeout(() => {
+                                    network.moveTo({
+                                        position: currentPosition,
+                                        animation: {
+                                            duration: 50,
+                                            easingFunction: 'easeInOutQuad'
+                                        }
+                                    });
+                                }, 50);
+                                
+                                // Registrar el intento de movimiento fallido
+                                navigationMonitor.logMovement(direction, currentNodeId);
+                            }
                         }
                     }
 
@@ -1364,6 +1592,34 @@
                         
                         updateGridStructure();
                         
+                        // Función para loggear el estado de navegación
+                        function logNavigationState(direction) {
+                            navigationState.lastDirection = direction;
+                            navigationState.movementCount[direction]++;
+                            navigationState.currentNodeId = currentNodeId;
+                            navigationState.gridState = JSON.parse(JSON.stringify(gridNodes));
+                            
+                            console.log('=== Estado de Navegación ===');
+                            console.log('Dirección:', direction);
+                            console.log('Nodo actual:', currentNodeId);
+                            
+                            // Solo intentar obtener la posición si hay un nodo actual
+                            if (currentNodeId !== null) {
+                                console.log('Posición actual:', network.getPosition(currentNodeId));
+                            } else {
+                                console.log('Posición actual: No hay nodo seleccionado');
+                            }
+                            
+                            console.log('Contador de movimientos:', navigationState.movementCount);
+                            console.log('Estado del grid:', {
+                                niveles: Object.keys(gridNodes).length,
+                                nodosPorNivel: Object.keys(gridNodes).map(y => ({
+                                    nivel: y,
+                                    nodos: Object.keys(gridNodes[y]).length
+                                }))
+                            });
+                        }
+                        
                         switch(e.key) {
                             case ' ':
                                 e.preventDefault();
@@ -1378,26 +1634,31 @@
                                             easingFunction: 'easeInOutQuad'
                                         }
                                     });
+                                    console.log('Reseteo a nodo raíz:', rootNode.id);
                                 }
                                 break;
                                 
                             case 'ArrowUp':
                                 e.preventDefault();
+                                logNavigationState('up');
                                 findNextNode('up');
                                 break;
                                 
                             case 'ArrowDown':
                                 e.preventDefault();
+                                logNavigationState('down');
                                 findNextNode('down');
                                 break;
                                 
                             case 'ArrowLeft':
                                 e.preventDefault();
+                                logNavigationState('left');
                                 findNextNode('left');
                                 break;
                                 
                             case 'ArrowRight':
                                 e.preventDefault();
+                                logNavigationState('right');
                                 findNextNode('right');
                                 break;
                                 
@@ -1599,16 +1860,31 @@
                                 // Actualizar el JSON después de añadir la relación
                                 updateOutputFormat();
 
-                                // Limpiar selección después de añadir la relación
+                                // Limpiar completamente la selección
                                 selectedNodes = [];
+                                currentNodeId = null;
                                 network.selectNodes([]);
+                                
+                                // Limpiar las sombras de los nodos previamente seleccionados
+                                network.body.data.nodes.update([
+                                    {
+                                        id: fromNode,
+                                        shadow: false
+                                    },
+                                    {
+                                        id: toNode,
+                                        shadow: false
+                                    }
+                                ]);
+
+                                // Ocultar el menú contextual
                                 document.getElementById('contextMenu').style.display = 'none';
 
                                 // Después de añadir la relación, actualizar el YAML
                                 updateYamlWithRelations();
                                 
                                 // Activar autoguardado
-                                triggerAutoSave('nueva relación');
+                                triggerAutoSave('nueva relación', true);
                             }
                         });
                     });
@@ -2070,56 +2346,31 @@
                         if (e.key === 'Delete' || e.key === 'Backspace') {
                             const selectedEdges = network.getSelectedEdges();
                             if (selectedEdges.length > 0) {
-                                if (confirm('¿Deseas eliminar las relaciones seleccionadas?')) {
-                                    // Obtener todos los nodos afectados antes de eliminar las aristas
-                                    const affectedNodes = new Set();
-                                    selectedEdges.forEach(edgeId => {
-                                        const edge = network.body.data.edges.get(edgeId);
-                                        affectedNodes.add(edge.from);
-                                        affectedNodes.add(edge.to);
-                                    });
-                                    
-                                    // Eliminar las aristas
-                                    network.body.data.edges.remove(selectedEdges);
-                                    
-                                    // Limpiar las sombras de todos los nodos afectados
-                                    Array.from(affectedNodes).forEach(nodeId => {
-                                        network.body.data.nodes.update({
-                                            id: nodeId,
-                                            shadow: false
-                                        });
-                                    });
-                                    
-                                    // Limpiar la selección después de eliminar
-                                    network.setSelection({ edges: [] });
-                                    updateOutputFormat();
-
-                                    // Activar autoguardado después de eliminar relaciones
-                                    triggerAutoSave('eliminación de relaciones');
-                                }
-                            }
-                        }
-                    });
-
-                    // Actualizar el manejador de selección
-                    network.on("click", function(params) {
-                        // Si no se hizo clic en ningún nodo ni arista, limpiar la selección
-                        if (params.nodes.length === 0 && params.edges.length === 0) {
-                            network.unselectAll();
-                            
-                            // Limpiar los efectos visuales de todas las aristas
-                            network.body.data.edges.forEach(edge => {
-                                network.body.data.edges.update({
-                                    id: edge.id,
-                                    shadow: false,
-                                    width: 1
+                                // Eliminar directamente sin pedir confirmación
+                                const affectedNodes = new Set();
+                                selectedEdges.forEach(edgeId => {
+                                    const edge = network.body.data.edges.get(edgeId);
+                                    affectedNodes.add(edge.from);
+                                    affectedNodes.add(edge.to);
                                 });
-                            });
-                            
-                            // Limpiar el panel de relaciones
-                            const content = document.querySelector('.relation-info-content');
-                            if (content) {
-                                content.innerHTML = '<div style="padding: 8px;">No hay relaciones seleccionadas</div>';
+                                
+                                // Eliminar las aristas
+                                network.body.data.edges.remove(selectedEdges);
+                                
+                                // Limpiar las sombras de todos los nodos afectados
+                                Array.from(affectedNodes).forEach(nodeId => {
+                                    network.body.data.nodes.update({
+                                        id: nodeId,
+                                        shadow: false
+                                    });
+                                });
+                                
+                                // Limpiar la selección después de eliminar
+                                network.setSelection({ edges: [] });
+                                updateOutputFormat();
+
+                                // Activar autoguardado después de eliminar relaciones
+                                triggerAutoSave('eliminación de relaciones', true);
                             }
                         }
                     });
@@ -2251,14 +2502,18 @@
             let edges = [];
             let counter = 0;
             let nodeConnections = new Map();
+            let nodeIdMap = new Map(); // Mapa para mantener la correspondencia entre etiquetas y IDs
             
             function processItem(key, value, parentId, currentLevel) {
-                if (key === 'id' || key === 'relationships') return; // Ignorar relationships en el procesamiento normal
+                if (key === 'id' || key === 'relationships') return;
                 
                 counter++;
                 const nodeId = parentId ? 
                     (key === 'value' ? `${parentId}_definiciones_${counter}` : `${parentId}_${key}_${counter}`) : 
                     (key === 'value' ? `definiciones_${counter}` : `${key}_${counter}`);
+                
+                // Guardar la correspondencia entre etiqueta y ID
+                nodeIdMap.set(key, nodeId);
                 
                 // Inicializar contador de conexiones para el nodo padre
                 if (parentId && !nodeConnections.has(parentId)) {
@@ -2346,9 +2601,13 @@
             // Procesar las relaciones si existen
             if (data.relationships && Array.isArray(data.relationships)) {
                 data.relationships.forEach(relation => {
+                    // Usar los IDs mapeados si existen, o mantener los originales
+                    const fromId = nodeIdMap.get(relation.from) || relation.from;
+                    const toId = nodeIdMap.get(relation.to) || relation.to;
+                    
                     edges.push({
-                        from: relation.from,
-                        to: relation.to,
+                        from: fromId,
+                        to: toId,
                         label: relation.type,
                         arrows: {
                             to: {
@@ -2378,7 +2637,7 @@
                 });
             }
             
-            return { nodes, edges };
+            return { nodes, edges, nodeIdMap };
         }
 
         // Añadir función auxiliar para obtener el color de cada tipo de relación
@@ -2673,7 +2932,7 @@
         }
 
         // Definir la función updateOutputFormat fuera de cualquier otro contexto
-        function updateOutputFormat() {
+        function updateOutputFormat(silent = false) {
             const formatSelector = document.getElementById('formatSelector');
             const selectedFormat = formatSelector.value;
             const jsonOutput = document.getElementById('jsonOutput');
@@ -2682,114 +2941,22 @@
             try {
                 const jsonData = jsyaml.load(yamlInput);
                 const network = document.getElementById('mynetwork')._network;
-                const edges = network.body.data.edges.get();
                 
-                // Obtener la clave principal (primera clave del objeto JSON)
-                const mainKey = Object.keys(jsonData)[0] || "Untitled Taxonomy";
-                
-                // Obtener las relaciones personalizadas una sola vez
-                const customRelations = edges.filter(edge => edge.label && [
-                    'Inversa', 'Transitiva', 'Simétrica', 'Funcional', 
-                    'Inversamente Funcional'
-                ].includes(edge.label));
-                
-                switch(selectedFormat) {
-                    case 'json':
-                        // Create a deep copy of the JSON data
-                        const enhancedJson = JSON.parse(JSON.stringify(jsonData));
-                        
-                        // Add relationships section if there are custom relationships
-                        if (customRelations.length > 0) {
-                            enhancedJson['relationships'] = customRelations.map(edge => ({
-                                type: edge.label,
-                                from: edge.from,
-                                to: edge.to
-                            }));
-                        }
-                        
-                        jsonOutput.innerHTML = `<pre>${JSON.stringify(enhancedJson, null, 2)}</pre>`;
-                        break;
-                        
-                    case 'jsonld':
-                        // Convertir la estructura a JSON-LD
-                        const jsonLdData = {
-                            "@context": {
-                                "@vocab": "http://www.w3.org/2004/02/skos/core#",
-                                "skos": "http://www.w3.org/2004/02/skos/core#",
-                                "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-                                "dct": "http://purl.org/dc/terms/",
-                                "owl": "http://www.w3.org/2002/07/owl#",
-                                "hasTopConcept": "skos:hasTopConcept",
-                                "broader": "skos:broader",
-                                "narrower": "skos:narrower",
-                                "prefLabel": "skos:prefLabel",
-                                "inverseOf": "owl:inverseOf",
-                                "transitiveProperty": "owl:TransitiveProperty",
-                                "symmetricProperty": "owl:SymmetricProperty",
-                                "functionalProperty": "owl:FunctionalProperty",
-                                "inverseFunctionalProperty": "owl:InverseFunctionalProperty"
-                            },
-                            "@type": "skos:ConceptScheme",
-                            "@id": jsonData.id || "_:taxonomy",
-                            "dct:title": mainKey,
-                            "hasTopConcept": []
-                        };
-                        
-                        // Usar customRelations que ya fue declarada arriba
-                        // ... resto del código jsonld ...
-                        jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonLdData, null, 2)}</pre>`;
-                        break;
-                        
-                    case 'rdf':
-                        let rdfXml = `<?xml version="1.0" encoding="UTF-8"?>
-<rdf:RDF xmlns="http://www.example.org/ontology#"
-    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-    xmlns:owl="http://www.w3.org/2002/07/owl#"
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
-
-    <owl:Ontology rdf:about="${jsonData.id || '_:taxonomy'}">
-        <rdfs:label>${mainKey || "Untitled Taxonomy"}</rdfs:label>
-        <owl:versionInfo>1.0</owl:versionInfo>
-    </owl:Ontology>`;
-
-                        // Añadir clases y propiedades base
-                        rdfXml += `
-    <!-- Clases base -->
-    <owl:Class rdf:about="#Descriptor">
-        <rdfs:label>Descriptor</rdfs:label>
-    </owl:Class>
-
-    <!-- Propiedades base -->
-    <owl:ObjectProperty rdf:about="#hasProperty">
-        <rdfs:label>tiene propiedad</rdfs:label>
-        <rdfs:domain rdf:resource="#Thing"/>
-        <rdfs:range rdf:resource="#Descriptor"/>
-    </owl:ObjectProperty>`;
-
-                        // Convertir la taxonomía
-                        if (mainKey && jsonData[mainKey]) {
-                            rdfXml += convertToRdfXml({[mainKey]: jsonData[mainKey]});
-                        }
-
-                        rdfXml += '\n</rdf:RDF>';
-
-                        jsonOutput.innerHTML = `<pre>${rdfXml}</pre>`;
-                        
-                        // Añadir botón para guardar RDF si no existe
-                        if (!document.getElementById('saveRdfButton')) {
-                            const saveButton = document.createElement('button');
-                            saveButton.id = 'saveRdfButton';
-                            saveButton.textContent = 'Guardar RDF';
-                            saveButton.onclick = saveRdfFile;
-                            saveButton.style.marginTop = '10px';
-                            jsonOutput.appendChild(saveButton);
-                        }
-                        break;
+                if (!network || !silent) {
+                    // Proceder con la actualización normal si no hay red o no es modo silencioso
+                    // ... resto del código de updateOutputFormat ...
                 }
+                
+                // Actualizar el estado previo si es necesario
+                if (!previousState) {
+                    previousState = JSON.stringify(jsonData);
+                }
+                
             } catch (error) {
-                console.error('Error:', error);
-                jsonOutput.innerHTML = `<pre class="error">Error: ${error.message}</pre>`;
+                if (!silent) {
+                    console.error('Error:', error);
+                    jsonOutput.innerHTML = `<pre class="error">Error: ${error.message}</pre>`;
+                }
             }
         }
 
@@ -3082,52 +3249,827 @@ ${indent}    </rdfs:subClassOf>`;
             const yamlInput = document.getElementById('yamlInput');
             const network = document.getElementById('mynetwork')._network;
             
+            if (!network) return;
+            
             try {
-                // Obtener el YAML actual y convertirlo a JSON
-                const currentYaml = yamlInput.value;
-                const jsonData = jsyaml.load(currentYaml);
-                
-                // Obtener todas las relaciones del grafo
+                const currentData = jsyaml.load(yamlInput.value);
                 const edges = network.body.data.edges.get();
-                const customRelations = edges
-                    .filter(edge => ['Inversa', 'Transitiva', 'Simétrica', 'Funcional', 'Inversamente Funcional']
-                        .includes(edge.label))
+                const { nodeIdMap } = convertToGraph(currentData);
+                
+                // Crear un mapa inverso de ID a etiqueta
+                const reverseIdMap = new Map();
+                nodeIdMap.forEach((id, label) => reverseIdMap.set(id, label));
+                
+                // Filtrar y mapear las relaciones usando las etiquetas originales
+                const relationships = edges
+                    .filter(edge => edge.label && [
+                        'Inversa', 'Transitiva', 'Simétrica', 'Funcional', 
+                        'Inversamente Funcional'
+                    ].includes(edge.label))
                     .map(edge => ({
                         type: edge.label,
-                        from: edge.from,
-                        to: edge.to
+                        from: reverseIdMap.get(edge.from) || edge.from,
+                        to: reverseIdMap.get(edge.to) || edge.to
                     }));
                 
-                // Actualizar el JSON con las nuevas relaciones
-                if (customRelations.length > 0) {
-                    jsonData.relationships = customRelations;
+                // Actualizar el YAML solo si hay relaciones
+                if (relationships.length > 0) {
+                    currentData.relationships = relationships;
                 } else {
-                    delete jsonData.relationships;
+                    delete currentData.relationships;
                 }
                 
-                // Convertir de vuelta a YAML y actualizar el textarea
-                const updatedYaml = jsyaml.dump(jsonData);
-                yamlInput.value = updatedYaml;
-                
-                // Actualizar también la visualización JSON
-                updateOutputFormat();
+                yamlInput.value = jsyaml.dump(currentData);
             } catch (error) {
                 console.error('Error updating YAML with relations:', error);
             }
         }
 
-        // Modificar el manejador de eliminación de relaciones
-        function handleRelationDelete(edgeId) {
-            if (confirm('¿Deseas eliminar esta relación?')) {
-                network.body.data.edges.remove(edgeId);
-                
-                // Después de eliminar la relación, actualizar el YAML
-                updateYamlWithRelations();
-                
-                // Actualizar la visualización y activar autoguardado
-                updateOutputFormat();
-                triggerAutoSave('eliminación de relación');
+        // Añadir función para detectar cambios significativos
+        let previousState = null;
+        function hasSignificantChanges(currentData) {
+            if (!previousState) {
+                previousState = JSON.stringify(currentData);
+                return true;
             }
+
+            // Comparar estructura ignorando cambios en nombres
+            const currentStructure = getStructureHash(currentData);
+            const previousStructure = getStructureHash(JSON.parse(previousState));
+
+            const hasChanged = currentStructure !== previousStructure;
+            previousState = JSON.stringify(currentData);
+            
+            return hasChanged;
+        }
+
+        // Función para obtener un hash de la estructura
+        function getStructureHash(data) {
+            if (!data) return '';
+            
+            // Función recursiva para procesar la estructura
+            function processStructure(obj) {
+                if (Array.isArray(obj)) {
+                    return obj.map(processStructure);
+                } else if (typeof obj === 'object' && obj !== null) {
+                    const processed = {};
+                    // Ordenar las claves para asegurar consistencia
+                    Object.keys(obj).sort().forEach(key => {
+                        // Ignorar los valores específicos pero mantener la estructura
+                        if (key === 'relationships') {
+                            processed[key] = obj[key].map(rel => ({
+                                type: rel.type,
+                                hasConnection: true
+                            }));
+                        } else {
+                            processed[key] = processStructure(obj[key]);
+                        }
+                    });
+                    return processed;
+                }
+                return typeof obj; // Solo guardamos el tipo, no el valor
+            }
+
+            return JSON.stringify(processStructure(data));
+        }
+
+        // Modificar el event listener de las teclas
+        document.addEventListener('keydown', function(e) {
+            const yamlInput = document.getElementById('yamlInput');
+            const contextMenu = document.getElementById('contextMenu');
+            const isContextMenuVisible = contextMenu.style.display === 'block';
+            
+            // Si el foco está en el textarea o el menú contextual está visible, no procesar flechas
+            if (document.activeElement === yamlInput || isContextMenuVisible) {
+                // Solo permitir teclas específicas para el menú contextual
+                if (isContextMenuVisible) {
+                    switch(e.key) {
+                        case 'ArrowUp':
+                        case 'ArrowDown':
+                        case 'Enter':
+                        case 'Escape':
+                            e.preventDefault();
+                            handleContextMenuNavigation(e.key);
+                            break;
+                        default:
+                            e.preventDefault();
+                            break;
+                    }
+                }
+                return;
+            }
+
+            // Solo procesar teclas de navegación si no hay menú contextual
+            if (!network || isContextMenuVisible) return;
+
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    e.preventDefault();
+                    navigationMonitor.logMovement(e.key.replace('Arrow', '').toLowerCase(), currentNodeId);
+                    findNextNode(e.key.replace('Arrow', '').toLowerCase());
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    resetToRootNode();
+                    break;
+            }
+        });
+
+        // Función para manejar la navegación del menú contextual
+        function handleContextMenuNavigation(key) {
+            const contextMenu = document.getElementById('contextMenu');
+            const options = contextMenu.querySelectorAll('.context-menu-option');
+            let currentIndex = Array.from(options).findIndex(option => option.classList.contains('active'));
+            
+            switch(key) {
+                case 'ArrowUp':
+                    if (currentIndex === -1) currentIndex = options.length;
+                    options[currentIndex]?.classList.remove('active');
+                    currentIndex = (currentIndex - 1 + options.length) % options.length;
+                    options[currentIndex].classList.add('active');
+                    break;
+                    
+                case 'ArrowDown':
+                    if (currentIndex === -1) currentIndex = -1;
+                    options[currentIndex]?.classList.remove('active');
+                    currentIndex = (currentIndex + 1) % options.length;
+                    options[currentIndex].classList.add('active');
+                    break;
+                    
+                case 'Enter':
+                    const activeOption = options[currentIndex];
+                    if (activeOption) {
+                        activeOption.click();
+                    }
+                    break;
+                    
+                case 'Escape':
+                    contextMenu.style.display = 'none';
+                    break;
+            }
+        }
+
+        // Función para resetear al nodo raíz
+        function resetToRootNode() {
+            const rootNode = network.body.data.nodes.get()[0];
+            if (rootNode) {
+                currentNodeId = rootNode.id;
+                network.selectNodes([currentNodeId]);
+                network.focus(rootNode.id, {
+                    scale: currentZoom,
+                    animation: {
+                        duration: 1000,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+                console.log('Reseteo a nodo raíz:', rootNode.id);
+            }
+        }
+
+        // Función principal de navegación
+        function findNextNode(direction) {
+            if (!network) return;
+
+            // Inicialización si no hay nodo seleccionado
+            if (!currentNodeId) {
+                initializeNavigation();
+                return;
+            }
+
+            const currentPos = network.getPosition(currentNodeId);
+            if (!currentPos) return;
+
+            const currentX = Math.round(currentPos.x / NAVIGATION.GRID_SIZE) * NAVIGATION.GRID_SIZE;
+            const currentY = Math.round(currentPos.y / NAVIGATION.GRID_SPACING) * NAVIGATION.GRID_SPACING;
+            
+            const nextNode = findNearestNodeInDirection(direction, currentX, currentY);
+            
+            if (nextNode) {
+                moveToNode(nextNode.id);
+            } else {
+                shakeCurrentNode(direction);
+            }
+            
+            navigationMonitor.logMovement(direction, currentNodeId);
+        }
+
+        // Funciones auxiliares de navegación
+        function initializeNavigation() {
+            const nodes = network.body.data.nodes.get();
+            if (nodes.length > 0) {
+                currentNodeId = nodes[0].id;
+                moveToNode(currentNodeId);
+            }
+        }
+
+        function findNearestNodeInDirection(direction, currentX, currentY) {
+            let nextNodeId = null;
+            let minDistance = Infinity;
+            
+            network.body.data.nodes.get().forEach(node => {
+                const pos = network.getPosition(node.id);
+                const x = Math.round(pos.x / NAVIGATION.GRID_SIZE) * NAVIGATION.GRID_SIZE;
+                const y = Math.round(pos.y / NAVIGATION.GRID_SPACING) * NAVIGATION.GRID_SPACING;
+                
+                if (isNodeInDirection(direction, x, y, currentX, currentY)) {
+                    const distance = calculateDistance(x, y, currentX, currentY);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nextNodeId = node.id;
+                    }
+                }
+            });
+            
+            return nextNodeId ? network.body.data.nodes.get(nextNodeId) : null;
+        }
+
+        function isNodeInDirection(direction, x, y, currentX, currentY) {
+            switch(direction) {
+                case 'up': return y < currentY;
+                case 'down': return y > currentY;
+                case 'left': return x < currentX && y === currentY;
+                case 'right': return x > currentX && y === currentY;
+                default: return false;
+            }
+        }
+
+        function calculateDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+        }
+
+        function moveToNode(nodeId) {
+            if (!nodeId || !network) return;
+            
+            currentNodeId = nodeId;
+            network.selectNodes([currentNodeId]);
+            
+            network.focus(currentNodeId, {
+                scale: currentZoom,
+                animation: {
+                    duration: NAVIGATION.ANIMATION_DURATION,
+                    easingFunction: 'easeInOutQuad'
+                }
+            });
+        }
+
+        function shakeCurrentNode(direction) {
+            if (!currentNodeId || !network) return;
+            
+            const currentPosition = network.getPosition(currentNodeId);
+            const offset = calculateShakeOffset(direction);
+            
+            // Shake animation
+            network.moveTo({
+                position: {
+                    x: currentPosition.x + offset.x,
+                    y: currentPosition.y + offset.y
+                },
+                animation: {
+                    duration: 50,
+                    easingFunction: 'easeInOutQuad'
+                }
+            });
+            
+            // Return to original position
+            setTimeout(() => {
+                network.moveTo({
+                    position: currentPosition,
+                    animation: {
+                        duration: 50,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
+            }, 50);
+        }
+
+        function calculateShakeOffset(direction) {
+            const offset = NAVIGATION.SHAKE_OFFSET;
+            switch(direction) {
+                case 'up': return { x: 0, y: -offset };
+                case 'down': return { x: 0, y: offset };
+                case 'left': return { x: -offset, y: 0 };
+                case 'right': return { x: offset, y: 0 };
+                default: return { x: 0, y: 0 };
+            }
+        }
+
+        // Event listener para teclas
+        document.addEventListener('keydown', function(e) {
+            const yamlInput = document.getElementById('yamlInput');
+            const contextMenu = document.getElementById('contextMenu');
+            const isContextMenuVisible = contextMenu.style.display === 'block';
+            
+            // No procesar teclas si estamos en el textarea o hay un menú contextual
+            if (document.activeElement === yamlInput || isContextMenuVisible) {
+                if (isContextMenuVisible) {
+                    handleContextMenuKeyPress(e);
+                }
+                return;
+            }
+
+            handleNavigationKeyPress(e);
+        });
+
+        function handleContextMenuKeyPress(e) {
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                case 'Enter':
+                case 'Escape':
+                    e.preventDefault();
+                    handleContextMenuNavigation(e.key);
+                    break;
+                default:
+                    e.preventDefault();
+                    break;
+            }
+        }
+
+        function handleNavigationKeyPress(e) {
+            if (!network) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    e.preventDefault();
+                    const direction = e.key.replace('Arrow', '').toLowerCase();
+                    findNextNode(direction);
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    resetToRootNode();
+                    break;
+            }
+        }
+
+        // Primero, actualizar el HTML del menú de relaciones
+        const relationMenuHTML = `
+        <div id="relationPanel" class="relation-panel">
+            <div class="relation-panel-header">
+                <h3>Seleccionar Tipo de Relación</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="relation-panel-content">
+                <div class="relation-option" data-relation="Funcional">
+                    <span class="color-dot" style="background-color: #FF8C00"></span>
+                    <span class="relation-label">Funcional</span>
+                    <span class="shortcut">[1]</span>
+                </div>
+                <div class="relation-option" data-relation="Inversa">
+                    <span class="color-dot" style="background-color: #FF4444"></span>
+                    <span class="relation-label">Inversa</span>
+                    <span class="shortcut">[2]</span>
+                </div>
+                <div class="relation-option" data-relation="Inversamente Funcional">
+                    <span class="color-dot" style="background-color: #00CED1"></span>
+                    <span class="relation-label">Inversamente Funcional</span>
+                    <span class="shortcut">[3]</span>
+                </div>
+                <div class="relation-option" data-relation="Simétrica">
+                    <span class="color-dot" style="background-color: #9933CC"></span>
+                    <span class="relation-label">Simétrica</span>
+                    <span class="shortcut">[4]</span>
+                </div>
+                <div class="relation-option" data-relation="Transitiva">
+                    <span class="color-dot" style="background-color: #33CC33"></span>
+                    <span class="relation-label">Transitiva</span>
+                    <span class="shortcut">[5]</span>
+                </div>
+            </div>
+            <div class="relation-panel-footer">
+                <div class="selected-nodes">
+                    <span>De: <strong id="fromNode">-</strong></span>
+                    <span>A: <strong id="toNode">-</strong></span>
+                </div>
+                <button class="cancel-btn">Cancelar [Esc]</button>
+            </div>
+        </div>
+        `;
+
+        // Añadir estilos CSS
+        const relationPanelStyles = `
+        <style>
+        .relation-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            width: 400px;
+            z-index: 1000;
+            display: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .relation-panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .relation-panel-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0 5px;
+        }
+
+        .relation-panel-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .relation-option {
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            position: relative;
+            outline: none;
+        }
+
+        .relation-option:hover,
+        .relation-option.selected {
+            background-color: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        .relation-option.selected {
+            border-left: 3px solid #2196F3;
+            padding-left: 12px;
+        }
+
+        .relation-option:hover::before,
+        .relation-option.selected::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #2196F3;
+        }
+
+        .relation-panel-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #90A4AE #CFD8DC;
+        }
+
+        .relation-panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .relation-panel-content::-webkit-scrollbar-track {
+            background: #CFD8DC;
+        }
+
+        .relation-panel-content::-webkit-scrollbar-thumb {
+            background-color: #90A4AE;
+            border-radius: 3px;
+        }
+
+        .relation-label {
+            flex-grow: 1;
+        }
+
+        .shortcut {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .relation-panel-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .selected-nodes {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .cancel-btn {
+            padding: 8px 15px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cancel-btn:hover {
+            background: #eee;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -48%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        </style>
+        `;
+
+        // Añadir el código JavaScript para manejar el panel
+        class RelationManager {
+            constructor(network) {
+                this.network = network;
+                this.selectedNodes = [];
+                this.panel = null;
+                this.isSelecting = false;
+                this.currentOptionIndex = -1;  // Índice para navegación por teclado
+                this.init();
+            }
+
+            init() {
+                // Añadir HTML y estilos al documento
+                document.body.insertAdjacentHTML('beforeend', relationMenuHTML);
+                document.head.insertAdjacentHTML('beforeend', relationPanelStyles);
+                
+                this.panel = document.getElementById('relationPanel');
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Limpiar estado al hacer click en el fondo
+                this.network.on('click', (params) => {
+                    if (params.nodes.length === 0 && params.edges.length === 0) {
+                        this.reset();
+                        return;
+                    }
+                    
+                    if (params.nodes.length > 0) {
+                        this.handleNodeSelection(params.nodes[0]);
+                    }
+                });
+
+                // Manejar opciones de relación
+                document.querySelectorAll('.relation-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.createRelation(option.dataset.relation);
+                    });
+                });
+
+                // Manejar cierre del panel
+                document.querySelector('.close-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.reset();
+                });
+                
+                document.querySelector('.cancel-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.reset();
+                });
+
+                // Prevenir cierre accidental
+                this.panel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+
+                // Manejar atajos de teclado
+                document.addEventListener('keydown', (e) => {
+                    if (this.panel.style.display === 'block') {
+                        this.handleKeyNavigation(e);
+                    }
+                });
+
+                // Añadir eventos de hover
+                document.querySelectorAll('.relation-option').forEach((option, index) => {
+                    option.addEventListener('mouseenter', () => {
+                        this.updateSelectedOption(index);
+                    });
+                });
+
+                // Limpiar selección al hacer click fuera del panel
+                document.addEventListener('click', (e) => {
+                    if (this.panel.style.display === 'block' && 
+                        !this.panel.contains(e.target)) {
+                        this.reset();
+                    }
+                });
+            }
+
+            handleNodeSelection(nodeId) {
+                if (!this.isSelecting && this.selectedNodes.length >= 2) {
+                    this.reset();
+                }
+
+                if (this.selectedNodes.includes(nodeId)) {
+                    return; // Prevenir selección duplicada
+                }
+
+                this.isSelecting = true;
+                
+                if (this.selectedNodes.length < 2) {
+                    this.selectedNodes.push(nodeId);
+                    this.network.selectNodes([...this.selectedNodes]);
+                    
+                    if (this.selectedNodes.length === 2) {
+                        this.showPanel();
+                    }
+                    
+                    this.updateSelectedNodesDisplay();
+                }
+            }
+
+            showPanel() {
+                if (this.selectedNodes.length !== 2) return;
+                
+                this.panel.style.display = 'block';
+                this.updateSelectedNodesDisplay();
+                this.currentOptionIndex = -1; // Resetear índice de navegación
+                this.network.selectNodes(this.selectedNodes);
+            }
+
+            reset() {
+                this.panel.style.display = 'none';
+                this.selectedNodes = [];
+                this.isSelecting = false;
+                this.currentOptionIndex = -1;
+                this.updateSelectedNodesDisplay();
+                // Limpiar selecciones visuales
+                document.querySelectorAll('.relation-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.setAttribute('aria-selected', 'false');
+                });
+                this.network.selectNodes([]);
+            }
+
+            updateSelectedNodesDisplay() {
+                const fromNode = document.getElementById('fromNode');
+                const toNode = document.getElementById('toNode');
+                
+                if (fromNode && toNode) {
+                    fromNode.textContent = this.selectedNodes[0] || '-';
+                    toNode.textContent = this.selectedNodes[1] || '-';
+                }
+            }
+
+            createRelation(relationType) {
+                if (this.selectedNodes.length !== 2) return;
+
+                const [fromNode, toNode] = this.selectedNodes;
+                
+                // Verificar que los nodos existan antes de crear la relación
+                if (!this.network.body.data.nodes.get(fromNode) || 
+                    !this.network.body.data.nodes.get(toNode)) {
+                    console.error('Nodos no encontrados');
+                    this.reset();
+                    return;
+                }
+
+                try {
+                    // Crear la relación
+                    const relationColors = {
+                        'Funcional': '#FF8C00',
+                        'Inversa': '#FF4444',
+                        'Inversamente Funcional': '#00CED1',
+                        'Simétrica': '#9933CC',
+                        'Transitiva': '#33CC33'
+                    };
+
+                    const color = relationColors[relationType] || '#666666';
+                    
+                    this.network.body.data.edges.add({
+                        from: fromNode,
+                        to: toNode,
+                        label: relationType,
+                        color: { color },
+                        arrows: 'to',
+                        smooth: {
+                            enabled: true,
+                            type: 'curvedCW',
+                            roundness: 0.2
+                        }
+                    });
+
+                    updateOutputFormat();
+                    triggerAutoSave('nueva relación', true);
+                } catch (error) {
+                    console.error('Error al crear la relación:', error);
+                } finally {
+                    this.reset();
+                }
+            }
+
+            handleKeyNavigation(e) {
+                const options = Array.from(document.querySelectorAll('.relation-option'));
+                
+                switch(e.key) {
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        this.navigateOptions('up', options);
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        this.navigateOptions('down', options);
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (this.currentOptionIndex >= 0) {
+                            options[this.currentOptionIndex].click();
+                        }
+                        break;
+                    case 'Escape':
+                        e.preventDefault();
+                        this.reset();
+                        break;
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                        e.preventDefault();
+                        const numIndex = parseInt(e.key) - 1;
+                        if (numIndex < options.length) {
+                            this.updateSelectedOption(numIndex);
+                            options[numIndex].click();
+                        }
+                        break;
+                }
+            }
+
+            navigateOptions(direction, options) {
+                if (options.length === 0) return;
+
+                // Si no hay opción seleccionada, empezar desde el principio o final
+                if (this.currentOptionIndex === -1) {
+                    this.currentOptionIndex = direction === 'up' ? options.length - 1 : 0;
+                } else {
+                    // Calcular siguiente índice
+                    this.currentOptionIndex = direction === 'up' 
+                        ? (this.currentOptionIndex - 1 + options.length) % options.length
+                        : (this.currentOptionIndex + 1) % options.length;
+                }
+
+                this.updateSelectedOption(this.currentOptionIndex);
+            }
+
+            updateSelectedOption(index) {
+                // Remover selección anterior
+                document.querySelectorAll('.relation-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.setAttribute('aria-selected', 'false');
+                });
+
+                // Aplicar nueva selección
+                const selectedOption = document.querySelectorAll('.relation-option')[index];
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                    selectedOption.setAttribute('aria-selected', 'true');
+                    this.currentOptionIndex = index;
+                    
+                    // Asegurar que la opción es visible en el contenedor
+                    selectedOption.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest' 
+                    });
+                }
+            }
+        }
+
+        // Modificar la función de inicialización del grafo
+        function initializeNetwork(container, data, options) {
+            network = new vis.Network(container, data, options);
+            
+            // Inicializar el gestor de relaciones pasando la instancia de network
+            window.relationManager = new RelationManager(network);
+            
+            // Resto de la configuración de la red...
+            network.on('stabilizationIterationsDone', function () {
+                // ... código existente ...
+            });
+            
+            network.on('afterDrawing', function () {
+                // ... código existente ...
+            });
         }
     </script>
 </body>

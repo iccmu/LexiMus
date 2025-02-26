@@ -4,28 +4,28 @@
       "Sistemas de Control": {
         "Movimiento": {
           "value": null,
-          "id": "4d6ed259-b3ba-4baf-8444-1c1d563b953d"
+          "id": "a6059c82-021e-4bcf-999e-2389af2eec3a"
         },
         "Interacción": {
           "value": null,
-          "id": "e308d71b-1108-49ff-a7a8-ec84eaa03d9d"
+          "id": "b361d262-a7ad-4d3d-bb5e-748cc75c4cc4"
         },
-        "id": "066b1db0-72d9-42e7-97e2-f7ac6c048603"
+        "id": "910ef290-ba3b-4050-a5ec-2566b829dc36"
       },
       "Objetivos": {
         "Principales": {
           "value": null,
-          "id": "e0640549-2096-490c-bb81-15e2e2d673fb"
+          "id": "579ba07f-6514-4169-97fc-fd7563981be4"
         },
         "Secundarios": {
           "value": null,
-          "id": "b3f7a1fe-88cc-4766-912c-e04ec52963c7"
+          "id": "1b7d4287-13da-4e7b-bfa2-38b78cd36b31"
         },
-        "id": "9b692f49-af6c-4e7a-bf5e-417e14b548d6"
+        "id": "636f8ddc-cc8f-4e04-9fe3-d655ed08d246"
       },
-      "id": "3595480d-c838-43fc-a97f-f85dc10737ef"
+      "id": "16053cce-3745-4163-9bbf-ac80f51b4267"
     },
-    "id": "f24f7652-abfb-4e76-b7a7-733b18da3d9d"
+    "id": "2b001abe-996b-440a-9fc6-f44ce958a1dc"
   },
-  "id": "76d5568b-8908-4292-bcad-2742a33c8a75"
+  "id": "ad0be2c3-24ae-47ba-a762-620780c03b3b"
 }

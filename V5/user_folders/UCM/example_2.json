@@ -1,14 +1,19 @@
 {
   "A": {
-    "Add": {
-      "Afds": null,
-      "id": "dddf74ce-ac85-4793-8461-a013502cb3ec"
+    "Ahhh": {
+      "Acvbhj": "nul",
+      "id": "301c1e27-a8d5-4cbd-b1bc-8735f7bf226f"
     },
-    "B": {
-      "b": null,
-      "id": "b9eb4a15-06c7-467b-9eaa-f761ae1803fb"
-    },
-    "id": "8c01fd75-aef7-4f1f-bb22-4d02547ec78c"
+    "Bmnf": "hola",
+    "id": "590ae6d2-a34c-4f26-9ff5-331285761a79"
   },
-  "id": "27ba29ce-a2ef-4b88-8448-a962ab4e4d40"
+  "relationships": [
+    {
+      "type": "Simétrica",
+      "from": "A",
+      "to": "Ahhh",
+      "id": "051c0a52-4156-45e6-9609-914176bb2d24"
+    }
+  ],
+  "id": "7b7a7db9-b627-4848-9b06-56c84a2990b3"
 }
