@@ -1,19 +1,14 @@
 {
   "A": {
-    "A": {
-      "A": null,
-      "id": "718b3251-dfac-4bc8-8efe-157f109cad08"
+    "Add": {
+      "Afds": null,
+      "id": "dddf74ce-ac85-4793-8461-a013502cb3ec"
     },
-    "B": "b",
-    "id": "7822edf6-d20b-42d5-b86b-bb6869875ea8"
+    "B": {
+      "b": null,
+      "id": "b9eb4a15-06c7-467b-9eaa-f761ae1803fb"
+    },
+    "id": "8c01fd75-aef7-4f1f-bb22-4d02547ec78c"
   },
-  "relationships": [
-    {
-      "type": "Inversa",
-      "from": "A_1_B_4_definiciones_4",
-      "to": "A_1_A_2_A_3",
-      "id": "21a2ef4b-4c68-4fdb-ac78-e6cf6dae6963"
-    }
-  ],
-  "id": "27906e2d-7c64-4706-a7c9-7015c2309508"
+  "id": "27ba29ce-a2ef-4b88-8448-a962ab4e4d40"
 }

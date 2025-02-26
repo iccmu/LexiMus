@@ -1033,15 +1033,15 @@
                             enabled: false
                         },
                         interaction: {
-                            dragNodes: true,
-                            dragView: true,
-                            zoomView: true,
-                            hover: false,  // Desactivar hover
-                            hoverConnectedEdges: false,  // Desactivar resaltado de bordes al pasar el ratón
-                            selectConnectedEdges: true,  // Mantener la selección de bordes al hacer clic
-                            tooltipDelay: 300,  // Aumentar el retraso del tooltip para evitar apariciones no deseadas
+                            dragNodes: false,      // Deshabilitar arrastre de nodos
+                            dragView: false,       // Deshabilitar arrastre de la vista
+                            zoomView: false,       // Deshabilitar zoom con la rueda del ratón
+                            hover: false,          // Deshabilitar hover
+                            selectable: false,     // Deshabilitar selección con click
+                            selectConnectedEdges: false,  // Deshabilitar selección de bordes conectados
+                            hoverConnectedEdges: false,   // Deshabilitar resaltado de bordes al pasar el ratón
                             keyboard: {
-                                enabled: true,
+                                enabled: true,     // Mantener habilitado el control por teclado
                                 speed: {
                                     x: 10,
                                     y: 10,
@@ -1309,57 +1309,13 @@
                         const contextMenu = document.getElementById('contextMenu');
                         const relationPanel = document.querySelector('.relation-info-panel');
                         const isContextMenuVisible = contextMenu.style.display === 'block';
-                        const isRelationPanelVisible = relationPanel && !relationPanel.classList.contains('minimized');
                         
-                        // Si el foco está en el textarea, no procesar las teclas
+                        // Si el foco está en el textarea, no procesar ninguna tecla
                         if (document.activeElement === yamlInput) {
                             return;
                         }
 
-                        if (!network) return;
-                        
-                        // Manejar primero el panel de relaciones si está visible y tiene contenido
-                        if (isRelationPanelVisible) {
-                            const relationItems = relationPanel.querySelectorAll('.relation-item');
-                            if (relationItems.length > 0) {
-                                let currentIndex = Array.from(relationItems).findIndex(item => item.classList.contains('active'));
-                                if (currentIndex === -1) currentIndex = 0;
-
-                                switch(e.key) {
-                                    case 'ArrowUp':
-                                        e.preventDefault();
-                                        relationItems[currentIndex]?.classList.remove('active');
-                                        currentIndex = (currentIndex - 1 + relationItems.length) % relationItems.length;
-                                        relationItems[currentIndex].classList.add('active');
-                                        relationItems[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                        return;
-                                    case 'ArrowDown':
-                                        e.preventDefault();
-                                        relationItems[currentIndex]?.classList.remove('active');
-                                        currentIndex = (currentIndex + 1) % relationItems.length;
-                                        relationItems[currentIndex].classList.add('active');
-                                        relationItems[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                        return;
-                                    case 'Enter':
-                                        e.preventDefault();
-                                        // Simular clic en el botón de eliminar de la relación activa
-                                        const activeItem = relationItems[currentIndex];
-                                        if (activeItem) {
-                                            const deleteButton = activeItem.querySelector('.delete-relation');
-                                            if (deleteButton) {
-                                                deleteButton.click();
-                                            }
-                                        }
-                                        return;
-                                    case 'Escape':
-                                        e.preventDefault();
-                                        network.unselectAll();
-                                        return;
-                                }
-                            }
-                        }
-                        
-                        // Si el menú contextual está visible, manejar su navegación
+                        // ESTADO 1: MENÚ DE RELACIONES ABIERTO
                         if (isContextMenuVisible) {
                             const options = contextMenu.querySelectorAll('.context-menu-option');
                             let currentIndex = Array.from(options).findIndex(option => option.classList.contains('active'));
@@ -1371,29 +1327,41 @@
                                     options[currentIndex]?.classList.remove('active');
                                     currentIndex = (currentIndex - 1 + options.length) % options.length;
                                     options[currentIndex].classList.add('active');
-                                    return;
+                                    break;
+                                    
                                 case 'ArrowDown':
                                     e.preventDefault();
                                     options[currentIndex]?.classList.remove('active');
                                     currentIndex = (currentIndex + 1) % options.length;
                                     options[currentIndex].classList.add('active');
-                                    return;
+                                    break;
+                                    
                                 case 'Enter':
                                     e.preventDefault();
-                                    // Simular clic en la opción activa
                                     const activeOption = options[currentIndex];
                                     if (activeOption) {
                                         activeOption.click();
                                     }
-                                    return;
+                                    break;
+                                    
                                 case 'Escape':
                                     e.preventDefault();
                                     contextMenu.style.display = 'none';
-                                    return;
+                                    break;
+                                    
+                                default:
+                                    // Prevenir cualquier otra tecla cuando el menú está abierto
+                                    if (['ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                    break;
                             }
+                            return; // Importante: detener aquí si el menú está abierto
                         }
+
+                        // ESTADO 2: NAVEGACIÓN NORMAL DEL GRAFO
+                        if (!network) return;
                         
-                        // Navegación normal del grafo
                         updateGridStructure();
                         
                         switch(e.key) {
@@ -1412,22 +1380,27 @@
                                     });
                                 }
                                 break;
+                                
                             case 'ArrowUp':
                                 e.preventDefault();
                                 findNextNode('up');
                                 break;
+                                
                             case 'ArrowDown':
                                 e.preventDefault();
                                 findNextNode('down');
                                 break;
+                                
                             case 'ArrowLeft':
                                 e.preventDefault();
                                 findNextNode('left');
                                 break;
+                                
                             case 'ArrowRight':
                                 e.preventDefault();
                                 findNextNode('right');
                                 break;
+                                
                             case 'Enter':
                                 e.preventDefault();
                                 if (currentNodeId) {
@@ -1464,17 +1437,6 @@
                                         });
                                     } else {
                                         contextMenu.style.display = 'none';
-                                    }
-                                }
-                                break;
-                            case 'Delete':
-                            case 'Backspace':
-                                if (selectedEdges.length > 0) {
-                                    if (confirm('¿Deseas eliminar las relaciones seleccionadas?')) {
-                                        network.body.data.edges.remove(selectedEdges);
-                                        network.setSelection({ edges: [] });
-                                        updateOutputFormat();
-                                        triggerAutoSave('eliminación de relaciones');
                                     }
                                 }
                                 break;
