@@ -799,6 +799,38 @@
             from { opacity: 0; transform: translate(-50%, -48%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
+
+        .relation-option:focus {
+            outline: 2px solid #2196F3;
+            background-color: #E3F2FD;
+            transform: translateX(5px);
+        }
+
+        .relation-option:focus-visible {
+            outline: 2px solid #2196F3;
+            outline-offset: 2px;
+        }
+
+        .relation-option {
+            transition: all 0.2s ease;
+        }
+
+        .relation-option .shortcut {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 8px;
+        }
+
+        .selectable-node {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 125, 50, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+        }
     </style>
 </head>
 <body>
@@ -1550,17 +1582,15 @@
                             if (currentIndex === -1) currentIndex = 0;
 
                             switch(e.key) {
-                                case 'ArrowUp':
+                                case 'Tab':
                                     e.preventDefault();
+                                    // Remover clase active del elemento actual
                                     options[currentIndex]?.classList.remove('active');
-                                    currentIndex = (currentIndex - 1 + options.length) % options.length;
-                                    options[currentIndex].classList.add('active');
-                                    break;
-                                    
-                                case 'ArrowDown':
-                                    e.preventDefault();
-                                    options[currentIndex]?.classList.remove('active');
-                                    currentIndex = (currentIndex + 1) % options.length;
+                                    // Calcular siguiente índice
+                                    currentIndex = e.shiftKey ? 
+                                        (currentIndex - 1 + options.length) % options.length : 
+                                        (currentIndex + 1) % options.length;
+                                    // Añadir clase active al siguiente elemento
                                     options[currentIndex].classList.add('active');
                                     break;
                                     
@@ -3335,46 +3365,25 @@ ${indent}    </rdfs:subClassOf>`;
 
         // Modificar el event listener de las teclas
         document.addEventListener('keydown', function(e) {
+            const relationPanel = document.getElementById('relationPanel');
             const yamlInput = document.getElementById('yamlInput');
-            const contextMenu = document.getElementById('contextMenu');
-            const isContextMenuVisible = contextMenu.style.display === 'block';
             
-            // Si el foco está en el textarea o el menú contextual está visible, no procesar flechas
-            if (document.activeElement === yamlInput || isContextMenuVisible) {
-                // Solo permitir teclas específicas para el menú contextual
-                if (isContextMenuVisible) {
-                    switch(e.key) {
-                        case 'ArrowUp':
-                        case 'ArrowDown':
-                        case 'Enter':
-                        case 'Escape':
-                            e.preventDefault();
-                            handleContextMenuNavigation(e.key);
-                            break;
-                        default:
-                            e.preventDefault();
-                            break;
-                    }
-                }
+            // Si el foco está en el textarea, no procesar ninguna tecla
+            if (document.activeElement === yamlInput) {
                 return;
             }
 
-            // Solo procesar teclas de navegación si no hay menú contextual
-            if (!network || isContextMenuVisible) return;
+            // Si el panel de relaciones está abierto y existe
+            if (relationPanel && relationPanel.style.display === 'block') {
+                handleContextMenuKeyPress(e);
+                return;
+            }
 
-            switch(e.key) {
-                case 'ArrowUp':
-                case 'ArrowDown':
-                case 'ArrowLeft':
-                case 'ArrowRight':
-                    e.preventDefault();
-                    navigationMonitor.logMovement(e.key.replace('Arrow', '').toLowerCase(), currentNodeId);
-                    findNextNode(e.key.replace('Arrow', '').toLowerCase());
-                    break;
-                case ' ':
-                    e.preventDefault();
-                    resetToRootNode();
-                    break;
+            // Navegación normal del grafo (cuando el panel está cerrado)
+            if (e.key.startsWith('Arrow')) {
+                e.preventDefault();
+                const direction = e.key.replace('Arrow', '').toLowerCase();
+                findNextNode(direction);
             }
         });
 
@@ -3574,16 +3583,60 @@ ${indent}    </rdfs:subClassOf>`;
         });
 
         function handleContextMenuKeyPress(e) {
+            const relationPanel = document.getElementById('relationPanel');
+            // Verificar que el panel existe
+            if (!relationPanel) return;
+
+            const options = document.querySelectorAll('.relation-option');
+            // Verificar que hay opciones
+            if (!options || options.length === 0) return;
+
             switch(e.key) {
-                case 'ArrowUp':
-                case 'ArrowDown':
+                case 'Tab':
+                    e.preventDefault();
+                    let currentIndex = -1;
+                    
+                    // Buscar el índice actual de manera segura
+                    options.forEach((option, index) => {
+                        if (option === document.activeElement || option.classList.contains('selected')) {
+                            currentIndex = index;
+                        }
+                    });
+                    
+                    // Calcular el siguiente índice de manera segura
+                    const nextIndex = currentIndex === -1 ? 0 : // Si no hay selección, empezar por el primero
+                        e.shiftKey ? 
+                            (currentIndex - 1 + options.length) % options.length : 
+                            (currentIndex + 1) % options.length;
+                    
+                    // Actualizar la selección de manera segura
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    if (options[nextIndex]) {
+                        options[nextIndex].classList.add('selected');
+                        options[nextIndex].focus();
+                    }
+                    break;
+                    
                 case 'Enter':
+                    e.preventDefault();
+                    const selectedOption = document.querySelector('.relation-option.selected');
+                    if (selectedOption) {
+                        selectedOption.click();
+                    }
+                    break;
+                    
                 case 'Escape':
                     e.preventDefault();
-                    handleContextMenuNavigation(e.key);
+                    if (relationPanel) {
+                        relationPanel.style.display = 'none';
+                    }
                     break;
+                    
                 default:
-                    e.preventDefault();
+                    // Prevenir explícitamente las flechas
+                    if (e.key.startsWith('Arrow')) {
+                        e.preventDefault();
+                    }
                     break;
             }
         }
@@ -3803,21 +3856,24 @@ ${indent}    </rdfs:subClassOf>`;
                 this.selectedNodes = [];
                 this.panel = null;
                 this.isSelecting = false;
-                this.currentOptionIndex = -1;  // Índice para navegación por teclado
+                this.currentOptionIndex = -1;
                 this.init();
             }
 
             init() {
-                // Añadir HTML y estilos al documento
-                document.body.insertAdjacentHTML('beforeend', relationMenuHTML);
-                document.head.insertAdjacentHTML('beforeend', relationPanelStyles);
-                
+                // Mantener el HTML existente pero añadir tabindex a las opciones
+                document.querySelectorAll('.relation-option').forEach((option, index) => {
+                    option.setAttribute('tabindex', '0');
+                    option.setAttribute('role', 'button');
+                    option.setAttribute('aria-label', `Relación ${option.querySelector('.relation-label').textContent}`);
+                });
+
                 this.panel = document.getElementById('relationPanel');
                 this.setupEventListeners();
             }
 
             setupEventListeners() {
-                // Limpiar estado al hacer click en el fondo
+                // Manejar selección de nodos
                 this.network.on('click', (params) => {
                     if (params.nodes.length === 0 && params.edges.length === 0) {
                         this.reset();
@@ -3829,51 +3885,155 @@ ${indent}    </rdfs:subClassOf>`;
                     }
                 });
 
-                // Manejar opciones de relación
-                document.querySelectorAll('.relation-option').forEach(option => {
-                    option.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.createRelation(option.dataset.relation);
-                    });
-                });
-
-                // Manejar cierre del panel
-                document.querySelector('.close-btn').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.reset();
-                });
-                
-                document.querySelector('.cancel-btn').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.reset();
-                });
-
-                // Prevenir cierre accidental
-                this.panel.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                });
-
-                // Manejar atajos de teclado
+                // Manejar navegación por teclado
                 document.addEventListener('keydown', (e) => {
                     if (this.panel.style.display === 'block') {
-                        this.handleKeyNavigation(e);
+                        this.handleKeyboardNavigation(e);
+                    } else if (e.key === 'Tab' && this.selectedNodes.length === 1) {
+                        // Permitir la selección del segundo nodo con Tab
+                        e.preventDefault();
+                        this.highlightSelectableNodes();
                     }
                 });
 
-                // Añadir eventos de hover
-                document.querySelectorAll('.relation-option').forEach((option, index) => {
-                    option.addEventListener('mouseenter', () => {
-                        this.updateSelectedOption(index);
+                // Manejar opciones de relación
+                document.querySelectorAll('.relation-option').forEach(option => {
+                    // Manejar focus
+                    option.addEventListener('focus', () => {
+                        this.updateSelectedOption(Array.from(document.querySelectorAll('.relation-option')).indexOf(option));
+                    });
+
+                    // Manejar click y enter/space
+                    option.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.createRelation(option.dataset.relation);
+                    });
+
+                    option.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.createRelation(option.dataset.relation);
+                        }
                     });
                 });
 
-                // Limpiar selección al hacer click fuera del panel
-                document.addEventListener('click', (e) => {
-                    if (this.panel.style.display === 'block' && 
-                        !this.panel.contains(e.target)) {
-                        this.reset();
+                // Botones de cierre
+                const closeButtons = [
+                    document.querySelector('.close-btn'),
+                    document.querySelector('.cancel-btn')
+                ];
+
+                closeButtons.forEach(btn => {
+                    if (btn) {
+                        btn.setAttribute('tabindex', '0');
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.reset();
+                        });
+                        btn.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                this.reset();
+                            }
+                        });
                     }
                 });
+            }
+
+            handleKeyboardNavigation(e) {
+                const options = Array.from(document.querySelectorAll('.relation-option'));
+                
+                switch(e.key) {
+                    case 'Tab':
+                        // Permitir navegación natural con Tab
+                        if (!e.shiftKey && this.currentOptionIndex === options.length - 1) {
+                            // Si es el último elemento, permitir que el foco vaya a los botones
+                            return;
+                        }
+                        if (e.shiftKey && this.currentOptionIndex === 0) {
+                            // Si es el primer elemento con Shift+Tab, permitir navegación hacia atrás
+                            return;
+                        }
+                        e.preventDefault();
+                        this.navigateOptions(e.shiftKey ? 'prev' : 'next', options);
+                        break;
+                        
+                    case 'Escape':
+                        e.preventDefault();
+                        this.reset();
+                        break;
+                        
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                        e.preventDefault();
+                        const numIndex = parseInt(e.key) - 1;
+                        if (numIndex < options.length) {
+                            this.updateSelectedOption(numIndex);
+                            options[numIndex].click();
+                        }
+                        break;
+                }
+            }
+
+            highlightSelectableNodes() {
+                if (!this.selectedNodes[0]) return;
+                
+                const nodes = this.network.body.data.nodes.get();
+                nodes.forEach(node => {
+                    if (node.id !== this.selectedNodes[0]) {
+                        this.network.body.data.nodes.update({
+                            id: node.id,
+                            color: {
+                                background: '#E8F5E9',
+                                border: '#2E7D32'
+                            }
+                        });
+                    }
+                });
+
+                // Restaurar colores después de un tiempo
+                setTimeout(() => {
+                    nodes.forEach(node => {
+                        if (node.id !== this.selectedNodes[0]) {
+                            this.network.body.data.nodes.update({
+                                id: node.id,
+                                color: undefined
+                            });
+                        }
+                    });
+                }, 1500);
+            }
+
+            navigateOptions(direction, options) {
+                if (options.length === 0) return;
+
+                let nextIndex;
+                if (direction === 'next') {
+                    nextIndex = this.currentOptionIndex === -1 ? 0 : 
+                               (this.currentOptionIndex + 1) % options.length;
+                } else {
+                    nextIndex = this.currentOptionIndex === -1 ? options.length - 1 : 
+                               (this.currentOptionIndex - 1 + options.length) % options.length;
+                }
+
+                options[nextIndex].focus();
+            }
+
+            updateSelectedOption(index) {
+                document.querySelectorAll('.relation-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.setAttribute('aria-selected', 'false');
+                });
+
+                const selectedOption = document.querySelectorAll('.relation-option')[index];
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                    selectedOption.setAttribute('aria-selected', 'true');
+                    this.currentOptionIndex = index;
+                }
             }
 
             handleNodeSelection(nodeId) {
@@ -3976,81 +4136,6 @@ ${indent}    </rdfs:subClassOf>`;
                     console.error('Error al crear la relación:', error);
                 } finally {
                     this.reset();
-                }
-            }
-
-            handleKeyNavigation(e) {
-                const options = Array.from(document.querySelectorAll('.relation-option'));
-                
-                switch(e.key) {
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        this.navigateOptions('up', options);
-                        break;
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        this.navigateOptions('down', options);
-                        break;
-                    case 'Enter':
-                        e.preventDefault();
-                        if (this.currentOptionIndex >= 0) {
-                            options[this.currentOptionIndex].click();
-                        }
-                        break;
-                    case 'Escape':
-                        e.preventDefault();
-                        this.reset();
-                        break;
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                        e.preventDefault();
-                        const numIndex = parseInt(e.key) - 1;
-                        if (numIndex < options.length) {
-                            this.updateSelectedOption(numIndex);
-                            options[numIndex].click();
-                        }
-                        break;
-                }
-            }
-
-            navigateOptions(direction, options) {
-                if (options.length === 0) return;
-
-                // Si no hay opción seleccionada, empezar desde el principio o final
-                if (this.currentOptionIndex === -1) {
-                    this.currentOptionIndex = direction === 'up' ? options.length - 1 : 0;
-                } else {
-                    // Calcular siguiente índice
-                    this.currentOptionIndex = direction === 'up' 
-                        ? (this.currentOptionIndex - 1 + options.length) % options.length
-                        : (this.currentOptionIndex + 1) % options.length;
-                }
-
-                this.updateSelectedOption(this.currentOptionIndex);
-            }
-
-            updateSelectedOption(index) {
-                // Remover selección anterior
-                document.querySelectorAll('.relation-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                    opt.setAttribute('aria-selected', 'false');
-                });
-
-                // Aplicar nueva selección
-                const selectedOption = document.querySelectorAll('.relation-option')[index];
-                if (selectedOption) {
-                    selectedOption.classList.add('selected');
-                    selectedOption.setAttribute('aria-selected', 'true');
-                    this.currentOptionIndex = index;
-                    
-                    // Asegurar que la opción es visible en el contenedor
-                    selectedOption.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'nearest' 
-                    });
                 }
             }
         }

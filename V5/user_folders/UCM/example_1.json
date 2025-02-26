@@ -4,28 +4,54 @@
       "Sistemas de Control": {
         "Movimiento": {
           "value": null,
-          "id": "a6059c82-021e-4bcf-999e-2389af2eec3a"
+          "id": "768d30aa-b05a-450e-997d-a78861623fbd"
         },
         "Interacción": {
           "value": null,
-          "id": "b361d262-a7ad-4d3d-bb5e-748cc75c4cc4"
+          "id": "b1ad134b-a536-4a0d-a4a1-61ecd756be71"
         },
-        "id": "910ef290-ba3b-4050-a5ec-2566b829dc36"
+        "id": "bb644e6c-b8b9-4ca3-ba82-dfba50152671"
       },
       "Objetivos": {
         "Principales": {
           "value": null,
-          "id": "579ba07f-6514-4169-97fc-fd7563981be4"
+          "id": "98a6843e-1b49-4d0b-b407-306242e403dd"
         },
         "Secundarios": {
           "value": null,
-          "id": "1b7d4287-13da-4e7b-bfa2-38b78cd36b31"
+          "id": "39670424-48f2-41ac-be63-db8a7bcc505a"
         },
-        "id": "636f8ddc-cc8f-4e04-9fe3-d655ed08d246"
+        "id": "625ce00f-2583-4fcf-a9b3-68dcd7bea185"
       },
-      "id": "16053cce-3745-4163-9bbf-ac80f51b4267"
+      "id": "4df4de6e-ff31-42d2-8912-8d539ea3b2b8"
     },
-    "id": "2b001abe-996b-440a-9fc6-f44ce958a1dc"
+    "id": "c8af220e-3d04-4a88-9596-e8f5f0d7f6b1"
   },
-  "id": "ad0be2c3-24ae-47ba-a762-620780c03b3b"
+  "relationships": [
+    {
+      "type": "Inversa",
+      "from": "Taxonomía de Videojuegos",
+      "to": "Sistemas de Control",
+      "id": "711bb646-727a-4836-be8c-e8859bea6fef"
+    },
+    {
+      "type": "Transitiva",
+      "from": "Sistemas de Control",
+      "to": "Interacción",
+      "id": "3df6da74-3dd3-4260-b7d5-757da97c2316"
+    },
+    {
+      "type": "Transitiva",
+      "from": "Objetivos",
+      "to": "Secundarios",
+      "id": "df3e8bb9-3ea8-46d7-bd41-92743d80360e"
+    },
+    {
+      "type": "Transitiva",
+      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistemas de Control_3_Interacción_6_definiciones_7",
+      "to": "value",
+      "id": "adeca9fb-4e71-45ad-81d9-d35a01daea23"
+    }
+  ],
+  "id": "3bfe2d58-0e00-48fe-b75e-57e14e00c32e"
 }
