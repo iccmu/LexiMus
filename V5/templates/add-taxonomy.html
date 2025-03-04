@@ -831,6 +831,32 @@
             70% { box-shadow: 0 0 0 10px rgba(46, 125, 50, 0); }
             100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
         }
+
+        /* Estilos para drag & drop en la jerarquía de propiedades */
+        .node-item {
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .node-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            background-color: #e3f2fd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .drop-zone {
+            border: 2px dashed #2B7CE9;
+            border-radius: 6px;
+            margin: 2px 0;
+            background-color: rgba(43, 124, 233, 0.1);
+            min-height: 30px;
+        }
+        
+        .json-hierarchy li.drop-target > .node-item {
+            background-color: #e3f2fd;
+            transform: translateX(5px);
+        }
     </style>
 </head>
 <body>
@@ -914,13 +940,13 @@
     <!-- Añadir después de la definición del panel de propiedades -->
 
     <!-- Añadir panel de información de relaciones -->
-    <div class="relation-info-panel">
+    <!-- <div class="relation-info-panel">
         <div class="relation-info-header">
             <h4>Relaciones Seleccionadas</h4>
             <button class="minimize-btn">−</button>
         </div>
         <div class="relation-info-content"></div>
-    </div>
+    </div> -->
 
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
@@ -2462,14 +2488,23 @@
                 if (key === 'id') return;
 
                 const li = document.createElement('li');
+                li.setAttribute('data-key', key);
+                
                 const nodeItem = document.createElement('div');
                 nodeItem.className = 'node-item';
+                nodeItem.setAttribute('draggable', 'true');
+                nodeItem.setAttribute('data-key', key);
+                nodeItem.setAttribute('data-level', level);
 
                 const keySpan = document.createElement('span');
                 keySpan.className = 'key';
                 keySpan.textContent = key;
 
                 nodeItem.appendChild(keySpan);
+
+                // Configurar eventos de drag & drop (solo visual, sin cambiar estructura)
+                nodeItem.addEventListener('dragstart', handleDragStart);
+                nodeItem.addEventListener('dragend', handleDragEnd);
 
                 if (typeof value === 'object' && value !== null) {
                     nodeItem.classList.add('has-children');
@@ -2497,6 +2532,234 @@
             });
 
             container.appendChild(ul);
+        }
+        
+        // Variables para el drag & drop
+        let draggedItem = null;
+        
+        // Funciones simplificadas para manejar el drag & drop (solo visual)
+        function handleDragStart(e) {
+            // Prevenir propagación para evitar conflictos con otros eventos
+            e.stopPropagation();
+            
+            // Guardar referencia al elemento arrastrado
+            draggedItem = this;
+            
+            // Añadir clase para estilo visual durante el arrastre
+            setTimeout(() => {
+                this.classList.add('dragging');
+            }, 0);
+            
+            // Guardar datos para la transferencia
+            e.dataTransfer.setData('text/plain', this.getAttribute('data-key'));
+            e.dataTransfer.effectAllowed = 'move';
+            
+            // Crear una imagen fantasma personalizada para el arrastre
+            const ghostElement = this.cloneNode(true);
+            ghostElement.style.width = this.offsetWidth + 'px';
+            ghostElement.style.height = this.offsetHeight + 'px';
+            ghostElement.style.opacity = '0.7';
+            ghostElement.style.position = 'absolute';
+            ghostElement.style.top = '-1000px';
+            document.body.appendChild(ghostElement);
+            
+            e.dataTransfer.setDragImage(ghostElement, 10, 10);
+            
+            // Eliminar el elemento fantasma después de un momento
+            setTimeout(() => {
+                document.body.removeChild(ghostElement);
+            }, 0);
+        }
+        
+        function handleDragEnd(e) {
+            // Limpiar estilos y referencias
+            this.classList.remove('dragging');
+            draggedItem = null;
+        }
+        
+        function handleDragOver(e) {
+            // Prevenir el comportamiento por defecto para permitir el drop
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+        
+        function handleDragEnter(e) {
+            // Prevenir el comportamiento por defecto
+            e.preventDefault();
+            
+            // Añadir clase visual al destino potencial
+            if (this !== draggedParent && !this.contains(draggedItem)) {
+                this.classList.add('drop-target');
+                dropTarget = this;
+                
+                // Crear zona de destino si no existe
+                if (!this.querySelector('.drop-zone')) {
+                    const dropZone = document.createElement('div');
+                    dropZone.className = 'drop-zone';
+                    this.appendChild(dropZone);
+                }
+            }
+        }
+        
+        function handleDragLeave(e) {
+            // Verificar si realmente estamos saliendo del elemento
+            const rect = this.getBoundingClientRect();
+            const isLeaving = 
+                e.clientX < rect.left ||
+                e.clientX >= rect.right ||
+                e.clientY < rect.top ||
+                e.clientY >= rect.bottom;
+                
+            if (isLeaving) {
+                this.classList.remove('drop-target');
+                
+                // Eliminar zona de destino después de un breve retraso
+                setTimeout(() => {
+                    if (this.contains(document.querySelector('.drop-zone'))) {
+                        this.querySelector('.drop-zone').remove();
+                    }
+                }, 100);
+            }
+        }
+        
+        function handleDrop(e) {
+            // Prevenir navegación por defecto
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Verificar que tenemos un elemento arrastrado y un destino válido
+            if (!draggedItem || this === draggedParent || this.contains(draggedItem)) {
+                return;
+            }
+            
+            // Obtener datos del elemento arrastrado
+            const key = e.dataTransfer.getData('text/plain');
+            const level = parseInt(draggedItem.getAttribute('data-level'));
+            
+            // Clonar el elemento arrastrado y su estructura
+            const clonedItem = draggedItem.cloneNode(true);
+            const clonedLi = document.createElement('li');
+            clonedLi.setAttribute('data-key', key);
+            clonedLi.appendChild(clonedItem);
+            
+            // Si el elemento arrastrado tiene hijos, clonarlos también
+            if (draggedParent.querySelector('ul')) {
+                const clonedUl = draggedParent.querySelector('ul').cloneNode(true);
+                clonedLi.appendChild(clonedUl);
+            }
+            
+            // Eliminar el elemento original
+            draggedParent.remove();
+            
+            // Añadir el elemento clonado al destino
+            if (this.querySelector('.drop-zone')) {
+                this.querySelector('.drop-zone').remove();
+            }
+            
+            // Determinar dónde insertar el elemento
+            if (this.querySelector('ul')) {
+                // Si el destino ya tiene una lista, añadir a esa lista
+                this.querySelector('ul').appendChild(clonedLi);
+            } else {
+                // Si no, crear una nueva lista
+                const newUl = document.createElement('ul');
+                newUl.className = 'json-hierarchy';
+                newUl.style.paddingLeft = '20px';
+                newUl.appendChild(clonedLi);
+                this.appendChild(newUl);
+            }
+            
+            // Reconfigurar eventos para el elemento clonado
+            clonedItem.addEventListener('dragstart', handleDragStart);
+            clonedItem.addEventListener('dragend', handleDragEnd);
+            clonedLi.addEventListener('dragover', handleDragOver);
+            clonedLi.addEventListener('dragenter', handleDragEnter);
+            clonedLi.addEventListener('dragleave', handleDragLeave);
+            clonedLi.addEventListener('drop', handleDrop);
+            
+            // Si el elemento tiene hijos, reconfigurar sus eventos también
+            clonedLi.querySelectorAll('.node-item').forEach(node => {
+                node.addEventListener('dragstart', handleDragStart);
+                node.addEventListener('dragend', handleDragEnd);
+            });
+            
+            clonedLi.querySelectorAll('li').forEach(li => {
+                li.addEventListener('dragover', handleDragOver);
+                li.addEventListener('dragenter', handleDragEnter);
+                li.addEventListener('dragleave', handleDragLeave);
+                li.addEventListener('drop', handleDrop);
+            });
+            
+            // Limpiar clases de destino
+            this.classList.remove('drop-target');
+            
+            // Actualizar el YAML después de reorganizar
+            updateYamlFromHierarchy();
+        }
+        
+        // Función para actualizar el YAML basado en la jerarquía actual
+        function updateYamlFromHierarchy() {
+            // Obtener la estructura actual del DOM
+            const hierarchyContainer = document.getElementById('propertiesContainer');
+            const jsonData = buildJsonFromHierarchy(hierarchyContainer);
+            
+            // Actualizar el textarea con el nuevo YAML
+            try {
+                const currentYaml = document.getElementById('yamlInput').value;
+                const currentJson = yamlToJson(currentYaml);
+                
+                // Fusionar los datos actualizados con el JSON existente
+                const updatedJson = { ...currentJson, ...jsonData };
+                
+                // Actualizar el textarea
+                document.getElementById('yamlInput').value = jsonToYaml(updatedJson);
+                
+                // Actualizar la visualización
+                updateOutputFormat();
+                
+                // Activar autoguardado
+                triggerAutoSave('reorganización de jerarquía', true);
+            } catch (error) {
+                console.error('Error al actualizar el YAML desde la jerarquía:', error);
+            }
+        }
+        
+        // Función para construir JSON desde la estructura DOM
+        function buildJsonFromHierarchy(container) {
+            const result = {};
+            
+            // Procesar cada elemento de la lista
+            container.querySelectorAll(':scope > ul > li').forEach(li => {
+                const key = li.getAttribute('data-key');
+                const nodeItem = li.querySelector(':scope > .node-item');
+                
+                // Verificar si tiene hijos
+                if (li.querySelector(':scope > ul')) {
+                    // Es un objeto anidado
+                    result[key] = buildJsonFromHierarchy(li);
+                } else {
+                    // Es un valor simple
+                    const valueSpan = nodeItem.querySelector('.value');
+                    if (valueSpan) {
+                        const valueText = valueSpan.textContent;
+                        // Extraer el valor después de los dos puntos
+                        const value = valueText.startsWith(':') ? 
+                            valueText.substring(1).trim() : 
+                            valueText.trim();
+                        
+                        // Manejar el caso especial del final de la rama
+                        if (value === '¡Has llegado al final de la rama!') {
+                            result[key] = null;
+                        } else {
+                            result[key] = value;
+                        }
+                    } else {
+                        result[key] = {};
+                    }
+                }
+            });
+            
+            return result;
         }
 
         async function loadJsonContent(filename) {
@@ -4155,6 +4418,155 @@ ${indent}    </rdfs:subClassOf>`;
             network.on('afterDrawing', function () {
                 // ... código existente ...
             });
+        }
+
+        // Añadir funcionalidad de drag & drop sin cambiar la estructura
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hacer que todos los elementos .node-item sean dragables
+            const nodeItems = document.querySelectorAll('.node-item');
+            nodeItems.forEach(item => {
+                item.setAttribute('draggable', 'true');
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+        });
+        
+        function handleDragStart(e) {
+            this.classList.add('dragging');
+            draggedItem = this; // Usar la variable existente en lugar de declararla nuevamente
+            
+            // Crear un elemento fantasma personalizado para el arrastre
+            const ghostElement = this.cloneNode(true);
+            ghostElement.style.width = this.offsetWidth + 'px';
+            ghostElement.style.height = this.offsetHeight + 'px';
+            ghostElement.style.opacity = '0.7';
+            ghostElement.style.position = 'absolute';
+            ghostElement.style.top = '-1000px';
+            document.body.appendChild(ghostElement);
+            
+            e.dataTransfer.setDragImage(ghostElement, 10, 10);
+            
+            // Eliminar el elemento fantasma después de un momento
+            setTimeout(() => {
+                document.body.removeChild(ghostElement);
+            }, 0);
+        }
+        
+        function handleDragEnd(e) {
+            // Limpiar estilos y referencias
+            this.classList.remove('dragging');
+            draggedItem = null;
+        }
+        
+        // Asegurar que la función updateOutputFormat incluya la conversión a RDF
+        function updateOutputFormat() {
+            const formatSelector = document.getElementById('formatSelector');
+            const selectedFormat = formatSelector.value;
+            const jsonOutput = document.getElementById('jsonOutput');
+            const yamlInput = document.getElementById('yamlInput').value;
+            
+            try {
+                const jsonData = jsyaml.load(yamlInput);
+                // Obtener la primera clave que no sea 'id'
+                const mainKey = Object.keys(jsonData).find(key => key !== 'id');
+                
+                switch(selectedFormat) {
+                    case 'json':
+                        jsonOutput.innerHTML = `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`;
+                        break;
+                    
+                    case 'jsonld':
+                        // Código existente para JSON-LD
+                        // ... existing code ...
+                        break;
+                    
+                    case 'rdf':
+                        let rdfXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns="http://www.example.org/ontology#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+
+    <owl:Ontology rdf:about="${jsonData.id || '_:taxonomy'}">
+        <rdfs:label>${mainKey || "Untitled Taxonomy"}</rdfs:label>
+        <owl:versionInfo>1.0</owl:versionInfo>
+    </owl:Ontology>`;
+
+                        // Añadir clases y propiedades base
+                        rdfXml += `
+    <!-- Clases base -->
+    <owl:Class rdf:about="#Descriptor">
+        <rdfs:label>Descriptor</rdfs:label>
+    </owl:Class>
+
+    <!-- Propiedades base -->
+    <owl:ObjectProperty rdf:about="#hasProperty">
+        <rdfs:label>tiene propiedad</rdfs:label>
+        <rdfs:domain rdf:resource="#Thing"/>
+        <rdfs:range rdf:resource="#Descriptor"/>
+    </owl:ObjectProperty>`;
+
+                        // Convertir la taxonomía
+                        if (mainKey && jsonData[mainKey]) {
+                            rdfXml += convertToRdfXml({[mainKey]: jsonData[mainKey]});
+                        }
+
+                        rdfXml += '\n</rdf:RDF>';
+
+                        jsonOutput.innerHTML = `<pre>${rdfXml}</pre>`;
+                        
+                        // Añadir botón para guardar RDF si no existe
+                        if (!document.getElementById('saveRdfButton')) {
+                            const saveButton = document.createElement('button');
+                            saveButton.id = 'saveRdfButton';
+                            saveButton.textContent = 'Guardar RDF';
+                            saveButton.onclick = saveRdfFile;
+                            saveButton.style.marginTop = '10px';
+                            jsonOutput.appendChild(saveButton);
+                        }
+                        break;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                jsonOutput.innerHTML = `<pre class="error">Error: ${error.message}</pre>`;
+            }
+        }
+
+        async function saveRdfFile() {
+            try {
+                // Obtener el JSON actual
+                const yamlInput = document.getElementById('yamlInput').value;
+                const jsonData = jsyaml.load(yamlInput);
+                
+                const urlParts = window.location.pathname.split('/');
+                const filename = decodeURIComponent(urlParts[urlParts.length - 1]);
+                
+                console.log("Enviando JSON para conversión:", jsonData); // Debug
+                
+                const response = await fetch(`/save-rdf/${filename}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        json: jsonData // Enviamos el JSON en lugar del RDF
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Error desconocido al guardar el archivo RDF');
+                }
+                
+                console.log("Respuesta del servidor:", result);
+                alert('Archivo OWL guardado correctamente');
+                
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert('Error al guardar el archivo OWL: ' + error.message);
+            }
         }
     </script>
 </body>

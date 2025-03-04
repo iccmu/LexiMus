@@ -4,54 +4,28 @@
       "Sistemas de Control": {
         "Movimiento": {
           "value": null,
-          "id": "768d30aa-b05a-450e-997d-a78861623fbd"
+          "id": "38bc3563-e2d6-4b5e-b0f1-3a4109c8fb0b"
         },
         "Interacción": {
           "value": null,
-          "id": "b1ad134b-a536-4a0d-a4a1-61ecd756be71"
+          "id": "e9278240-7378-4025-b716-0a0d7a70376d"
         },
-        "id": "bb644e6c-b8b9-4ca3-ba82-dfba50152671"
+        "id": "91641936-d002-4465-b657-e6db2d05ec67"
       },
       "Objetivos": {
         "Principales": {
           "value": null,
-          "id": "98a6843e-1b49-4d0b-b407-306242e403dd"
+          "id": "e7c429ad-af4c-46f2-8389-9ceffd63528c"
         },
         "Secundarios": {
           "value": null,
-          "id": "39670424-48f2-41ac-be63-db8a7bcc505a"
+          "id": "ddafd8c9-8dc7-437e-92bf-d14077e820d3"
         },
-        "id": "625ce00f-2583-4fcf-a9b3-68dcd7bea185"
+        "id": "a387d555-bf42-4e96-9c58-bc8cd9c5a927"
       },
-      "id": "4df4de6e-ff31-42d2-8912-8d539ea3b2b8"
+      "id": "0b6332b4-8e5e-4018-bd24-4a0561e0e53f"
     },
-    "id": "c8af220e-3d04-4a88-9596-e8f5f0d7f6b1"
+    "id": "c039c307-2aed-4303-9ac7-2706eb5fd819"
   },
-  "relationships": [
-    {
-      "type": "Inversa",
-      "from": "Taxonomía de Videojuegos",
-      "to": "Sistemas de Control",
-      "id": "711bb646-727a-4836-be8c-e8859bea6fef"
-    },
-    {
-      "type": "Transitiva",
-      "from": "Sistemas de Control",
-      "to": "Interacción",
-      "id": "3df6da74-3dd3-4260-b7d5-757da97c2316"
-    },
-    {
-      "type": "Transitiva",
-      "from": "Objetivos",
-      "to": "Secundarios",
-      "id": "df3e8bb9-3ea8-46d7-bd41-92743d80360e"
-    },
-    {
-      "type": "Transitiva",
-      "from": "Taxonomía de Videojuegos_1_Mecánicas de Juego_2_Sistemas de Control_3_Interacción_6_definiciones_7",
-      "to": "value",
-      "id": "adeca9fb-4e71-45ad-81d9-d35a01daea23"
-    }
-  ],
-  "id": "3bfe2d58-0e00-48fe-b75e-57e14e00c32e"
+  "id": "3d15d684-55d6-466b-a1b8-7feb12f14de4"
 }
