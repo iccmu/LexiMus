@@ -1,0 +1,31 @@
+{
+  "Taxonomía de Videojuegos": {
+    "Mecánicas de Juego": {
+      "Sistemas de Control": {
+        "Movimiento": {
+          "value": null,
+          "id": "190e4707-5a1d-4fb6-af22-cce841c9e712"
+        },
+        "Interacción": {
+          "value": null,
+          "id": "1db9251b-5663-49eb-a7c2-cedfded34843"
+        },
+        "id": "c0b8d6a5-19c6-4f8b-92a6-db9d238ab4da"
+      },
+      "Objetivos": {
+        "Principales": {
+          "value": null,
+          "id": "c97544ca-0ef8-4441-97ef-7d335daa469d"
+        },
+        "Secundarios": {
+          "value": null,
+          "id": "0bbd3ed5-9bd7-4abb-85c8-f4807e46ae87"
+        },
+        "id": "b45faab3-c908-4814-8938-5a03807d4cfb"
+      },
+      "id": "62a48479-308c-4140-ba34-5546591c77d0"
+    },
+    "id": "1fcf4e9c-d6b0-49b1-9e44-61f189557143"
+  },
+  "id": "69640b33-4dec-4796-b150-edf9e526d8de"
+}

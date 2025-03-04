@@ -135,6 +135,27 @@ async def upload_json(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Función auxiliar para contar elementos en un objeto anidado
+def count_elements(obj):
+    """Cuenta recursivamente el número de elementos en un objeto anidado."""
+    if not isinstance(obj, dict):
+        return 1
+    
+    count = 0
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            count += count_elements(value)
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    count += count_elements(item)
+                else:
+                    count += 1
+        else:
+            count += 1
+    
+    return count
+
 @app.get("/list-jsons/{username}")
 async def list_jsons(username: str):
     try:
@@ -148,48 +169,65 @@ async def list_jsons(username: str):
         if is_superuser:
             # Si es superusuario, usar su propia carpeta
             user_folder = os.path.join(base_path, username)
+            # También buscar en subcarpetas de usuarios creados por este superusuario
+            folders_to_search = [user_folder]
+            for subdir in os.listdir(user_folder):
+                subdir_path = os.path.join(user_folder, subdir)
+                if os.path.isdir(subdir_path):
+                    folders_to_search.append(subdir_path)
         else:
-            # Si es usuario normal, usar la carpeta de su creador
-            user_folder = os.path.join(base_path, user['created_by'])
-        
-        if not os.path.exists(user_folder):
-            return {"files": [], "message": "No se encontraron archivos"}
-        
-        def count_elements(obj):
-            if isinstance(obj, dict):
-                count = 0
-                for value in obj.values():
-                    count += count_elements(value)
-                return max(1, count)  # Contar al menos 1 para diccionarios no vacíos
-            elif isinstance(obj, list):
-                return sum(count_elements(item) for item in obj)
-            else:
-                return 0
+            # Si es usuario normal, usar la carpeta de su creador y su propia subcarpeta
+            creator_folder = os.path.join(base_path, user['created_by'])
+            user_folder = os.path.join(creator_folder, username)
+            folders_to_search = [user_folder]
         
         json_files = []
-        for filename in os.listdir(user_folder):
-            if filename.endswith('.json'):
-                file_path = os.path.join(user_folder, filename)
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    json_data = json.load(f)
-                    # Obtener el primer elemento que no sea 'id'
-                    first_key = next((key for key in json_data.keys() if key != 'id'), None)
-                    if first_key:
-                        first_value = json_data[first_key]
-                        if isinstance(first_value, dict):
-                            # Contar elementos recursivamente
-                            num_elements = count_elements(first_value)
-                            display_value = f"{num_elements} elementos"
-                        else:
-                            display_value = first_value
-                    else:
-                        display_value = "Sin elementos"
-                    
-                    json_files.append({
-                        "filename": filename,
-                        "path": file_path,
-                        "first_element": f"{first_key}: {display_value}"
-                    })
+        
+        for folder in folders_to_search:
+            if not os.path.exists(folder):
+                continue
+                
+            for filename in os.listdir(folder):
+                if filename.endswith('.json'):
+                    file_path = os.path.join(folder, filename)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            json_data = json.load(f)
+                            
+                            # Verificar que json_data no sea None y sea un diccionario
+                            if json_data is None or not isinstance(json_data, dict):
+                                display_value = "Formato no válido"
+                                first_key = "Error"
+                            else:
+                                # Obtener el primer elemento que no sea 'id'
+                                first_key = next((key for key in json_data.keys() if key != 'id'), None)
+                                
+                                if first_key:
+                                    first_value = json_data[first_key]
+                                    if isinstance(first_value, dict):
+                                        # Contar elementos recursivamente
+                                        num_elements = count_elements(first_value)
+                                        display_value = f"{num_elements} elementos"
+                                    else:
+                                        display_value = str(first_value)
+                                else:
+                                    display_value = "Sin elementos"
+                            
+                            json_files.append({
+                                "filename": filename,
+                                "path": file_path,
+                                "first_element": f"{first_key if first_key else 'Sin clave'}: {display_value}"
+                            })
+                    except Exception as e:
+                        # Si hay un error al leer un archivo, continuar con el siguiente
+                        print(f"Error al leer {file_path}: {str(e)}")
+                        # Añadir el archivo con información de error
+                        json_files.append({
+                            "filename": filename,
+                            "path": file_path,
+                            "first_element": f"Error: {str(e)[:50]}..."
+                        })
+                        continue
         
         return {"files": json_files}
     except Exception as e:
@@ -206,6 +244,16 @@ async def get_json_content(filename: str, request: Request):
                 file_path = os.path.join(root, filename)
                 with open(file_path, 'r', encoding='utf-8') as f:
                     json_data = json.load(f)
+                    
+                    # Verificar que el JSON sea un objeto
+                    if json_data is None or not isinstance(json_data, dict):
+                        # Si no es un objeto, devolver un objeto con información sobre el error
+                        return {
+                            "error": "Formato no válido",
+                            "original_content": json_data,
+                            "message": "El archivo JSON no contiene un objeto válido"
+                        }
+                    
                     return json_data
         
         raise HTTPException(status_code=404, detail="Archivo no encontrado")

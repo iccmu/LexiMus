@@ -620,6 +620,15 @@
         }
 
         function processHierarchy(data, container, level = 0) {
+            // Verificar que data sea un objeto válido
+            if (!data || typeof data !== 'object') {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-message';
+                errorMsg.textContent = 'Datos no válidos o formato incorrecto';
+                container.appendChild(errorMsg);
+                return;
+            }
+
             const ul = document.createElement('ul');
             ul.className = 'json-hierarchy';
             ul.style.paddingLeft = level > 0 ? '20px' : '0';
@@ -850,11 +859,27 @@
                     hierarchyContainer.className = 'hierarchy-container';
                     
                     // Obtener el JSON completo del archivo
-                    const response = await fetch(`/get-json-content/${file.filename}`);
-                    const jsonData = await response.json();
-                    
-                    // Procesar la jerarquía del JSON
-                    processHierarchy(jsonData, hierarchyContainer);
+                    try {
+                        const response = await fetch(`/get-json-content/${file.filename}`);
+                        if (!response.ok) {
+                            throw new Error(`Error al cargar el archivo: ${response.statusText}`);
+                        }
+                        const jsonData = await response.json();
+                        
+                        // Verificar que jsonData sea válido
+                        if (!jsonData || typeof jsonData !== 'object') {
+                            throw new Error('El archivo no contiene un JSON válido');
+                        }
+                        
+                        // Procesar la jerarquía del JSON
+                        processHierarchy(jsonData, hierarchyContainer);
+                    } catch (fileError) {
+                        console.error(`Error loading file ${file.filename}:`, fileError);
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message';
+                        errorDiv.textContent = `Error: ${fileError.message}`;
+                        hierarchyContainer.appendChild(errorDiv);
+                    }
                     
                     card.appendChild(hierarchyContainer);
                     
