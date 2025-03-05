@@ -51,7 +51,7 @@
     
     .main-content {
       display: flex;
-      height: calc(100vh - 60px);
+      height: calc(100vh - 60px - 40px);
       position: relative;
     }
     
@@ -393,6 +393,66 @@
       font-size: 12px;
       color: #666;
     }
+    
+    /* Estilos para el panel de información */
+    .info-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #333;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 40px;
+      box-sizing: border-box;
+      z-index: 30;
+      font-size: 14px;
+    }
+    
+    .info-panel-content {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .info-label {
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    
+    .info-panel.fixed {
+      background-color: #4CAF50 !important;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    }
+    
+    .info-panel.fixed::before {
+      content: "📌";
+      margin-right: 10px;
+    }
+    
+    .pyramid-node.pinned {
+      border: 3px solid #FFD700 !important; /* Borde dorado para el nodo fijado */
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.7) !important; /* Sombra dorada */
+      z-index: 10 !important; /* Asegurar que esté por encima de otros nodos */
+    }
+    
+    .pyramid-node.pinned::before {
+      content: "📌";
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      font-size: 12px;
+      background-color: #FFD700;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
@@ -421,6 +481,14 @@
         <div id="node-visualization">
           <!-- La visualización se generará aquí dinámicamente -->
         </div>
+      </div>
+    </div>
+    
+    <!-- Panel de información del nodo -->
+    <div class="info-panel" id="info-panel">
+      <div class="info-panel-content">
+        <div><span class="info-label">Nodo:</span> <span id="node-name">Ninguno seleccionado</span></div>
+        <div><span class="info-label">ID:</span> <span id="node-id">-</span></div>
       </div>
     </div>
   </div>
@@ -488,6 +556,7 @@ taxonomia:
 
     // Variables globales
     let currentFocusedNode = null;
+    let pinnedNode = null; // Nueva variable para el nodo fijado
     
     // Función para convertir YAML a JSON
     function yamlToJson(yamlString) {
@@ -748,7 +817,7 @@ taxonomia:
       
       // Primero, restablecer todos los nodos a su estado minimizado
       allNodes.forEach(node => {
-        node.classList.remove('focused', 'active-child');
+        node.classList.remove('focused', 'active-child', 'pinned');
         node.classList.add('minimized');
         
         // Restaurar colores originales según el tipo de nodo
@@ -766,6 +835,13 @@ taxonomia:
           node.classList.remove('has-children');
         }
       });
+      
+      // Si hay un nodo fijado, mantenerlo destacado
+      if (pinnedNode) {
+        const pinnedNodeId = pinnedNode.getAttribute('data-id');
+        pinnedNode.classList.add('pinned');
+        pinnedNode.classList.remove('minimized');
+      }
       
       if (focusedNodeId) {
         // Obtener el nodo enfocado
@@ -829,6 +905,28 @@ taxonomia:
       }
     }
     
+    // Función para actualizar la información del nodo en el panel inferior
+    function updateNodeInfo(node) {
+      const infoPanel = document.getElementById('info-panel');
+      
+      // Si el panel está fijado, no actualizar la información
+      if (infoPanel.classList.contains('fixed')) {
+        return;
+      }
+      
+      if (!node) {
+        document.getElementById('node-name').textContent = 'Ninguno seleccionado';
+        document.getElementById('node-id').textContent = '-';
+        return;
+      }
+      
+      const nodeName = node.textContent.trim();
+      const nodeId = node.getAttribute('data-id');
+      
+      document.getElementById('node-name').textContent = nodeName;
+      document.getElementById('node-id').textContent = nodeId;
+    }
+    
     // Configurar eventos para los nodos
     function setupNodeEvents() {
       let currentFocusedNode = null;
@@ -858,11 +956,15 @@ taxonomia:
           // Actualizar el estado visual de todos los nodos
           updateNodesVisualState(this.getAttribute('data-id'));
           
+          // Actualizar la información del nodo en el panel inferior
+          updateNodeInfo(this);
+          
           // Hacer scroll para asegurar que el nodo está visible
           this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
         });
         
         // Añadir evento de teclado para expandir/colapsar con la barra espaciadora
+        // y para fijar la información con Enter
         node.addEventListener('keydown', function(e) {
           if (e.key === ' ' || e.key === 'Spacebar') {
             e.preventDefault(); // Prevenir el desplazamiento de la página
@@ -911,6 +1013,36 @@ taxonomia:
                 }
               }
             }
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            
+            // Fijar la información del nodo en el panel inferior
+            const infoPanel = document.getElementById('info-panel');
+            
+            // Si el panel ya tiene la clase 'fixed', quitarla
+            // Si no, añadirla
+            if (infoPanel.classList.contains('fixed')) {
+              infoPanel.classList.remove('fixed');
+              infoPanel.style.backgroundColor = '#333'; // Restaurar color original
+              pinnedNode = null; // Eliminar el nodo fijado
+            } else {
+              infoPanel.classList.add('fixed');
+              infoPanel.style.backgroundColor = '#4CAF50'; // Cambiar color para indicar que está fijado
+              
+              // Guardar la información del nodo actual
+              const nodeName = this.textContent.trim();
+              const nodeId = this.getAttribute('data-id');
+              
+              document.getElementById('node-name').textContent = nodeName;
+              document.getElementById('node-id').textContent = nodeId;
+              
+              // Fijar este nodo visualmente
+              pinnedNode = this;
+              this.classList.add('pinned');
+            }
+            
+            // Actualizar el estado visual de los nodos
+            updateNodesVisualState(currentFocusedNode ? currentFocusedNode.getAttribute('data-id') : null);
           }
         });
       });
@@ -936,6 +1068,9 @@ taxonomia:
           // Actualizar el estado visual de todos los nodos
           updateNodesVisualState(this.getAttribute('data-id'));
           
+          // Actualizar la información del nodo en el panel inferior
+          updateNodeInfo(this);
+          
           // Hacer scroll para asegurar que el nodo está visible
           this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
         });
@@ -943,6 +1078,41 @@ taxonomia:
       
       // Añadir evento de teclado para navegación
       document.addEventListener('keydown', function(e) {
+        // Si se presiona Enter y hay un nodo enfocado
+        if (e.key === 'Enter' && currentFocusedNode) {
+          e.preventDefault();
+          
+          // Fijar la información del nodo en el panel inferior
+          const infoPanel = document.getElementById('info-panel');
+          
+          // Si el panel ya tiene la clase 'fixed', quitarla
+          // Si no, añadirla
+          if (infoPanel.classList.contains('fixed')) {
+            infoPanel.classList.remove('fixed');
+            infoPanel.style.backgroundColor = '#333'; // Restaurar color original
+            pinnedNode = null; // Eliminar el nodo fijado
+          } else {
+            infoPanel.classList.add('fixed');
+            infoPanel.style.backgroundColor = '#4CAF50'; // Cambiar color para indicar que está fijado
+            
+            // Guardar la información del nodo actual
+            const nodeName = currentFocusedNode.textContent.trim();
+            const nodeId = currentFocusedNode.getAttribute('data-id');
+            
+            document.getElementById('node-name').textContent = nodeName;
+            document.getElementById('node-id').textContent = nodeId;
+            
+            // Fijar este nodo visualmente
+            pinnedNode = currentFocusedNode;
+            currentFocusedNode.classList.add('pinned');
+          }
+          
+          // Actualizar el estado visual de los nodos
+          updateNodesVisualState(currentFocusedNode.getAttribute('data-id'));
+          
+          return;
+        }
+        
         if (!currentFocusedNode) {
           // Si no hay nodo seleccionado, seleccionar el primero
           if (nodes.length > 0 && (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowLeft')) {
@@ -1102,9 +1272,33 @@ taxonomia:
               // Navegar al nivel inferior (primer hijo)
               // Primero verificar si hay un contenedor de hijos visible
               const childrenContainer = document.getElementById(`children_${currentId}`);
+              
+              // Verificar si el nodo tiene hijos y el contenedor existe pero no está visible
+              if (childrenContainer && !childrenContainer.classList.contains('visible')) {
+                // Abrir el contenedor de hijos
+                childrenContainer.classList.add('visible');
+                currentFocusedNode.classList.remove('collapsed');
+                currentFocusedNode.classList.add('expanded');
+                
+                // Hacer visibles los nodos hijos para la navegación
+                const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+                childNodes.forEach(child => {
+                  child.classList.remove('minimized');
+                  child.classList.add('active-child');
+                });
+                
+                // Seleccionar el primer hijo dentro del contenedor
+                const visibleChildren = childrenContainer.querySelectorAll('.pyramid-node:not(.hidden)');
+                if (visibleChildren.length > 0) {
+                  nextNode = visibleChildren[0];
+                  break;
+                }
+              }
+              
+              // Si el contenedor ya está visible o no existe, continuar con la lógica anterior
               if (childrenContainer && childrenContainer.classList.contains('visible')) {
                 // Si el contenedor está visible, seleccionar el primer hijo dentro del contenedor
-                const visibleChildren = childrenContainer.querySelectorAll('.pyramid-node');
+                const visibleChildren = childrenContainer.querySelectorAll('.pyramid-node:not(.hidden)');
                 if (visibleChildren.length > 0) {
                   nextNode = visibleChildren[0];
                   break;
@@ -1157,17 +1351,19 @@ taxonomia:
             const isInChildrenContainer = currentFocusedNode.closest('.children-container') !== null;
             
             if (isInChildrenContainer) {
-              // Si estamos en un contenedor de hijos, buscar el nodo anterior en el mismo contenedor
+              // Si estamos en un contenedor de hijos, ir al padre del contenedor
               const container = currentFocusedNode.closest('.children-container');
-              const nodesInContainer = Array.from(container.querySelectorAll('.pyramid-node'));
-              const currentIndex = nodesInContainer.indexOf(currentFocusedNode);
+              const parentId = container.id.replace('children_', '');
+              nextNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
               
-              if (currentIndex > 0) {
-                nextNode = nodesInContainer[currentIndex - 1];
-              } else {
-                // Si es el primer nodo del contenedor, ir al padre
-                const parentId = container.id.replace('children_', '');
-                nextNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+              // Colapsar el contenedor de hijos al salir
+              container.classList.remove('visible');
+              
+              // Actualizar la clase del nodo padre
+              const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+              if (parentNode) {
+                parentNode.classList.remove('expanded');
+                parentNode.classList.add('collapsed');
               }
             } else {
               // Navegar al nodo a la izquierda en el mismo nivel
@@ -1200,14 +1396,9 @@ taxonomia:
             const isInContainer = currentFocusedNode.closest('.children-container') !== null;
             
             if (isInContainer) {
-              // Si estamos en un contenedor de hijos, buscar el nodo siguiente en el mismo contenedor
-              const container = currentFocusedNode.closest('.children-container');
-              const nodesInContainer = Array.from(container.querySelectorAll('.pyramid-node'));
-              const currentIndex = nodesInContainer.indexOf(currentFocusedNode);
-              
-              if (currentIndex < nodesInContainer.length - 1) {
-                nextNode = nodesInContainer[currentIndex + 1];
-              }
+              // Si estamos en un contenedor de hijos, no hacer nada con la flecha derecha
+              // No abriremos conjuntos de nodos con flechas laterales
+              break;
             } else {
               // Navegar al nodo a la derecha en el mismo nivel
               // Obtener todos los nodos del mismo nivel y con el mismo padre
@@ -1229,38 +1420,10 @@ taxonomia:
                 // Seleccionar el nodo a la derecha si existe
                 if (currentIndexRight < sortedSiblingsRight.length - 1) {
                   nextNode = sortedSiblingsRight[currentIndexRight + 1];
-                } else {
-                  // Si es el último nodo, verificar si tiene hijos y expandirlos
-                  const childrenContainer = document.getElementById(`children_${currentId}`);
-                  if (childrenContainer && !childrenContainer.classList.contains('visible')) {
-                    // Expandir el contenedor de hijos
-                    childrenContainer.classList.add('visible');
-                    currentFocusedNode.classList.remove('collapsed');
-                    currentFocusedNode.classList.add('expanded');
-                    
-                    // Seleccionar el primer hijo
-                    const firstChild = childrenContainer.querySelector('.pyramid-node');
-                    if (firstChild) {
-                      nextNode = firstChild;
-                    }
-                  }
                 }
-              } else {
-                // Si no hay hermanos, verificar si tiene hijos y expandirlos
-                const childrenContainer = document.getElementById(`children_${currentId}`);
-                if (childrenContainer && !childrenContainer.classList.contains('visible')) {
-                  // Expandir el contenedor de hijos
-                  childrenContainer.classList.add('visible');
-                  currentFocusedNode.classList.remove('collapsed');
-                  currentFocusedNode.classList.add('expanded');
-                  
-                  // Seleccionar el primer hijo
-                  const firstChild = childrenContainer.querySelector('.pyramid-node');
-                  if (firstChild) {
-                    nextNode = firstChild;
-                  }
-                }
+                // Ya no expandimos nodos con la flecha derecha
               }
+              // Ya no expandimos nodos con la flecha derecha cuando no hay hermanos
             }
             break;
         }
@@ -1402,6 +1565,12 @@ taxonomia:
       // Inicializar el estado visual de los nodos
       setTimeout(() => {
         updateNodesVisualState();
+        
+        // Seleccionar el nodo raíz por defecto
+        const rootNode = document.querySelector('.pyramid-node[data-id="root"]');
+        if (rootNode) {
+          rootNode.click();
+        }
       }, config.autoScrollDelay);
     });
   </script>
