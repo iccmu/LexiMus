@@ -82,7 +82,7 @@
     
     .toggle-panel {
       position: fixed;
-      top: 70px;
+      top: 50%;
       left: 10px;
       width: 40px;
       height: 40px;
@@ -96,6 +96,34 @@
       align-items: center;
       justify-content: center;
       z-index: 20;
+      transform: translateY(-50%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .toggle-props-panel {
+      position: fixed;
+      top: 50%;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      transform: translateY(-50%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .toggle-panel:hover, .toggle-props-panel:hover {
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: all 0.2s ease;
     }
     
     /* Estilos para la visualización de nodos */
@@ -433,13 +461,13 @@
     }
     
     .pyramid-node.pinned {
-      border: 3px solid #FFD700 !important; /* Borde dorado para el nodo fijado */
+      border: 3px solid #FFD700 !important; /* Borde dorado para el nodo fijado principal */
       box-shadow: 0 0 10px rgba(255, 215, 0, 0.7) !important; /* Sombra dorada */
       z-index: 10 !important; /* Asegurar que esté por encima de otros nodos */
     }
     
     .pyramid-node.pinned::before {
-      content: "📌";
+      content: "1️⃣";
       position: absolute;
       top: -10px;
       right: -10px;
@@ -452,6 +480,203 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    .pyramid-node.secondary-pinned {
+      border: 3px solid #1E90FF !important; /* Borde azul para el nodo fijado secundario */
+      box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important; /* Sombra azul */
+      z-index: 9 !important; /* Justo debajo del nodo principal */
+    }
+    
+    .pyramid-node.secondary-pinned::before {
+      content: "2️⃣";
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      font-size: 12px;
+      background-color: #1E90FF;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    /* Estilos para el desplazamiento del contenedor de nodos */
+    .nodes-container {
+      transition: margin-left 0.3s ease;
+    }
+    
+    .nodes-container.shifted {
+      margin-left: 0; /* El panel YAML-JSON tiene su propio espacio */
+    }
+    
+    /* Ajustar el diseño para evitar superposiciones */
+    .main-content {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      overflow: hidden;
+    }
+    
+    .YAML-JSON {
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s ease;
+      flex-shrink: 0;
+    }
+    
+    .YAML-JSON.visible {
+      width: 40%; /* Ancho del panel cuando está visible */
+      min-width: 300px;
+      max-width: 500px;
+    }
+    
+    .nodes-container {
+      flex-grow: 1;
+      overflow: auto;
+      transition: margin-left 0.3s ease;
+    }
+    
+    /* Asegurar que el botón de alternar siempre esté visible */
+    .toggle-panel {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      z-index: 1000;
+    }
+    
+    /* Estilos para el panel de propiedades */
+    .props-panel {
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s ease;
+      flex-shrink: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      background-color: #f5f5f5;
+      z-index: 100;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    .props-panel.visible {
+      width: 40%;
+      min-width: 300px;
+      max-width: 500px;
+      padding: 20px;
+    }
+    
+    .toggle-props-panel {
+      position: fixed;
+      right: 10px;
+      top: 10px;
+      z-index: 1001;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .toggle-props-panel:hover {
+      background-color: #555;
+    }
+    
+    .main-content.props-panel-visible .nodes-container {
+      margin-right: 40%;
+      width: 60%;
+    }
+    
+    /* Cuando ambos paneles están visibles */
+    .main-content.panel-visible.props-panel-visible .nodes-container {
+      margin-left: 40%;
+      margin-right: 40%;
+      width: 20%;
+    }
+    
+    /* Estilos para la visualización del árbol de propiedades */
+    #props-tree {
+      overflow: auto;
+      max-height: calc(100% - 50px);
+    }
+    
+    .prop-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 4px;
+      background-color: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .prop-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .prop-children {
+      margin-left: 20px;
+      padding-left: 10px;
+      border-left: 2px solid #ddd;
+      margin-top: 8px;
+      display: none;
+    }
+    
+    .prop-children.visible {
+      display: block;
+    }
+    
+    .prop-toggle {
+      margin-right: 5px;
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      text-align: center;
+      line-height: 12px;
+    }
+    
+    .prop-id {
+      color: #666;
+      font-size: 0.8em;
+      margin-left: 10px;
+    }
+    
+    .prop-value {
+      color: #28a745;
+      font-style: italic;
+    }
+    
+    @media (max-width: 1200px) {
+      .props-panel.visible {
+        width: 350px;
+        min-width: 300px;
+      }
+      
+      .main-content.props-panel-visible .nodes-container {
+        margin-right: 350px;
+        width: calc(100% - 350px);
+      }
+      
+      .main-content.panel-visible.props-panel-visible .nodes-container {
+        margin-left: 350px;
+        margin-right: 350px;
+        width: calc(100% - 700px);
+      }
     }
   </style>
 </head>
@@ -470,6 +695,7 @@
     
     <div class="main-content">
       <button class="toggle-panel" id="toggle-panel">≡</button>
+      <button class="toggle-props-panel" id="toggle-props-panel">⚙</button>
       
       <div class="YAML-JSON" id="yaml-json-panel">
         <h2>Datos en formato <span id="current-format">YAML</span></h2>
@@ -481,6 +707,11 @@
         <div id="node-visualization">
           <!-- La visualización se generará aquí dinámicamente -->
         </div>
+      </div>
+      
+      <div class="props-panel" id="props-panel">
+        <h2>Jerarquía de Propiedades</h2>
+        <div id="props-tree"></div>
       </div>
     </div>
     
@@ -556,7 +787,8 @@ taxonomia:
 
     // Variables globales
     let currentFocusedNode = null;
-    let pinnedNode = null; // Nueva variable para el nodo fijado
+    let pinnedNode = null; // Nodo fijado principal
+    let secondaryPinnedNode = null; // Segundo nodo fijado
     
     // Función para convertir YAML a JSON
     function yamlToJson(yamlString) {
@@ -817,7 +1049,7 @@ taxonomia:
       
       // Primero, restablecer todos los nodos a su estado minimizado
       allNodes.forEach(node => {
-        node.classList.remove('focused', 'active-child', 'pinned');
+        node.classList.remove('focused', 'active-child', 'pinned', 'secondary-pinned');
         node.classList.add('minimized');
         
         // Restaurar colores originales según el tipo de nodo
@@ -836,11 +1068,15 @@ taxonomia:
         }
       });
       
-      // Si hay un nodo fijado, mantenerlo destacado
+      // Si hay nodos fijados, mantenerlos destacados
       if (pinnedNode) {
-        const pinnedNodeId = pinnedNode.getAttribute('data-id');
         pinnedNode.classList.add('pinned');
         pinnedNode.classList.remove('minimized');
+      }
+      
+      if (secondaryPinnedNode) {
+        secondaryPinnedNode.classList.add('secondary-pinned');
+        secondaryPinnedNode.classList.remove('minimized');
       }
       
       if (focusedNodeId) {
@@ -925,6 +1161,99 @@ taxonomia:
       
       document.getElementById('node-name').textContent = nodeName;
       document.getElementById('node-id').textContent = nodeId;
+    }
+    
+    // Función para fijar un nodo
+    function pinNode(node) {
+      if (!node) return;
+      
+      const infoPanel = document.getElementById('info-panel');
+      
+      // Si este nodo ya está fijado como secundario, solo desfijar el secundario
+      if (secondaryPinnedNode === node) {
+        secondaryPinnedNode.classList.remove('secondary-pinned');
+        secondaryPinnedNode = null;
+        
+        // Actualizar la información en el panel para mostrar solo el nodo principal
+        const primaryName = pinnedNode.textContent.trim();
+        const primaryId = pinnedNode.getAttribute('data-id');
+        
+        document.getElementById('node-name').textContent = primaryName;
+        document.getElementById('node-id').textContent = primaryId;
+        
+        return;
+      }
+      
+      // Si este nodo ya está fijado como principal, desfijar ambos
+      if (pinnedNode === node) {
+        unpinAllNodes();
+        return;
+      }
+      
+      // Si no hay ningún nodo fijado, fijar este como principal
+      if (!pinnedNode) {
+        pinnedNode = node;
+        node.classList.add('pinned');
+        
+        infoPanel.classList.add('fixed');
+        infoPanel.style.backgroundColor = '#4CAF50';
+        
+        // Actualizar la información en el panel
+        const nodeName = node.textContent.trim();
+        const nodeId = node.getAttribute('data-id');
+        document.getElementById('node-name').textContent = nodeName;
+        document.getElementById('node-id').textContent = nodeId;
+      } 
+      // Si ya hay un nodo fijado pero no un segundo, fijar este como secundario
+      else if (!secondaryPinnedNode) {
+        secondaryPinnedNode = node;
+        node.classList.add('secondary-pinned');
+        
+        // Actualizar la información en el panel para mostrar ambos nodos
+        const primaryName = pinnedNode.textContent.trim();
+        const primaryId = pinnedNode.getAttribute('data-id');
+        const secondaryName = node.textContent.trim();
+        const secondaryId = node.getAttribute('data-id');
+        
+        document.getElementById('node-name').textContent = `${primaryName} | ${secondaryName}`;
+        document.getElementById('node-id').textContent = `${primaryId} | ${secondaryId}`;
+      }
+      // Si ya hay dos nodos fijados, reemplazar el secundario
+      else if (node !== pinnedNode) {
+        // Quitar la clase del nodo secundario anterior
+        secondaryPinnedNode.classList.remove('secondary-pinned');
+        
+        // Fijar el nuevo nodo como secundario
+        secondaryPinnedNode = node;
+        node.classList.add('secondary-pinned');
+        
+        // Actualizar la información en el panel
+        const primaryName = pinnedNode.textContent.trim();
+        const primaryId = pinnedNode.getAttribute('data-id');
+        const secondaryName = node.textContent.trim();
+        const secondaryId = node.getAttribute('data-id');
+        
+        document.getElementById('node-name').textContent = `${primaryName} | ${secondaryName}`;
+        document.getElementById('node-id').textContent = `${primaryId} | ${secondaryId}`;
+      }
+    }
+    
+    // Función para desfijar todos los nodos
+    function unpinAllNodes() {
+      const infoPanel = document.getElementById('info-panel');
+      
+      if (pinnedNode) {
+        pinnedNode.classList.remove('pinned');
+        pinnedNode = null;
+      }
+      
+      if (secondaryPinnedNode) {
+        secondaryPinnedNode.classList.remove('secondary-pinned');
+        secondaryPinnedNode = null;
+      }
+      
+      infoPanel.classList.remove('fixed');
+      infoPanel.style.backgroundColor = '#333';
     }
     
     // Configurar eventos para los nodos
@@ -1016,30 +1345,8 @@ taxonomia:
           } else if (e.key === 'Enter') {
             e.preventDefault();
             
-            // Fijar la información del nodo en el panel inferior
-            const infoPanel = document.getElementById('info-panel');
-            
-            // Si el panel ya tiene la clase 'fixed', quitarla
-            // Si no, añadirla
-            if (infoPanel.classList.contains('fixed')) {
-              infoPanel.classList.remove('fixed');
-              infoPanel.style.backgroundColor = '#333'; // Restaurar color original
-              pinnedNode = null; // Eliminar el nodo fijado
-            } else {
-              infoPanel.classList.add('fixed');
-              infoPanel.style.backgroundColor = '#4CAF50'; // Cambiar color para indicar que está fijado
-              
-              // Guardar la información del nodo actual
-              const nodeName = this.textContent.trim();
-              const nodeId = this.getAttribute('data-id');
-              
-              document.getElementById('node-name').textContent = nodeName;
-              document.getElementById('node-id').textContent = nodeId;
-              
-              // Fijar este nodo visualmente
-              pinnedNode = this;
-              this.classList.add('pinned');
-            }
+            // Usar la función pinNode para manejar la fijación/desfijación
+            pinNode(this);
             
             // Actualizar el estado visual de los nodos
             updateNodesVisualState(currentFocusedNode ? currentFocusedNode.getAttribute('data-id') : null);
@@ -1082,30 +1389,8 @@ taxonomia:
         if (e.key === 'Enter' && currentFocusedNode) {
           e.preventDefault();
           
-          // Fijar la información del nodo en el panel inferior
-          const infoPanel = document.getElementById('info-panel');
-          
-          // Si el panel ya tiene la clase 'fixed', quitarla
-          // Si no, añadirla
-          if (infoPanel.classList.contains('fixed')) {
-            infoPanel.classList.remove('fixed');
-            infoPanel.style.backgroundColor = '#333'; // Restaurar color original
-            pinnedNode = null; // Eliminar el nodo fijado
-          } else {
-            infoPanel.classList.add('fixed');
-            infoPanel.style.backgroundColor = '#4CAF50'; // Cambiar color para indicar que está fijado
-            
-            // Guardar la información del nodo actual
-            const nodeName = currentFocusedNode.textContent.trim();
-            const nodeId = currentFocusedNode.getAttribute('data-id');
-            
-            document.getElementById('node-name').textContent = nodeName;
-            document.getElementById('node-id').textContent = nodeId;
-            
-            // Fijar este nodo visualmente
-            pinnedNode = currentFocusedNode;
-            currentFocusedNode.classList.add('pinned');
-          }
+          // Usar la función pinNode para manejar la fijación/desfijación
+          pinNode(currentFocusedNode);
           
           // Actualizar el estado visual de los nodos
           updateNodesVisualState(currentFocusedNode.getAttribute('data-id'));
@@ -1438,10 +1723,27 @@ taxonomia:
     // Función para alternar la visibilidad del panel YAML-JSON
     document.getElementById('toggle-panel').addEventListener('click', function() {
       const panel = document.getElementById('yaml-json-panel');
-      panel.classList.toggle('visible');
+      const mainContent = document.querySelector('.main-content');
+      const nodesContainer = document.getElementById('nodes-container');
       
-      // Cambiar el ícono del botón
-      this.textContent = panel.classList.contains('visible') ? '×' : '≡';
+      panel.classList.toggle('visible');
+      mainContent.classList.toggle('panel-visible');
+      
+      // Si el panel está visible, desplazar el contenedor de nodos a la derecha
+      if (panel.classList.contains('visible')) {
+        this.textContent = '×'; // Cambiar el ícono del botón a una X
+      } else {
+        this.textContent = '≡'; // Cambiar el ícono del botón a barras
+      }
+      
+      // Actualizar los indicadores de navegación después de un breve retraso
+      // para permitir que la animación de desplazamiento termine
+      setTimeout(checkForOverflow, 300);
+      
+      // Forzar un reflow para que el contenedor de nodos se ajuste correctamente
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 350);
     });
     
     // Evento para cambiar entre formatos
@@ -1531,6 +1833,156 @@ taxonomia:
       }
     }
     
+    // Función para alternar la visibilidad del panel de propiedades
+    document.getElementById('toggle-props-panel').addEventListener('click', function() {
+      const panel = document.getElementById('props-panel');
+      const mainContent = document.querySelector('.main-content');
+      
+      panel.classList.toggle('visible');
+      mainContent.classList.toggle('props-panel-visible');
+      
+      // Si el panel está visible, cambiar el ícono del botón
+      if (panel.classList.contains('visible')) {
+        this.textContent = '×'; // Cambiar el ícono del botón a una X
+      } else {
+        this.textContent = '⚙'; // Cambiar el ícono del botón a engranaje
+      }
+      
+      // Actualizar los indicadores de navegación después de un breve retraso
+      setTimeout(checkForOverflow, 300);
+      
+      // Forzar un reflow para que el contenedor de nodos se ajuste correctamente
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 350);
+    });
+    
+    // Función para cargar y mostrar la jerarquía de propiedades
+    async function loadPropertiesHierarchy() {
+      try {
+        // En un entorno real, esto sería una llamada a la API
+        // Por ahora, usamos el ejemplo de props.json directamente
+        const propsData = {
+          "id": "root-game-123",
+          "VideoJuego": {
+            "id": "game-root-456",
+            "Personajes": {
+              "id": "characters-789",
+              "Heroe": {
+                "id": "hero-abc",
+                "value": null
+              },
+              "Villano": {
+                "id": "villain-def",
+                "value": null
+              }
+            },
+            "Items": {
+              "id": "items-ghi",
+              "Arma": {
+                "id": "weapon-jkl",
+                "value": null
+              },
+              "Pocion": {
+                "id": "potion-mno",
+                "value": null
+              }
+            },
+            "Aliados": {
+              "id": "allies-pqr",
+              "Guerrero": {
+                "id": "warrior-stu",
+                "value": null
+              },
+              "Mago": {
+                "id": "mage-vwx",
+                "value": null
+              }
+            }
+          }
+        };
+        
+        renderPropertiesTree(propsData);
+      } catch (error) {
+        console.error('Error loading properties hierarchy:', error);
+        document.getElementById('props-tree').innerHTML = '<p>Error al cargar la jerarquía de propiedades.</p>';
+      }
+    }
+    
+    // Función para renderizar el árbol de propiedades
+    function renderPropertiesTree(data, parentElement = null) {
+      const container = parentElement || document.getElementById('props-tree');
+      
+      // Limpiar el contenedor si es el contenedor principal
+      if (!parentElement) {
+        container.innerHTML = '';
+      }
+      
+      // Recorrer las propiedades del objeto
+      Object.entries(data).forEach(([key, value]) => {
+        // Ignorar la propiedad "id" cuando está sola
+        if (key === 'id' || key === 'value') return;
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'prop-item';
+        
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'prop-item-header';
+        
+        // Determinar si este nodo tiene hijos
+        const hasChildren = typeof value === 'object' && value !== null && 
+                            Object.keys(value).some(k => k !== 'id' && k !== 'value');
+        
+        // Crear el contenido del encabezado
+        let headerContent = '';
+        if (hasChildren) {
+          headerContent += '<span class="prop-toggle">▶</span>';
+        } else {
+          headerContent += '<span class="prop-toggle" style="visibility:hidden">▶</span>';
+        }
+        
+        headerContent += key;
+        
+        // Añadir el ID si existe
+        if (value && value.id) {
+          headerContent += `<span class="prop-id">(ID: ${value.id})</span>`;
+        }
+        
+        // Añadir el valor si existe y no es null
+        if (value && value.value !== undefined && value.value !== null) {
+          headerContent += `<span class="prop-value">${value.value}</span>`;
+        }
+        
+        headerDiv.innerHTML = headerContent;
+        itemDiv.appendChild(headerDiv);
+        
+        // Si tiene hijos, crear un contenedor para ellos
+        if (hasChildren) {
+          const childrenDiv = document.createElement('div');
+          childrenDiv.className = 'prop-children';
+          itemDiv.appendChild(childrenDiv);
+          
+          // Añadir evento para expandir/colapsar
+          headerDiv.addEventListener('click', function() {
+            childrenDiv.classList.toggle('visible');
+            const toggle = this.querySelector('.prop-toggle');
+            if (childrenDiv.classList.contains('visible')) {
+              toggle.textContent = '▼';
+              
+              // Si aún no se han renderizado los hijos, hacerlo ahora
+              if (childrenDiv.children.length === 0) {
+                renderPropertiesTree(value, childrenDiv);
+              }
+            } else {
+              toggle.textContent = '▶';
+            }
+          });
+        }
+        
+        container.appendChild(itemDiv);
+      });
+    }
+    
     // Inicializar la visualización al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
       // Verificar que jsyaml esté cargado
@@ -1572,6 +2024,131 @@ taxonomia:
           rootNode.click();
         }
       }, config.autoScrollDelay);
+      
+      // Añadir estilos CSS para el desplazamiento del contenedor de nodos
+      const style = document.createElement('style');
+      style.textContent = `
+        /* Estilos existentes para nodos fijados... */
+        
+        /* Ajustar el diseño para evitar superposiciones */
+        .main-content {
+          display: flex;
+          flex-direction: row;
+          align-items: stretch;
+          overflow: hidden;
+        }
+        
+        .YAML-JSON {
+          width: 0;
+          overflow: hidden;
+          transition: width 0.3s ease;
+          flex-shrink: 0;
+        }
+        
+        .YAML-JSON.visible {
+          width: 40%; /* Ancho del panel cuando está visible */
+          min-width: 300px;
+          max-width: 500px;
+        }
+        
+        .nodes-container {
+          flex-grow: 1;
+          overflow: auto;
+          transition: margin-left 0.3s ease, width 0.3s ease;
+          width: 100%;
+        }
+        
+        .main-content.panel-visible .nodes-container {
+          margin-left: 40%; /* Debe coincidir con el ancho del panel */
+          width: 60%; /* El ancho restante */
+        }
+        
+        @media (max-width: 1200px) {
+          .YAML-JSON.visible {
+            width: 350px;
+            min-width: 300px;
+          }
+          
+          .main-content.panel-visible .nodes-container {
+            margin-left: 350px;
+            width: calc(100% - 350px);
+          }
+        }
+        
+        /* Asegurar que el botón de alternar siempre esté visible */
+        .toggle-panel {
+          position: fixed;
+          left: 10px;
+          top: 10px;
+          z-index: 1001;
+          background-color: #333;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 18px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .toggle-panel:hover {
+          background-color: #555;
+        }
+        
+        /* Asegurar que el contenido de la visualización se ajuste correctamente */
+        .pyramid-container {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.3s ease;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Asegurarse de que el contenedor de nodos se ajuste cuando cambia el tamaño de la ventana
+      window.addEventListener('resize', function() {
+        checkForOverflow();
+        
+        // Ajustar el tamaño del contenedor de nodos si el panel está visible
+        const panel = document.getElementById('yaml-json-panel');
+        const nodesContainer = document.getElementById('nodes-container');
+        
+        if (panel && panel.classList.contains('visible') && nodesContainer) {
+          // Forzar un reflow para que el contenedor se ajuste correctamente
+          nodesContainer.style.display = 'none';
+          setTimeout(() => {
+            nodesContainer.style.display = '';
+          }, 10);
+        }
+      });
+      
+      // Cargar la jerarquía de propiedades
+      loadPropertiesHierarchy();
+      
+      // Añadir estilos CSS adicionales para manejar ambos paneles
+      const additionalStyle = document.createElement('style');
+      additionalStyle.textContent = `
+        /* Ajustes para cuando ambos paneles están visibles */
+        .main-content.panel-visible.props-panel-visible .nodes-container {
+          margin-left: 40%;
+          margin-right: 40%;
+          width: 20%;
+        }
+        
+        @media (max-width: 1200px) {
+          .main-content.panel-visible.props-panel-visible .nodes-container {
+            margin-left: 350px;
+            margin-right: 350px;
+            width: calc(100% - 700px);
+          }
+        }
+      `;
+      document.head.appendChild(additionalStyle);
     });
   </script>
 </body>
