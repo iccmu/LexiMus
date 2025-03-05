@@ -878,9 +878,37 @@ taxonomia:
               if (childrenContainer.classList.contains('visible')) {
                 this.classList.remove('collapsed');
                 this.classList.add('expanded');
+                
+                // Si se expande, hacer visibles los nodos hijos para la navegación
+                const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+                childNodes.forEach(child => {
+                  child.classList.remove('minimized');
+                  child.classList.add('active-child');
+                });
               } else {
                 this.classList.remove('expanded');
                 this.classList.add('collapsed');
+              }
+            } else {
+              // Verificar si este nodo es hijo de otro nodo
+              const parentId = this.getAttribute('data-parent');
+              if (parentId && parentId !== 'null') {
+                // Buscar el contenedor de hijos del padre
+                const parentContainer = document.getElementById(`children_${parentId}`);
+                if (parentContainer && parentContainer.classList.contains('visible')) {
+                  // Colapsar el contenedor del padre
+                  parentContainer.classList.remove('visible');
+                  
+                  // Actualizar la clase del nodo padre
+                  const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+                  if (parentNode) {
+                    parentNode.classList.remove('expanded');
+                    parentNode.classList.add('collapsed');
+                    
+                    // Enfocar el nodo padre
+                    parentNode.click();
+                  }
+                }
               }
             }
           }
@@ -949,6 +977,27 @@ taxonomia:
             } else {
               currentFocusedNode.classList.remove('expanded');
               currentFocusedNode.classList.add('collapsed');
+            }
+          } else {
+            // Verificar si este nodo es hijo de otro nodo
+            const parentId = currentFocusedNode.getAttribute('data-parent');
+            if (parentId && parentId !== 'null') {
+              // Buscar el contenedor de hijos del padre
+              const parentContainer = document.getElementById(`children_${parentId}`);
+              if (parentContainer && parentContainer.classList.contains('visible')) {
+                // Colapsar el contenedor del padre
+                parentContainer.classList.remove('visible');
+                
+                // Actualizar la clase del nodo padre
+                const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+                if (parentNode) {
+                  parentNode.classList.remove('expanded');
+                  parentNode.classList.add('collapsed');
+                  
+                  // Enfocar el nodo padre
+                  parentNode.click();
+                }
+              }
             }
           }
           
