@@ -481,11 +481,13 @@ async def save_rdf(filename: str, request: Request):
         # Obtener el JSON de la solicitud
         data = await request.json()
         json_data = data.get('json')
+        relations_data = data.get('relations', [])  # Obtener las relaciones definidas
         
         if not json_data:
             raise HTTPException(status_code=400, detail="No se proporcionó contenido JSON")
         
         print("JSON recibido:", json_data)  # Debug
+        print("Relaciones recibidas:", relations_data)  # Debug
         
         # Obtener el nombre base del archivo sin extensión
         base_filename = filename.rsplit('.', 1)[0]
@@ -520,6 +522,9 @@ async def save_rdf(filename: str, request: Request):
             ontology = URIRef("")
             g.add((ontology, RDF.type, OWL.Ontology))
             
+            # Diccionario para almacenar las clases creadas (para referencias posteriores)
+            classes = {}
+            
             # Procesar el JSON y crear las clases y propiedades
             def process_json_to_owl(data, parent=None):
                 for key, value in data.items():
@@ -531,6 +536,9 @@ async def save_rdf(filename: str, request: Request):
                     g.add((class_uri, RDF.type, OWL.Class))
                     g.add((class_uri, RDFS.label, Literal(key)))
                     
+                    # Guardar referencia a la clase
+                    classes[key] = class_uri
+                    
                     # Añadir subclase si hay padre
                     if parent:
                         g.add((class_uri, RDFS.subClassOf, parent))
@@ -539,8 +547,84 @@ async def save_rdf(filename: str, request: Request):
                     if isinstance(value, dict):
                         process_json_to_owl(value, class_uri)
             
-            # Procesar el JSON
+            # Procesar el JSON para crear la jerarquía de clases
             process_json_to_owl(json_data)
+            
+            # Procesar las relaciones definidas
+            for relation in relations_data:
+                source_class = relation.get('source')
+                target_class = relation.get('target')
+                relation_type = relation.get('type')
+                relation_name = relation.get('name', 'hasRelation')
+                
+                if source_class in classes and target_class in classes:
+                    source_uri = classes[source_class]
+                    target_uri = classes[target_class]
+                    
+                    # Crear la propiedad de objeto para la relación
+                    relation_uri = onto[relation_name.replace(" ", "_")]
+                    
+                    # Definir el tipo de relación
+                    if relation_type == 'objectProperty':
+                        # Propiedad de objeto estándar
+                        g.add((relation_uri, RDF.type, OWL.ObjectProperty))
+                        g.add((relation_uri, RDFS.label, Literal(relation_name)))
+                        g.add((relation_uri, RDFS.domain, source_uri))
+                        g.add((relation_uri, RDFS.range, target_uri))
+                    
+                    elif relation_type == 'equivalentClass':
+                        # Clases equivalentes
+                        g.add((source_uri, OWL.equivalentClass, target_uri))
+                    
+                    elif relation_type == 'disjointWith':
+                        # Clases disjuntas
+                        g.add((source_uri, OWL.disjointWith, target_uri))
+                    
+                    elif relation_type == 'inverseOf':
+                        # Propiedades inversas
+                        inverse_relation_uri = onto[f"inverse_{relation_name}".replace(" ", "_")]
+                        g.add((inverse_relation_uri, RDF.type, OWL.ObjectProperty))
+                        g.add((inverse_relation_uri, RDFS.label, Literal(f"inverse of {relation_name}")))
+                        g.add((relation_uri, OWL.inverseOf, inverse_relation_uri))
+                        g.add((inverse_relation_uri, RDFS.domain, target_uri))
+                        g.add((inverse_relation_uri, RDFS.range, source_uri))
+                    
+                    elif relation_type == 'symmetricProperty':
+                        # Propiedad simétrica
+                        g.add((relation_uri, RDF.type, OWL.ObjectProperty))
+                        g.add((relation_uri, RDF.type, OWL.SymmetricProperty))
+                        g.add((relation_uri, RDFS.label, Literal(relation_name)))
+                        g.add((relation_uri, RDFS.domain, source_uri))
+                        g.add((relation_uri, RDFS.range, target_uri))
+                    
+                    elif relation_type == 'transitiveProperty':
+                        # Propiedad transitiva
+                        g.add((relation_uri, RDF.type, OWL.ObjectProperty))
+                        g.add((relation_uri, RDF.type, OWL.TransitiveProperty))
+                        g.add((relation_uri, RDFS.label, Literal(relation_name)))
+                        g.add((relation_uri, RDFS.domain, source_uri))
+                        g.add((relation_uri, RDFS.range, target_uri))
+                    
+                    # Restricciones de cardinalidad si están definidas
+                    min_cardinality = relation.get('minCardinality')
+                    max_cardinality = relation.get('maxCardinality')
+                    
+                    if min_cardinality is not None or max_cardinality is not None:
+                        # Crear una restricción
+                        restriction_node = URIRef(f"_:restriction_{source_class}_{relation_name}_{target_class}")
+                        g.add((restriction_node, RDF.type, OWL.Restriction))
+                        g.add((restriction_node, OWL.onProperty, relation_uri))
+                        
+                        if min_cardinality is not None:
+                            g.add((restriction_node, OWL.minCardinality, 
+                                  Literal(min_cardinality, datatype=XSD.nonNegativeInteger)))
+                        
+                        if max_cardinality is not None:
+                            g.add((restriction_node, OWL.maxCardinality, 
+                                  Literal(max_cardinality, datatype=XSD.nonNegativeInteger)))
+                        
+                        # Añadir la restricción como subclase
+                        g.add((source_uri, RDFS.subClassOf, restriction_node))
             
             # Serializar a OWL/XML
             owl_content = g.serialize(format='pretty-xml')
@@ -560,4 +644,50 @@ async def save_rdf(filename: str, request: Request):
         
     except Exception as e:
         print(f"Error general: {str(e)}")  # Debug
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Añadir una nueva ruta para gestionar relaciones
+@app.get("/manage-relations/{filename}", response_class=HTMLResponse)
+async def manage_relations(request: Request, filename: str):
+    return templates.TemplateResponse("manage-relations.html", {"request": request})
+
+# Endpoint para obtener las clases disponibles para crear relaciones
+@app.get("/api/classes/{filename}")
+async def get_classes(filename: str):
+    try:
+        # Buscar el archivo en todas las carpetas de usuario
+        base_path = "user_folders"
+        file_path = None
+        
+        for root, dirs, files in os.walk(base_path):
+            if filename in files:
+                file_path = os.path.join(root, filename)
+                break
+        
+        if not file_path:
+            raise HTTPException(status_code=404, detail="Archivo no encontrado")
+        
+        # Leer el JSON
+        with open(file_path, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+        
+        # Extraer las clases del JSON
+        classes = []
+        
+        def extract_classes(data, path=""):
+            for key, value in data.items():
+                if key == 'id':
+                    continue
+                
+                current_path = f"{path}.{key}" if path else key
+                classes.append(current_path)
+                
+                if isinstance(value, dict):
+                    extract_classes(value, current_path)
+        
+        extract_classes(json_data)
+        
+        return {"classes": classes}
+    
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

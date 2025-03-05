@@ -4,28 +4,48 @@
       "Sistemas de Control": {
         "Movimiento": {
           "value": null,
-          "id": "38bc3563-e2d6-4b5e-b0f1-3a4109c8fb0b"
+          "id": "bfc5b858-04ef-4b1e-b8c9-47a0eb3de762"
         },
         "Interacción": {
           "value": null,
-          "id": "e9278240-7378-4025-b716-0a0d7a70376d"
+          "id": "df7f01c5-015a-4d27-937c-2303d75cf5db"
         },
-        "id": "91641936-d002-4465-b657-e6db2d05ec67"
+        "id": "46594219-78e5-45a5-83a7-fee977e06b12"
       },
       "Objetivos": {
         "Principales": {
           "value": null,
-          "id": "e7c429ad-af4c-46f2-8389-9ceffd63528c"
+          "id": "9c8a2ddf-81e5-4132-a731-87c2ebfd749e"
         },
         "Secundarios": {
           "value": null,
-          "id": "ddafd8c9-8dc7-437e-92bf-d14077e820d3"
+          "id": "d1c7ca81-386d-4b8c-8570-a21ca2acc9a1"
         },
-        "id": "a387d555-bf42-4e96-9c58-bc8cd9c5a927"
+        "id": "29f69e33-4ead-4566-bb5f-4e3ad234728c"
       },
-      "id": "0b6332b4-8e5e-4018-bd24-4a0561e0e53f"
+      "id": "bb1bf320-472a-4b2b-a667-f509c10db076"
     },
-    "id": "c039c307-2aed-4303-9ac7-2706eb5fd819"
+    "id": "b55393c0-badc-49d2-accc-659032e8abe0"
   },
-  "id": "3d15d684-55d6-466b-a1b8-7feb12f14de4"
+  "relationships": [
+    {
+      "type": "Transitiva",
+      "from": "Sistemas de Control",
+      "to": "Interacción",
+      "id": "75fa092a-d956-42e6-9da5-7ff43c14c7a4"
+    },
+    {
+      "type": "Transitiva",
+      "from": "Interacción",
+      "to": "Secundarios",
+      "id": "a914237c-a8a8-4393-ac5b-e0b340395853"
+    },
+    {
+      "type": "Simétrica",
+      "from": "Secundarios",
+      "to": "Principales",
+      "id": "775e69a8-e616-47cc-8e0b-e4cbce64f1bc"
+    }
+  ],
+  "id": "4adca021-1c03-4a17-bbea-7fa31e8939db"
 }

@@ -4,28 +4,36 @@
       "Sistemas de Control": {
         "Movimiento": {
           "value": null,
-          "id": "190e4707-5a1d-4fb6-af22-cce841c9e712"
+          "id": "93aa7be9-c9c3-40a6-8b82-0193d032e342"
         },
         "Interacción": {
           "value": null,
-          "id": "1db9251b-5663-49eb-a7c2-cedfded34843"
+          "id": "ddd92eab-557a-406c-b99d-a3501dea9587"
         },
-        "id": "c0b8d6a5-19c6-4f8b-92a6-db9d238ab4da"
+        "id": "356f4dbc-226c-4020-8e71-d9b683b12c80"
       },
       "Objetivos": {
         "Principales": {
           "value": null,
-          "id": "c97544ca-0ef8-4441-97ef-7d335daa469d"
+          "id": "79ac2575-ce76-4d20-b821-da0024c56954"
         },
         "Secundarios": {
           "value": null,
-          "id": "0bbd3ed5-9bd7-4abb-85c8-f4807e46ae87"
+          "id": "cf36133c-b72c-4dfd-8f9b-a44f292fff5d"
         },
-        "id": "b45faab3-c908-4814-8938-5a03807d4cfb"
+        "id": "1ea0ce00-3746-4523-a851-94a3d2ddc2f2"
       },
-      "id": "62a48479-308c-4140-ba34-5546591c77d0"
+      "id": "0c6e50e5-1abd-4bc7-9965-927ffbde9a98"
     },
-    "id": "1fcf4e9c-d6b0-49b1-9e44-61f189557143"
+    "id": "c03b6a4c-c0c2-4a0f-a2be-37a07d225ce8"
   },
-  "id": "69640b33-4dec-4796-b150-edf9e526d8de"
+  "relationships": [
+    {
+      "type": "Inversamente Funcional",
+      "from": "Sistemas de Control",
+      "to": "Objetivos",
+      "id": "6e1cf8a3-bea7-4b00-b7e7-0112352dae6e"
+    }
+  ],
+  "id": "5843842f-9304-46d1-ab52-e3bf64a6b579"
 }

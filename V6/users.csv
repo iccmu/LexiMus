@@ -1,6 +1,0 @@
-username,password,is_superuser,created_by
-uno,uno,True,system
-USAL,USAL,True,uno
-UR,UR,True,uno
-UCM,UCM,True,uno
-iss,iss,False,UCM

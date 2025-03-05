@@ -40,6 +40,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            white-space: nowrap; /* Evita que el texto se envuelva dentro del botón */
         }
 
         .json-preview {
@@ -857,13 +858,36 @@
             background-color: #e3f2fd;
             transform: translateX(5px);
         }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap; /* Permite que los botones se envuelvan si no hay suficiente espacio */
+        }
+
+        .relation-btn {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap; /* Evita que el texto se envuelva dentro del botón */
+        }
+
+        .relation-btn:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="top-bar">
             <h2>Añadir Taxonomía - <span id="filename"></span></h2>
-            <button class="back-btn" onclick="window.location.href='/dashboard'">Volver</button>
+            <div class="button-group">
+                <button class="back-btn" onclick="window.location.href='/dashboard'">Volver</button>
+                <button id="manageRelationsBtn" class="relation-btn">Gestionar Relaciones</button>
+            </div>
         </div>
 
         <div class="content-container">
@@ -4568,6 +4592,47 @@ ${indent}    </rdfs:subClassOf>`;
                 alert('Error al guardar el archivo OWL: ' + error.message);
             }
         }
+
+        // Añadir este código al final del script
+        document.getElementById('manageRelationsBtn').addEventListener('click', function() {
+            window.location.href = `/manage-relations/${filename}`;
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticación
+            if (!sessionStorage.getItem('user')) {
+                window.location.href = '/';
+            }
+
+            const urlParts = window.location.pathname.split('/');
+            const filename = decodeURIComponent(urlParts[urlParts.length - 1]);
+            
+            const filenameElement = document.getElementById('filename');
+            if (filenameElement) {
+                filenameElement.textContent = filename;
+            }
+
+            // Cargar el JSON específico del archivo
+            loadJsonContent(filename);
+            
+            // Inicializar event listeners y otros elementos aquí
+            const yamlInput = document.getElementById('yamlInput');
+            if (yamlInput) {
+                yamlInput.addEventListener('input', debounce(function() {
+                    // Código existente del event listener
+                }, 300));
+            }
+            
+            // Añadir el event listener al botón de gestión de relaciones
+            const manageRelationsBtn = document.getElementById('manageRelationsBtn');
+            if (manageRelationsBtn) {
+                manageRelationsBtn.addEventListener('click', function() {
+                    window.location.href = `/manage-relations/${filename}`;
+                });
+            }
+            
+            // Otros event listeners que puedan estar causando problemas
+        });
     </script>
 </body>
 </html> 

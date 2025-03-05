@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador de Taxonomía</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .top-bar {
+      background-color: #333;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px;
+      box-sizing: border-box;
+    }
+    
+    .top-bar h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .controls button, .controls select {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    
+    .main-content {
+      display: flex;
+      height: calc(100vh - 60px);
+      position: relative;
+    }
+    
+    .YAML-JSON {
+      width: 30%;
+      background-color: #f5f5f5;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow: auto;
+      transform: translateX(-100%);
+      position: absolute;
+      height: 100%;
+      transition: transform 0.3s ease;
+      z-index: 10;
+    }
+    
+    .YAML-JSON.visible {
+      transform: translateX(0);
+    }
+    
+    .nodes-container {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    
+    .toggle-panel {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      width: 40px;
+      height: 40px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+    
+    /* Estilos para la visualización de nodos */
+    .pyramid-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      padding: 40px 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .pyramid-level {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      width: 100%;
+      padding: 0 10px;
+    }
+    
+    /* Contenedor para un nodo y sus hijos */
+    .node-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    /* Contenedor para los hijos de un nodo */
+    .children-container {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+      background-color: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      max-width: 300px;
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .children-container.visible {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    /* Estilos para nodos colapsados/expandidos */
+    .pyramid-node.collapsed::after {
+      content: "▶";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    
+    .pyramid-node.expanded::after {
+      content: "▼";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    
+    .pyramid-node {
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      min-width: 100px;
+      max-width: 150px;
+      word-wrap: break-word;
+      flex-shrink: 0;
+      position: relative;
+    }
+    
+    /* Nodos minimizados (subnodos cuando su padre no está activo) */
+    .pyramid-node.minimized {
+      transform: scale(0.8);
+      opacity: 0.7;
+      filter: saturate(0.7);
+    }
+    
+    /* Estilos para los diferentes tipos de nodos */
+    .pyramid-node.main {
+      background-color: #2196F3; /* Azul para el nodo principal */
+      color: white;
+    }
+    
+    .pyramid-node.category {
+      background-color: #4CAF50; /* Verde para categorías */
+      color: white;
+    }
+    
+    .pyramid-node.subcategory {
+      background-color: #FF9800; /* Naranja para subcategorías */
+      color: white;
+    }
+    
+    .pyramid-node.example {
+      background-color: #9C27B0; /* Púrpura para ejemplos */
+      color: white;
+    }
+    
+    /* Nodo actualmente seleccionado/enfocado */
+    .pyramid-node.focused {
+      transform: scale(1.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 5;
+      background-color: #1976D2; /* Azul más oscuro para el nodo enfocado */
+      border: 3px solid #0D47A1; /* Borde azul oscuro */
+      color: white;
+      font-weight: bold;
+    }
+    
+    /* Efecto de brillo para el nodo enfocado */
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(25, 118, 210, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0); }
+    }
+    
+    .pyramid-node.focused {
+      animation: pulse 2s infinite;
+    }
+    
+    /* Hijos directos del nodo activo */
+    .pyramid-node.active-child {
+      transform: scale(1);
+      opacity: 1;
+      filter: saturate(1);
+      box-shadow: 0 3px 7px rgba(0,0,0,0.25);
+    }
+    
+    /* Indicador visual para nodos con hijos */
+    .pyramid-node.has-children::after {
+      content: "▼";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 70%;
+      font-family: monospace;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      resize: none;
+    }
+    
+    #update-visualization {
+      margin-top: 10px;
+      padding: 8px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    /* Estilos para pantallas pequeñas */
+    @media (max-width: 768px) {
+      .pyramid-node {
+        min-width: 80px;
+        padding: 10px 15px;
+        font-size: 14px;
+      }
+      
+      .pyramid-level {
+        gap: 15px;
+      }
+    }
+    
+    /* Indicadores de navegación */
+    .navigation-indicator {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    
+    .indicator-left {
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .indicator-right {
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .indicator-up {
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .indicator-down {
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    /* Estilos para el indicador de más nodos */
+    .more-nodes-indicator {
+      background-color: #607D8B;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      display: inline-block;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .more-nodes-indicator:hover {
+      background-color: #455A64;
+      transform: scale(1.05);
+    }
+    
+    /* Contenedor para los nodos ocultos */
+    .hidden-nodes-container {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+      background-color: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .hidden-nodes-container.visible {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <h1>Visualizador de Taxonomía</h1>
+      <div class="controls">
+        <button id="load-data">Cargar Datos</button>
+        <select id="format-selector">
+          <option value="yaml">YAML</option>
+          <option value="json">JSON</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="main-content">
+      <button class="toggle-panel" id="toggle-panel">≡</button>
+      
+      <div class="YAML-JSON" id="yaml-json-panel">
+        <h2>Datos en formato <span id="current-format">YAML</span></h2>
+        <textarea id="data-display"></textarea>
+        <button id="update-visualization">Actualizar Visualización</button>
+      </div>
+      
+      <div class="nodes-container" id="nodes-container">
+        <div id="node-visualization">
+          <!-- La visualización se generará aquí dinámicamente -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incluir la biblioteca js-yaml para procesar YAML -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  
+  <script>
+    // Configuración personalizable
+    const config = {
+      maxVisibleChildren: 6,  // Número máximo de nodos hijos visibles inicialmente
+      animationDuration: 300, // Duración de las animaciones en milisegundos
+      autoScrollDelay: 100,   // Retraso para el desplazamiento automático
+      collapseByDefault: true // Colapsar nodos hijos por defecto
+    };
+    
+    // Datos de ejemplo en formato YAML
+    const yamlData = `# Ejemplo de taxonomía en YAML
+taxonomia:
+  - categoria: Animales
+    subcategorias:
+      - nombre: Mamíferos
+        ejemplos:
+          - Perro
+          - Gato
+          - Elefante
+          - León
+          - Tigre
+          - Oso
+          - Jirafa
+          - Cebra
+          - Rinoceronte
+          - Hipopótamo
+      - nombre: Aves
+        ejemplos:
+          - Águila
+          - Pingüino
+          - Colibrí
+          - Búho
+          - Pato
+          - Gallina
+          - Pavo
+          - Flamenco
+  - categoria: Plantas
+    subcategorias:
+      - nombre: Árboles
+        ejemplos:
+          - Roble
+          - Pino
+          - Sauce
+          - Abeto
+          - Cedro
+          - Arce
+          - Olmo
+      - nombre: Flores
+        ejemplos:
+          - Rosa
+          - Tulipán
+          - Girasol
+          - Margarita
+          - Orquídea
+          - Lirio
+          - Clavel
+          - Violeta`;
+
+    // Variables globales
+    let currentFocusedNode = null;
+    
+    // Función para convertir YAML a JSON
+    function yamlToJson(yamlString) {
+      return jsyaml.load(yamlString);
+    }
+    
+    // Función para convertir JSON a YAML
+    function jsonToYaml(jsonObj) {
+      return jsyaml.dump(jsonObj);
+    }
+    
+    // Función para generar la visualización de nodos
+    function updateNodeVisualization(data) {
+      const nodeVisualization = document.getElementById('node-visualization');
+      
+      try {
+        if (typeof data === 'string') {
+          // Si es YAML, convertir a JSON
+          data = yamlToJson(data);
+        }
+        
+        console.log("Datos procesados:", data);
+        
+        // Estructura para organizar los nodos por niveles
+        const levels = [
+          [{ text: 'Taxonomía', type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz
+          [], // Nivel 1: Categorías
+          [], // Nivel 2: Subcategorías
+          []  // Nivel 3: Ejemplos
+        ];
+        
+        // Procesar categorías (nivel 1)
+        if (data.taxonomia && Array.isArray(data.taxonomia)) {
+          data.taxonomia.forEach((categoria, catIndex) => {
+            levels[1].push({
+              text: categoria.categoria,
+              type: 'category',
+              parent: 'root',
+              id: `cat_${catIndex}`
+            });
+            
+            // Procesar subcategorías (nivel 2)
+            if (categoria.subcategorias && Array.isArray(categoria.subcategorias)) {
+              categoria.subcategorias.forEach((subcategoria, subIndex) => {
+                levels[2].push({
+                  text: subcategoria.nombre,
+                  type: 'subcategory',
+                  parent: `cat_${catIndex}`,
+                  id: `subcat_${catIndex}_${subIndex}`
+                });
+                
+                // Procesar ejemplos (nivel 3)
+                if (subcategoria.ejemplos && Array.isArray(subcategoria.ejemplos)) {
+                  subcategoria.ejemplos.forEach((ejemplo, ejIndex) => {
+                    levels[3].push({
+                      text: ejemplo,
+                      type: 'example',
+                      parent: `subcat_${catIndex}_${subIndex}`,
+                      id: `example_${catIndex}_${subIndex}_${ejIndex}`
+                    });
+                  });
+                }
+              });
+            }
+          });
+        }
+        
+        console.log("Niveles generados:", levels);
+        
+        // Generar HTML para la visualización
+        let html = '<div class="pyramid-container">';
+        
+        // Para cada nivel (excepto el último que se manejará de forma especial)
+        for (let levelIndex = 0; levelIndex < levels.length - 1; levelIndex++) {
+          const level = levels[levelIndex];
+          
+          if (level.length > 0) {
+            html += `<div class="pyramid-level" data-level="${levelIndex}">`;
+            
+            // Agrupar nodos por padre
+            const nodesByParent = {};
+            level.forEach(node => {
+              const parentId = node.parent || 'null';
+              if (!nodesByParent[parentId]) {
+                nodesByParent[parentId] = [];
+              }
+              nodesByParent[parentId].push(node);
+            });
+            
+            // Para cada grupo de nodos con el mismo padre
+            const possibleParents = Object.keys(nodesByParent);
+            possibleParents.forEach(parentId => {
+              const children = nodesByParent[parentId] || [];
+              
+              children.forEach((node, nodeIndex) => {
+                const nodeType = node.type;
+                const parentAttr = node.parent ? `data-parent="${node.parent}"` : 'data-parent="null"';
+                const hasChildren = levels[levelIndex + 1].some(child => child.parent === node.id);
+                const collapseClass = hasChildren ? 'collapsed' : '';
+                
+                // Crear un grupo para el nodo y sus posibles hijos
+                html += `<div class="node-group" data-node-id="${node.id}">`;
+                
+                // El nodo principal
+                html += `<div class="pyramid-node ${nodeType} ${collapseClass}" tabindex="0" 
+                             data-row="${levelIndex}" data-col="${nodeIndex}" 
+                             ${parentAttr} data-id="${node.id}">
+                          ${node.text}
+                        </div>`;
+                
+                // Si es el último nivel antes de los ejemplos, añadir contenedor para ejemplos
+                if (levelIndex === levels.length - 2) {
+                  // Obtener los ejemplos para este nodo
+                  const examples = levels[levelIndex + 1].filter(example => example.parent === node.id);
+                  
+                  if (examples.length > 0) {
+                    // Contenedor para ejemplos (inicialmente oculto)
+                    html += `<div class="children-container" id="children_${node.id}">`;
+                    
+                    // Verificar si hay más ejemplos que el máximo configurable
+                    if (examples.length > config.maxVisibleChildren) {
+                      // Mostrar solo los primeros N ejemplos
+                      const visibleExamples = examples.slice(0, config.maxVisibleChildren);
+                      const hiddenExamples = examples.slice(config.maxVisibleChildren);
+                      
+                      // Mostrar los ejemplos visibles
+                      visibleExamples.forEach((example, exIndex) => {
+                        html += `<div class="pyramid-node ${example.type}" tabindex="0" 
+                                     data-row="${levelIndex + 1}" data-col="${exIndex}" 
+                                     data-parent="${node.id}" data-id="${example.id}">
+                                  ${example.text}
+                                </div>`;
+                      });
+                      
+                      // Añadir indicador de "más ejemplos"
+                      const moreNodesId = `more_${node.id}`;
+                      html += `<div class="more-nodes-indicator" id="${moreNodesId}" data-parent="${node.id}">
+                                +${hiddenExamples.length} más...
+                              </div>`;
+                      
+                      // Contenedor para ejemplos ocultos
+                      html += `<div class="hidden-nodes-container" id="hidden_${moreNodesId}">`;
+                      
+                      // Añadir los ejemplos ocultos
+                      hiddenExamples.forEach((example, exIndex) => {
+                        html += `<div class="pyramid-node ${example.type}" tabindex="0" 
+                                     data-row="${levelIndex + 1}" data-col="${exIndex + config.maxVisibleChildren}" 
+                                     data-parent="${node.id}" data-id="${example.id}">
+                                  ${example.text}
+                                </div>`;
+                      });
+                      
+                      html += '</div>'; // Cerrar contenedor de ejemplos ocultos
+                    } else {
+                      // Mostrar todos los ejemplos si son menos o igual que el máximo
+                      examples.forEach((example, exIndex) => {
+                        html += `<div class="pyramid-node ${example.type}" tabindex="0" 
+                                     data-row="${levelIndex + 1}" data-col="${exIndex}" 
+                                     data-parent="${node.id}" data-id="${example.id}">
+                                  ${example.text}
+                                </div>`;
+                      });
+                    }
+                    
+                    html += '</div>'; // Cerrar contenedor de ejemplos
+                  }
+                }
+                
+                html += '</div>'; // Cerrar grupo de nodo
+              });
+            });
+            
+            html += '</div>'; // Cerrar nivel
+          }
+        }
+        
+        html += '</div>'; // Cerrar contenedor principal
+        nodeVisualization.innerHTML = html;
+        
+        console.log("HTML generado:", html);
+        
+        // Configurar eventos para los indicadores de "más nodos"
+        setupMoreNodesIndicators();
+        
+        // Configurar eventos para los nodos
+        setupNodeEvents();
+        
+        // Configurar navegación con teclado
+        setupKeyboardNavigation();
+        
+        // Mostrar indicadores de navegación si es necesario
+        checkForOverflow();
+        
+      } catch (e) {
+        console.error("Error al actualizar la visualización:", e);
+        nodeVisualization.innerHTML = '<p>Error al generar la visualización. Verifica el formato de los datos.</p>';
+      }
+    }
+    
+    // Función para actualizar el estado visual de los nodos
+    function updateNodesVisualState(focusedNodeId = null) {
+      // Obtener todos los nodos
+      const allNodes = document.querySelectorAll('.pyramid-node');
+      
+      // Primero, restablecer todos los nodos a su estado minimizado
+      allNodes.forEach(node => {
+        node.classList.remove('focused', 'active-child');
+        node.classList.add('minimized');
+        
+        // Restaurar colores originales según el tipo de nodo
+        const nodeType = node.classList.contains('main') ? 'main' : 
+                         node.classList.contains('category') ? 'category' :
+                         node.classList.contains('subcategory') ? 'subcategory' : 'example';
+        
+        // Marcar nodos que tienen hijos
+        const nodeId = node.getAttribute('data-id');
+        const hasChildren = document.querySelector(`.pyramid-node[data-parent="${nodeId}"]`) !== null;
+        
+        if (hasChildren) {
+          node.classList.add('has-children');
+        } else {
+          node.classList.remove('has-children');
+        }
+      });
+      
+      if (focusedNodeId) {
+        // Obtener el nodo enfocado
+        const focusedNode = document.querySelector(`.pyramid-node[data-id="${focusedNodeId}"]`);
+        
+        if (focusedNode) {
+          // Activar el nodo enfocado
+          focusedNode.classList.add('focused');
+          focusedNode.classList.remove('minimized');
+          
+          // Mostrar información del nodo enfocado en la consola (para depuración)
+          console.log('Nodo enfocado:', focusedNode.textContent, 'ID:', focusedNodeId);
+          
+          // Activar el padre del nodo enfocado
+          const parentId = focusedNode.getAttribute('data-parent');
+          if (parentId && parentId !== 'null') {
+            const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+            if (parentNode) {
+              parentNode.classList.remove('minimized');
+            }
+            
+            // Activar los hermanos del nodo enfocado
+            const siblings = document.querySelectorAll(`.pyramid-node[data-parent="${parentId}"]`);
+            siblings.forEach(sibling => {
+              sibling.classList.remove('minimized');
+              sibling.classList.add('active-child');
+            });
+          }
+          
+          // Activar los hijos del nodo enfocado
+          const childrenNodes = document.querySelectorAll(`.pyramid-node[data-parent="${focusedNodeId}"]`);
+          childrenNodes.forEach(child => {
+            child.classList.remove('minimized');
+            child.classList.add('active-child');
+          });
+          
+          // Si el nodo enfocado es un hijo, activar sus hermanos
+          const focusedParentId = focusedNode.getAttribute('data-parent');
+          if (focusedParentId && focusedParentId !== 'null') {
+            const siblings = document.querySelectorAll(`.pyramid-node[data-parent="${focusedParentId}"]`);
+            siblings.forEach(sibling => {
+              sibling.classList.remove('minimized');
+              sibling.classList.add('active-child');
+            });
+          }
+        }
+      } else {
+        // Si no hay nodo enfocado, mostrar el nodo raíz y sus hijos normalmente
+        const rootNode = document.querySelector('.pyramid-node[data-id="root"]');
+        if (rootNode) {
+          rootNode.classList.remove('minimized');
+          rootNode.classList.add('focused');
+          
+          // Mostrar los hijos del nodo raíz normalmente
+          const rootChildren = document.querySelectorAll('.pyramid-node[data-parent="root"]');
+          rootChildren.forEach(child => {
+            child.classList.remove('minimized');
+            child.classList.add('active-child');
+          });
+        }
+      }
+    }
+    
+    // Configurar eventos para los nodos
+    function setupNodeEvents() {
+      let currentFocusedNode = null;
+      
+      const nodes = document.querySelectorAll('.pyramid-node');
+      
+      nodes.forEach(node => {
+        // Marcar nodos que tienen hijos
+        const nodeId = node.getAttribute('data-id');
+        const hasChildren = document.querySelector(`.pyramid-node[data-parent="${nodeId}"]`) !== null;
+        const childrenContainer = document.getElementById(`children_${nodeId}`);
+        
+        if (hasChildren) {
+          node.classList.add('collapsed');
+        }
+        
+        node.addEventListener('click', function() {
+          // Quitar el foco del nodo anterior
+          if (currentFocusedNode) {
+            currentFocusedNode.classList.remove('focused');
+          }
+          
+          // Establecer el foco en el nodo actual
+          this.classList.add('focused');
+          currentFocusedNode = this;
+          
+          // Actualizar el estado visual de todos los nodos
+          updateNodesVisualState(this.getAttribute('data-id'));
+          
+          // Hacer scroll para asegurar que el nodo está visible
+          this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+        });
+        
+        // Añadir evento de teclado para expandir/colapsar con la barra espaciadora
+        node.addEventListener('keydown', function(e) {
+          if (e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault(); // Prevenir el desplazamiento de la página
+            
+            const nodeId = this.getAttribute('data-id');
+            const childrenContainer = document.getElementById(`children_${nodeId}`);
+            
+            if (childrenContainer) {
+              // Alternar visibilidad del contenedor de hijos
+              childrenContainer.classList.toggle('visible');
+              
+              // Actualizar clase del nodo
+              if (childrenContainer.classList.contains('visible')) {
+                this.classList.remove('collapsed');
+                this.classList.add('expanded');
+              } else {
+                this.classList.remove('expanded');
+                this.classList.add('collapsed');
+              }
+            }
+          }
+        });
+      });
+    }
+    
+    // Configurar navegación con teclado
+    function setupKeyboardNavigation() {
+      let currentFocusedNode = null;
+      
+      // Primero, añadir evento de clic a todos los nodos
+      const nodes = document.querySelectorAll('.pyramid-node');
+      nodes.forEach(node => {
+        node.addEventListener('click', function() {
+          // Quitar el foco del nodo anterior
+          if (currentFocusedNode) {
+            currentFocusedNode.classList.remove('focused');
+          }
+          
+          // Establecer el foco en el nodo actual
+          this.classList.add('focused');
+          currentFocusedNode = this;
+          
+          // Actualizar el estado visual de todos los nodos
+          updateNodesVisualState(this.getAttribute('data-id'));
+          
+          // Hacer scroll para asegurar que el nodo está visible
+          this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+        });
+      });
+      
+      // Añadir evento de teclado para navegación
+      document.addEventListener('keydown', function(e) {
+        if (!currentFocusedNode) {
+          // Si no hay nodo seleccionado, seleccionar el primero
+          if (nodes.length > 0 && (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowLeft')) {
+            nodes[0].click();
+            e.preventDefault();
+          }
+          return;
+        }
+        
+        // Expandir/colapsar con la barra espaciadora
+        if (e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault(); // Prevenir el desplazamiento de la página
+          
+          const nodeId = currentFocusedNode.getAttribute('data-id');
+          const childrenContainer = document.getElementById(`children_${nodeId}`);
+          
+          if (childrenContainer) {
+            // Alternar visibilidad del contenedor de hijos
+            childrenContainer.classList.toggle('visible');
+            
+            // Actualizar clase del nodo
+            if (childrenContainer.classList.contains('visible')) {
+              currentFocusedNode.classList.remove('collapsed');
+              currentFocusedNode.classList.add('expanded');
+            } else {
+              currentFocusedNode.classList.remove('expanded');
+              currentFocusedNode.classList.add('collapsed');
+            }
+          }
+          
+          return;
+        }
+        
+        // Obtener información del nodo actual
+        const currentRow = parseInt(currentFocusedNode.getAttribute('data-row'));
+        const currentId = currentFocusedNode.getAttribute('data-id');
+        const currentParent = currentFocusedNode.getAttribute('data-parent');
+        
+        let nextNode = null;
+        
+        switch (e.key) {
+          case 'ArrowUp':
+            // Navegar al nivel superior (padre)
+            if (currentParent && currentParent !== 'null') {
+              nextNode = document.querySelector(`.pyramid-node[data-id="${currentParent}"]`);
+            }
+            break;
+            
+          case 'ArrowDown':
+            // Navegar al nivel inferior (primer hijo)
+            const children = document.querySelectorAll(`.pyramid-node[data-parent="${currentId}"]`);
+            
+            if (children.length > 0) {
+              // Ordenar los hijos por su posición visual (izquierda a derecha)
+              const sortedChildren = Array.from(children).sort((a, b) => {
+                const rectA = a.getBoundingClientRect();
+                const rectB = b.getBoundingClientRect();
+                return rectA.left - rectB.left;
+              });
+              
+              // Seleccionar el primer hijo (el más a la izquierda)
+              nextNode = sortedChildren[0];
+            }
+            break;
+            
+          case 'ArrowLeft':
+            // Navegar al nodo a la izquierda en el mismo nivel
+            // Obtener todos los nodos del mismo nivel y con el mismo padre
+            const siblingNodes = document.querySelectorAll(
+              `.pyramid-node[data-row="${currentRow}"][data-parent="${currentParent}"]`
+            );
+            
+            if (siblingNodes.length > 1) {
+              // Ordenar los nodos por su posición visual (izquierda a derecha)
+              const sortedSiblings = Array.from(siblingNodes).sort((a, b) => {
+                const rectA = a.getBoundingClientRect();
+                const rectB = b.getBoundingClientRect();
+                return rectA.left - rectB.left;
+              });
+              
+              // Encontrar el índice del nodo actual
+              const currentIndex = sortedSiblings.findIndex(node => node === currentFocusedNode);
+              
+              // Seleccionar el nodo a la izquierda si existe
+              if (currentIndex > 0) {
+                nextNode = sortedSiblings[currentIndex - 1];
+              }
+            }
+            break;
+            
+          case 'ArrowRight':
+            // Navegar al nodo a la derecha en el mismo nivel
+            // Obtener todos los nodos del mismo nivel y con el mismo padre
+            const siblingNodesRight = document.querySelectorAll(
+              `.pyramid-node[data-row="${currentRow}"][data-parent="${currentParent}"]`
+            );
+            
+            if (siblingNodesRight.length > 1) {
+              // Ordenar los nodos por su posición visual (izquierda a derecha)
+              const sortedSiblingsRight = Array.from(siblingNodesRight).sort((a, b) => {
+                const rectA = a.getBoundingClientRect();
+                const rectB = b.getBoundingClientRect();
+                return rectA.left - rectB.left;
+              });
+              
+              // Encontrar el índice del nodo actual
+              const currentIndexRight = sortedSiblingsRight.findIndex(node => node === currentFocusedNode);
+              
+              // Seleccionar el nodo a la derecha si existe
+              if (currentIndexRight < sortedSiblingsRight.length - 1) {
+                nextNode = sortedSiblingsRight[currentIndexRight + 1];
+              }
+            }
+            break;
+        }
+        
+        if (nextNode) {
+          nextNode.click();
+          e.preventDefault();
+        }
+      });
+    }
+    
+    // Función para alternar la visibilidad del panel YAML-JSON
+    document.getElementById('toggle-panel').addEventListener('click', function() {
+      const panel = document.getElementById('yaml-json-panel');
+      panel.classList.toggle('visible');
+      
+      // Cambiar el ícono del botón
+      this.textContent = panel.classList.contains('visible') ? '×' : '≡';
+    });
+    
+    // Evento para cambiar entre formatos
+    document.getElementById('format-selector').addEventListener('change', function() {
+      const format = this.value;
+      document.getElementById('current-format').textContent = format.toUpperCase();
+      
+      if (format === 'json') {
+        // Convertir YAML a JSON
+        try {
+          const jsonData = yamlToJson(document.getElementById('data-display').value);
+          document.getElementById('data-display').value = JSON.stringify(jsonData, null, 2);
+        } catch (e) {
+          console.error("Error al convertir a JSON:", e);
+          document.getElementById('data-display').value = "Error al convertir a JSON. Verifica el formato YAML.";
+        }
+      } else {
+        // Convertir JSON a YAML
+        try {
+          const jsonText = document.getElementById('data-display').value;
+          const jsonObj = JSON.parse(jsonText);
+          const yamlData = jsonToYaml(jsonObj);
+          document.getElementById('data-display').value = yamlData;
+        } catch (e) {
+          console.error("Error al convertir a YAML:", e);
+          document.getElementById('data-display').value = "# Error al convertir a YAML. Verifica el formato JSON.";
+        }
+      }
+    });
+    
+    // Evento para actualizar la visualización
+    document.getElementById('update-visualization').addEventListener('click', function() {
+      const format = document.getElementById('format-selector').value;
+      const dataText = document.getElementById('data-display').value;
+      
+      if (format === 'json') {
+        try {
+          const jsonObj = JSON.parse(dataText);
+          updateNodeVisualization(jsonObj);
+        } catch (e) {
+          console.error("Error al parsear JSON:", e);
+          alert("Error al parsear JSON. Verifica el formato.");
+        }
+      } else {
+        updateNodeVisualization(dataText);
+      }
+    });
+    
+    // Función para verificar si hay desbordamiento y mostrar indicadores
+    function checkForOverflow() {
+      const container = document.querySelector('.nodes-container');
+      const content = document.querySelector('.pyramid-container');
+      
+      if (!container || !content) return;
+      
+      // Eliminar indicadores existentes
+      document.querySelectorAll('.navigation-indicator').forEach(el => el.remove());
+      
+      // Verificar desbordamiento horizontal
+      if (content.scrollWidth > container.clientWidth) {
+        // Hay contenido fuera de la vista a la derecha
+        const rightIndicator = document.createElement('div');
+        rightIndicator.className = 'navigation-indicator indicator-right';
+        rightIndicator.textContent = '→';
+        container.appendChild(rightIndicator);
+        
+        // Hay contenido fuera de la vista a la izquierda
+        const leftIndicator = document.createElement('div');
+        leftIndicator.className = 'navigation-indicator indicator-left';
+        leftIndicator.textContent = '←';
+        container.appendChild(leftIndicator);
+      }
+      
+      // Verificar desbordamiento vertical
+      if (content.scrollHeight > container.clientHeight) {
+        // Hay contenido fuera de la vista abajo
+        const downIndicator = document.createElement('div');
+        downIndicator.className = 'navigation-indicator indicator-down';
+        downIndicator.textContent = '↓';
+        container.appendChild(downIndicator);
+        
+        // Hay contenido fuera de la vista arriba
+        const upIndicator = document.createElement('div');
+        upIndicator.className = 'navigation-indicator indicator-up';
+        upIndicator.textContent = '↑';
+        container.appendChild(upIndicator);
+      }
+    }
+    
+    // Función para configurar los indicadores de "más nodos"
+    function setupMoreNodesIndicators() {
+      const indicators = document.querySelectorAll('.more-nodes-indicator');
+      
+      indicators.forEach(indicator => {
+        indicator.addEventListener('click', function() {
+          const hiddenContainerId = `hidden_${this.id}`;
+          const hiddenContainer = document.getElementById(hiddenContainerId);
+          
+          if (hiddenContainer) {
+            hiddenContainer.classList.toggle('visible');
+            
+            // Cambiar el texto del indicador
+            if (hiddenContainer.classList.contains('visible')) {
+              this.textContent = 'Mostrar menos';
+            } else {
+              const count = hiddenContainer.querySelectorAll('.pyramid-node').length;
+              this.textContent = `+${count} más...`;
+            }
+            
+            // Actualizar los eventos para los nodos recién mostrados
+            if (hiddenContainer.classList.contains('visible')) {
+              const newNodes = hiddenContainer.querySelectorAll('.pyramid-node');
+              newNodes.forEach(node => {
+                node.addEventListener('click', function() {
+                  // Quitar el foco del nodo anterior
+                  if (currentFocusedNode) {
+                    currentFocusedNode.classList.remove('focused');
+                  }
+                  
+                  // Establecer el foco en el nodo actual
+                  this.classList.add('focused');
+                  currentFocusedNode = this;
+                  
+                  // Actualizar el estado visual de todos los nodos
+                  updateNodesVisualState(this.getAttribute('data-id'));
+                  
+                  // Hacer scroll para asegurar que el nodo está visible
+                  this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+                });
+              });
+            }
+          }
+        });
+      });
+    }
+    
+    // Inicializar la visualización al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      // Verificar que jsyaml esté cargado
+      if (typeof jsyaml === 'undefined') {
+        console.error("Error: jsyaml no está cargado");
+        document.getElementById('node-visualization').innerHTML = 
+          '<p>Error: No se pudo cargar la biblioteca js-yaml. Verifica las dependencias.</p>';
+        return;
+      }
+      
+      // Cargar datos iniciales
+      document.getElementById('data-display').value = yamlData;
+      
+      // Generar visualización inicial
+      updateNodeVisualization(yamlData);
+      
+      // Añadir evento de redimensionamiento para actualizar indicadores
+      window.addEventListener('resize', checkForOverflow);
+      
+      // Añadir eventos de desplazamiento para actualizar indicadores
+      document.querySelector('.nodes-container').addEventListener('scroll', function() {
+        // Actualizar visibilidad de indicadores según la posición de desplazamiento
+        const indicators = document.querySelectorAll('.navigation-indicator');
+        indicators.forEach(indicator => {
+          indicator.style.opacity = '0.7';
+          setTimeout(() => {
+            indicator.style.opacity = '0';
+          }, 1500);
+        });
+      });
+      
+      // Inicializar el estado visual de los nodos
+      setTimeout(() => {
+        updateNodesVisualState();
+      }, config.autoScrollDelay);
+    });
+  </script>
+</body>
+</html>

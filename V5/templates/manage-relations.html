@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Relaciones entre Clases</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .relation-form {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .submit-btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .relation-list {
+            margin-top: 30px;
+        }
+
+        .relation-item {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete-btn {
+            padding: 6px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cardinality-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .cardinality-input {
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gestión de Relaciones entre Clases</h1>
+            <button onclick="window.location.href='/dashboard'" class="back-btn">Volver al Dashboard</button>
+        </div>
+
+        <form class="relation-form" id="relationForm">
+            <div class="form-group">
+                <label for="sourceClass">Clase Origen</label>
+                <select id="sourceClass" required>
+                    <!-- Se llenará dinámicamente con JavaScript -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="relationType">Tipo de Relación</label>
+                <select id="relationType" required onchange="toggleRelationOptions()">
+                    <option value="objectProperty">Propiedad de Objeto</option>
+                    <option value="equivalentClass">Clases Equivalentes</option>
+                    <option value="disjointWith">Clases Disjuntas</option>
+                    <option value="inverseOf">Propiedad Inversa</option>
+                    <option value="symmetricProperty">Propiedad Simétrica</option>
+                    <option value="transitiveProperty">Propiedad Transitiva</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="relationNameGroup">
+                <label for="relationName">Nombre de la Relación</label>
+                <input type="text" id="relationName" placeholder="Ej: tieneComponente, esParteDe, etc.">
+            </div>
+
+            <div class="form-group">
+                <label for="targetClass">Clase Destino</label>
+                <select id="targetClass" required>
+                    <!-- Se llenará dinámicamente con JavaScript -->
+                </select>
+            </div>
+
+            <div class="form-group" id="cardinalityGroup">
+                <label>Cardinalidad (opcional)</label>
+                <div class="cardinality-container">
+                    <div>
+                        <label for="minCardinality">Mínima</label>
+                        <input type="number" id="minCardinality" class="cardinality-input" min="0">
+                    </div>
+                    <div>
+                        <label for="maxCardinality">Máxima</label>
+                        <input type="number" id="maxCardinality" class="cardinality-input" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Añadir Relación</button>
+        </form>
+
+        <div class="relation-list" id="relationList">
+            <h2>Relaciones Definidas</h2>
+            <!-- Se llenará dinámicamente con JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Verificar autenticación
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        if (!user) {
+            window.location.href = '/';
+        }
+
+        // Obtener el nombre del archivo de la URL
+        const urlParts = window.location.pathname.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        
+        // Almacenar las relaciones definidas
+        let relations = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClasses();
+            
+            if (user.is_superuser) {
+                document.getElementById('relationForm').addEventListener('submit', addRelation);
+            } else {
+                // Deshabilitar el formulario para usuarios normales
+                document.getElementById('relationForm').style.display = 'none';
+                document.querySelector('.relation-list').style.marginTop = '0';
+            }
+        });
+
+        async function loadClasses() {
+            try {
+                const response = await fetch(`/api/classes/${filename}`);
+                const data = await response.json();
+                populateClassSelects(data.classes);
+            } catch (error) {
+                console.error('Error loading classes:', error);
+            }
+        }
+
+        function populateClassSelects(classes) {
+            const sourceSelect = document.getElementById('sourceClass');
+            const targetSelect = document.getElementById('targetClass');
+            
+            sourceSelect.innerHTML = '';
+            targetSelect.innerHTML = '';
+            
+            classes.forEach(className => {
+                const sourceOption = document.createElement('option');
+                sourceOption.value = className;
+                sourceOption.textContent = className;
+                sourceSelect.appendChild(sourceOption);
+                
+                const targetOption = document.createElement('option');
+                targetOption.value = className;
+                targetOption.textContent = className;
+                targetSelect.appendChild(targetOption);
+            });
+        }
+
+        function toggleRelationOptions() {
+            const relationType = document.getElementById('relationType').value;
+            const relationNameGroup = document.getElementById('relationNameGroup');
+            const cardinalityGroup = document.getElementById('cardinalityGroup');
+            
+            // Mostrar/ocultar campos según el tipo de relación
+            if (relationType === 'equivalentClass' || relationType === 'disjointWith') {
+                relationNameGroup.style.display = 'none';
+                cardinalityGroup.style.display = 'none';
+            } else {
+                relationNameGroup.style.display = 'flex';
+                cardinalityGroup.style.display = 'flex';
+            }
+        }
+
+        function addRelation(event) {
+            event.preventDefault();
+            
+            const sourceClass = document.getElementById('sourceClass').value;
+            const targetClass = document.getElementById('targetClass').value;
+            const relationType = document.getElementById('relationType').value;
+            
+            let relationName = '';
+            if (relationType !== 'equivalentClass' && relationType !== 'disjointWith') {
+                relationName = document.getElementById('relationName').value;
+                if (!relationName) {
+                    alert('Por favor, ingrese un nombre para la relación');
+                    return;
+                }
+            } else {
+                relationName = relationType === 'equivalentClass' ? 'equivalentTo' : 'disjointWith';
+            }
+            
+            // Obtener cardinalidad si está disponible
+            let minCardinality = document.getElementById('minCardinality').value;
+            let maxCardinality = document.getElementById('maxCardinality').value;
+            
+            // Convertir a números o null
+            minCardinality = minCardinality ? parseInt(minCardinality) : null;
+            maxCardinality = maxCardinality ? parseInt(maxCardinality) : null;
+            
+            // Crear objeto de relación
+            const relation = {
+                source: sourceClass,
+                target: targetClass,
+                type: relationType,
+                name: relationName
+            };
+            
+            // Añadir cardinalidad si está definida
+            if (minCardinality !== null) relation.minCardinality = minCardinality;
+            if (maxCardinality !== null) relation.maxCardinality = maxCardinality;
+            
+            // Añadir a la lista de relaciones
+            relations.push(relation);
+            
+            // Actualizar la visualización
+            updateRelationList();
+            
+            // Limpiar el formulario
+            document.getElementById('relationForm').reset();
+        }
+
+        function updateRelationList() {
+            const container = document.getElementById('relationList');
+            container.innerHTML = '<h2>Relaciones Definidas</h2>';
+            
+            if (relations.length === 0) {
+                container.innerHTML += '<p>No hay relaciones definidas</p>';
+                return;
+            }
+            
+            relations.forEach((relation, index) => {
+                const item = document.createElement('div');
+                item.className = 'relation-item';
+                
+                let relationText = '';
+                
+                if (relation.type === 'equivalentClass') {
+                    relationText = `<strong>${relation.source}</strong> es equivalente a <strong>${relation.target}</strong>`;
+                } else if (relation.type === 'disjointWith') {
+                    relationText = `<strong>${relation.source}</strong> es disjunto con <strong>${relation.target}</strong>`;
+                } else {
+                    relationText = `<strong>${relation.source}</strong> ${relation.name} <strong>${relation.target}</strong>`;
+                    
+                    // Añadir información de cardinalidad si está definida
+                    if (relation.minCardinality !== undefined || relation.maxCardinality !== undefined) {
+                        let cardinalityText = ' (Cardinalidad: ';
+                        
+                        if (relation.minCardinality !== undefined) {
+                            cardinalityText += `min=${relation.minCardinality}`;
+                        }
+                        
+                        if (relation.maxCardinality !== undefined) {
+                            if (relation.minCardinality !== undefined) {
+                                cardinalityText += ', ';
+                            }
+                            cardinalityText += `max=${relation.maxCardinality}`;
+                        }
+                        
+                        cardinalityText += ')';
+                        relationText += cardinalityText;
+                    }
+                }
+                
+                item.innerHTML = `
+                    <div>${relationText}</div>
+                    <button onclick="deleteRelation(${index})" class="delete-btn">Eliminar</button>
+                `;
+                
+                container.appendChild(item);
+            });
+            
+            // Añadir botón para guardar todas las relaciones
+            if (relations.length > 0 && user.is_superuser) {
+                const saveButton = document.createElement('button');
+                saveButton.className = 'submit-btn';
+                saveButton.style.marginTop = '20px';
+                saveButton.textContent = 'Guardar Todas las Relaciones';
+                saveButton.onclick = saveAllRelations;
+                container.appendChild(saveButton);
+            }
+        }
+
+        function deleteRelation(index) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta relación?')) {
+                relations.splice(index, 1);
+                updateRelationList();
+            }
+        }
+
+        async function saveAllRelations() {
+            try {
+                // Primero obtener el JSON actual
+                const jsonResponse = await fetch(`/get-json-content/${filename}`);
+                const jsonData = await jsonResponse.json();
+                
+                // Enviar las relaciones junto con el JSON para generar el OWL
+                const response = await fetch(`/save-rdf/${filename}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        json: jsonData,
+                        relations: relations
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`Relaciones guardadas correctamente. Archivo OWL generado en: ${result.path}`);
+                } else {
+                    alert(`Error: ${result.detail}`);
+                }
+            } catch (error) {
+                console.error('Error saving relations:', error);
+                alert('Error al guardar las relaciones');
+            }
+        }
+
+        // Inicializar la visualización de campos según el tipo de relación seleccionado
+        toggleRelationOptions();
+    </script>
+</body>
+</html> 
