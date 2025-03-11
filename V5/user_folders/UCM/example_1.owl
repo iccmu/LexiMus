@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#value">
+    <rdfs:label>value</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Movimiento"/>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Interacción"/>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Principales"/>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Secundarios"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#relationships">
+    <rdfs:label>relationships</rdfs:label>
+  </owl:Class>
+  <owl:Ontology rdf:about=""/>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Interacción">
+    <rdfs:label>Interacción</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Sistemas_de_Control"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Movimiento">
+    <rdfs:label>Movimiento</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Sistemas_de_Control"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Sistemas_de_Control">
+    <rdfs:label>Sistemas de Control</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Mecánicas_de_Juego"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Principales">
+    <rdfs:label>Principales</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Objetivos"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Secundarios">
+    <rdfs:label>Secundarios</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Objetivos"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Mecánicas_de_Juego">
+    <rdfs:label>Mecánicas de Juego</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Taxonomía_de_Videojuegos"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Objetivos">
+    <rdfs:label>Objetivos</rdfs:label>
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/ontology#Mecánicas_de_Juego"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/ontology#Taxonomía_de_Videojuegos">
+    <rdfs:label>Taxonomía de Videojuegos</rdfs:label>
+  </owl:Class>
+</rdf:RDF>

@@ -206,6 +206,8 @@
       word-wrap: break-word;
       flex-shrink: 0;
       position: relative;
+      /* Eliminar tabindex para evitar que los nodos reciban foco con Tab */
+      outline: none;
     }
     
     /* Nodos minimizados (subnodos cuando su padre no está activo) */
@@ -422,7 +424,7 @@
       color: #666;
     }
     
-    /* Estilos para el panel de información */
+    /* Estilos para el panel de información con tarjetas de metadatos */
     .info-panel {
       position: fixed;
       bottom: 0;
@@ -433,16 +435,35 @@
       padding: 10px 20px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start; /* Cambiado de center a flex-start */
       height: 40px;
       box-sizing: border-box;
       z-index: 30;
       font-size: 14px;
+      transition: height 0.3s ease;
+      overflow: hidden; /* Ocultar desbordamiento cuando está colapsado */
+    }
+    
+    .info-panel.expanded {
+      height: 250px; /* Aumentado para dar más espacio */
+      overflow-y: auto; /* Permitir scroll cuando está expandido */
+      align-items: flex-start; /* Asegurar que el contenido comience desde arriba */
     }
     
     .info-panel-content {
       display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      padding-bottom: 15px; /* Añadir espacio en la parte inferior */
+    }
+    
+    .info-basic {
+      display: flex;
       gap: 20px;
+      align-items: center;
+      flex-wrap: wrap; /* Permitir que los elementos se envuelvan en pantallas pequeñas */
+      margin-bottom: 5px; /* Espacio antes de las tarjetas */
     }
     
     .info-label {
@@ -450,24 +471,119 @@
       color: #4CAF50;
     }
     
-    .info-panel.fixed {
-      background-color: #4CAF50 !important;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    /* Estilos para las tarjetas de metadatos */
+    .metadata-cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      overflow-y: visible; /* Cambiar a visible para evitar cortes */
+      max-height: 160px; /* Aumentar altura máxima */
+      padding-bottom: 10px; /* Espacio adicional en la parte inferior */
     }
     
-    .info-panel.fixed::before {
-      content: "📌";
-      margin-right: 10px;
+    .metadata-card {
+      background-color: #444;
+      border-radius: 5px;
+      padding: 8px 12px;
+      min-width: 150px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .metadata-card-title {
+      font-weight: bold;
+      color: #4CAF50;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+    
+    .metadata-card-content {
+      font-size: 13px;
+      color: #fff;
+    }
+    
+    .add-metadata-card {
+      background-color: #555;
+      border: 2px dashed #777;
+      border-radius: 5px;
+      padding: 8px 12px;
+      min-width: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #aaa;
+    }
+    
+    .add-metadata-card:hover {
+      background-color: #666;
+      color: white;
+    }
+    
+    .metadata-editor {
+      width: 100%;
+      display: none;
+    }
+    
+    .metadata-editor.visible {
+      display: block;
+    }
+    
+    .metadata-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .metadata-input-group {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .metadata-input {
+      flex: 1;
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    
+    .metadata-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    
+    .edit-button, .save-button, .cancel-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    
+    .cancel-button {
+      background-color: #f44336;
+    }
+    
+    .edit-button:hover, .save-button:hover {
+      background-color: #45a049;
+    }
+    
+    .cancel-button:hover {
+      background-color: #d32f2f;
     }
     
     .pyramid-node.pinned {
-      border: 3px solid #FFD700 !important; /* Borde dorado para el nodo fijado principal */
+      border: 3px solid #FFD700 !important; /* Borde dorado para el nodo fijado */
       box-shadow: 0 0 10px rgba(255, 215, 0, 0.7) !important; /* Sombra dorada */
       z-index: 10 !important; /* Asegurar que esté por encima de otros nodos */
     }
     
     .pyramid-node.pinned::before {
-      content: "1️⃣";
+      content: "📌";
       position: absolute;
       top: -10px;
       right: -10px;
@@ -482,14 +598,8 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
     
-    .pyramid-node.secondary-pinned {
-      border: 3px solid #1E90FF !important; /* Borde azul para el nodo fijado secundario */
-      box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important; /* Sombra azul */
-      z-index: 9 !important; /* Justo debajo del nodo principal */
-    }
-    
     .pyramid-node.secondary-pinned::before {
-      content: "2️⃣";
+      content: "📌";
       position: absolute;
       top: -10px;
       right: -10px;
@@ -678,6 +788,18 @@
         width: calc(100% - 700px);
       }
     }
+    
+    .metadata-card.focused-card {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 2px #4CAF50, 0 4px 8px rgba(0,0,0,0.3) !important;
+      transition: all 0.2s ease;
+    }
+    
+    /* Añadir navegación con teclado entre tarjetas */
+    .metadata-card:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #4CAF50, 0 4px 8px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
@@ -718,8 +840,26 @@
     <!-- Panel de información del nodo -->
     <div class="info-panel" id="info-panel">
       <div class="info-panel-content">
-        <div><span class="info-label">Nodo:</span> <span id="node-name">Ninguno seleccionado</span></div>
-        <div><span class="info-label">ID:</span> <span id="node-id">-</span></div>
+        <div class="info-basic">
+          <div><span class="info-label">Nodo:</span> <span id="node-name">Ninguno seleccionado</span></div>
+          <div><span class="info-label">ID:</span> <span id="node-id">-</span></div>
+          <button class="edit-button" id="toggle-metadata">Añadir Metadato</button>
+        </div>
+        <div class="metadata-editor" id="metadata-editor">
+          <div class="metadata-form">
+            <div class="metadata-input-group">
+              <input type="text" class="metadata-input" id="metadata-key" placeholder="Título (ej: Descripción, Autor, etc.)">
+              <input type="text" class="metadata-input" id="metadata-value" placeholder="Valor">
+            </div>
+            <div class="metadata-actions">
+              <button class="save-button" id="save-metadata">Guardar</button>
+              <button class="cancel-button" id="cancel-metadata">Cancelar</button>
+            </div>
+          </div>
+        </div>
+        <div class="metadata-cards-container" id="metadata-cards-container">
+          <!-- Las tarjetas de metadatos se generarán aquí dinámicamente -->
+        </div>
       </div>
     </div>
   </div>
@@ -787,8 +927,10 @@ taxonomia:
 
     // Variables globales
     let currentFocusedNode = null;
-    let pinnedNode = null; // Nodo fijado principal
-    let secondaryPinnedNode = null; // Segundo nodo fijado
+    // let pinnedNode = null; // Eliminar esta variable
+    
+    // Objeto para almacenar metadatos de nodos
+    const nodeMetadata = {};
     
     // Función para convertir YAML a JSON
     function yamlToJson(yamlString) {
@@ -1068,16 +1210,13 @@ taxonomia:
         }
       });
       
-      // Si hay nodos fijados, mantenerlos destacados
+      // Ya no necesitamos el código para nodos fijados
+      /* 
       if (pinnedNode) {
         pinnedNode.classList.add('pinned');
         pinnedNode.classList.remove('minimized');
       }
-      
-      if (secondaryPinnedNode) {
-        secondaryPinnedNode.classList.add('secondary-pinned');
-        secondaryPinnedNode.classList.remove('minimized');
-      }
+      */
       
       if (focusedNodeId) {
         // Obtener el nodo enfocado
@@ -1144,15 +1283,22 @@ taxonomia:
     // Función para actualizar la información del nodo en el panel inferior
     function updateNodeInfo(node) {
       const infoPanel = document.getElementById('info-panel');
+      const metadataEditor = document.getElementById('metadata-editor');
+      const metadataCardsContainer = document.getElementById('metadata-cards-container');
       
-      // Si el panel está fijado, no actualizar la información
+      // Ya no necesitamos verificar si el panel está fijado
+      /* 
       if (infoPanel.classList.contains('fixed')) {
         return;
       }
+      */
       
       if (!node) {
         document.getElementById('node-name').textContent = 'Ninguno seleccionado';
         document.getElementById('node-id').textContent = '-';
+        metadataEditor.classList.remove('visible');
+        infoPanel.classList.remove('expanded');
+        metadataCardsContainer.innerHTML = '';
         return;
       }
       
@@ -1161,99 +1307,146 @@ taxonomia:
       
       document.getElementById('node-name').textContent = nodeName;
       document.getElementById('node-id').textContent = nodeId;
+      
+      // Ocultar el editor de metadatos
+      metadataEditor.classList.remove('visible');
+      
+      // Mostrar las tarjetas de metadatos existentes
+      renderMetadataCards(nodeId);
+      
+      // Siempre expandir el panel cuando se selecciona un nodo
+      infoPanel.classList.add('expanded');
     }
     
-    // Función para fijar un nodo
-    function pinNode(node) {
-      if (!node) return;
+    // Función para renderizar las tarjetas de metadatos
+    function renderMetadataCards(nodeId) {
+      const container = document.getElementById('metadata-cards-container');
+      container.innerHTML = '';
       
-      const infoPanel = document.getElementById('info-panel');
-      
-      // Si este nodo ya está fijado como secundario, solo desfijar el secundario
-      if (secondaryPinnedNode === node) {
-        secondaryPinnedNode.classList.remove('secondary-pinned');
-        secondaryPinnedNode = null;
+      // Si no hay metadatos para este nodo, mostrar solo el botón de añadir
+      if (!nodeMetadata[nodeId] || Object.keys(nodeMetadata[nodeId]).length === 0) {
+        container.innerHTML = '<div class="add-metadata-card" id="add-metadata-card" tabindex="0">+ Añadir metadato</div>';
         
-        // Actualizar la información en el panel para mostrar solo el nodo principal
-        const primaryName = pinnedNode.textContent.trim();
-        const primaryId = pinnedNode.getAttribute('data-id');
-        
-        document.getElementById('node-name').textContent = primaryName;
-        document.getElementById('node-id').textContent = primaryId;
+        // Añadir evento al botón de añadir
+        setTimeout(() => {
+          const addButton = document.getElementById('add-metadata-card');
+          if (addButton) {
+            addButton.addEventListener('click', function() {
+              document.getElementById('toggle-metadata').click();
+            });
+            
+            // Añadir navegación con teclado
+            addButton.addEventListener('keydown', function(e) {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('toggle-metadata').click();
+              }
+            });
+          }
+        }, 0);
         
         return;
       }
       
-      // Si este nodo ya está fijado como principal, desfijar ambos
-      if (pinnedNode === node) {
-        unpinAllNodes();
-        return;
+      // Crear tarjetas para cada metadato
+      let index = 0;
+      for (const [key, value] of Object.entries(nodeMetadata[nodeId])) {
+        const card = document.createElement('div');
+        card.className = 'metadata-card';
+        card.setAttribute('tabindex', '0'); // Hacer la tarjeta enfocable
+        card.setAttribute('data-key', key);
+        card.setAttribute('data-index', index++);
+        card.innerHTML = `
+          <div class="metadata-card-title">${key}</div>
+          <div class="metadata-card-content">${value}</div>
+        `;
+        
+        // Añadir evento para editar al hacer clic en la tarjeta
+        card.addEventListener('click', function() {
+          editMetadataCard(this, key, value);
+        });
+        
+        // Añadir navegación con teclado
+        card.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            editMetadataCard(this, key, value);
+          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextCard = this.nextElementSibling;
+            if (nextCard && nextCard.classList.contains('metadata-card')) {
+              nextCard.focus();
+            } else if (document.getElementById('add-metadata-card')) {
+              document.getElementById('add-metadata-card').focus();
+            }
+          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevCard = this.previousElementSibling;
+            if (prevCard && prevCard.classList.contains('metadata-card')) {
+              prevCard.focus();
+            }
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            // Volver al nodo
+            const focusedNode = document.querySelector('.pyramid-node.focused');
+            if (focusedNode) {
+              focusedNode.focus();
+            }
+          }
+        });
+        
+        container.appendChild(card);
       }
       
-      // Si no hay ningún nodo fijado, fijar este como principal
-      if (!pinnedNode) {
-        pinnedNode = node;
-        node.classList.add('pinned');
-        
-        infoPanel.classList.add('fixed');
-        infoPanel.style.backgroundColor = '#4CAF50';
-        
-        // Actualizar la información en el panel
-        const nodeName = node.textContent.trim();
-        const nodeId = node.getAttribute('data-id');
-        document.getElementById('node-name').textContent = nodeName;
-        document.getElementById('node-id').textContent = nodeId;
-      } 
-      // Si ya hay un nodo fijado pero no un segundo, fijar este como secundario
-      else if (!secondaryPinnedNode) {
-        secondaryPinnedNode = node;
-        node.classList.add('secondary-pinned');
-        
-        // Actualizar la información en el panel para mostrar ambos nodos
-        const primaryName = pinnedNode.textContent.trim();
-        const primaryId = pinnedNode.getAttribute('data-id');
-        const secondaryName = node.textContent.trim();
-        const secondaryId = node.getAttribute('data-id');
-        
-        document.getElementById('node-name').textContent = `${primaryName} | ${secondaryName}`;
-        document.getElementById('node-id').textContent = `${primaryId} | ${secondaryId}`;
-      }
-      // Si ya hay dos nodos fijados, reemplazar el secundario
-      else if (node !== pinnedNode) {
-        // Quitar la clase del nodo secundario anterior
-        secondaryPinnedNode.classList.remove('secondary-pinned');
-        
-        // Fijar el nuevo nodo como secundario
-        secondaryPinnedNode = node;
-        node.classList.add('secondary-pinned');
-        
-        // Actualizar la información en el panel
-        const primaryName = pinnedNode.textContent.trim();
-        const primaryId = pinnedNode.getAttribute('data-id');
-        const secondaryName = node.textContent.trim();
-        const secondaryId = node.getAttribute('data-id');
-        
-        document.getElementById('node-name').textContent = `${primaryName} | ${secondaryName}`;
-        document.getElementById('node-id').textContent = `${primaryId} | ${secondaryId}`;
-      }
+      // Añadir el botón para agregar nuevo metadato
+      const addButton = document.createElement('div');
+      addButton.className = 'add-metadata-card';
+      addButton.setAttribute('tabindex', '0');
+      addButton.textContent = '+ Añadir metadato';
+      
+      addButton.addEventListener('click', function() {
+        document.getElementById('toggle-metadata').click();
+      });
+      
+      // Añadir navegación con teclado
+      addButton.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('toggle-metadata').click();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const cards = document.querySelectorAll('.metadata-card');
+          if (cards.length > 0) {
+            cards[cards.length - 1].focus();
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          // Volver al nodo
+          const focusedNode = document.querySelector('.pyramid-node.focused');
+          if (focusedNode) {
+            focusedNode.focus();
+          }
+        }
+      });
+      
+      container.appendChild(addButton);
     }
     
-    // Función para desfijar todos los nodos
-    function unpinAllNodes() {
-      const infoPanel = document.getElementById('info-panel');
+    // Función auxiliar para editar una tarjeta de metadatos
+    function editMetadataCard(card, key, value) {
+      // Abrir el editor con los valores de esta tarjeta
+      document.getElementById('metadata-key').value = key;
+      document.getElementById('metadata-value').value = value;
+      document.getElementById('metadata-editor').classList.add('visible');
+      document.getElementById('info-panel').classList.add('expanded');
       
-      if (pinnedNode) {
-        pinnedNode.classList.remove('pinned');
-        pinnedNode = null;
-      }
+      // Guardar la clave original para poder actualizarla
+      document.getElementById('metadata-key').setAttribute('data-original-key', key);
       
-      if (secondaryPinnedNode) {
-        secondaryPinnedNode.classList.remove('secondary-pinned');
-        secondaryPinnedNode = null;
-      }
-      
-      infoPanel.classList.remove('fixed');
-      infoPanel.style.backgroundColor = '#333';
+      // Enfocar el campo de título
+      setTimeout(() => {
+        document.getElementById('metadata-key').focus();
+      }, 100);
     }
     
     // Configurar eventos para los nodos
@@ -1293,7 +1486,7 @@ taxonomia:
         });
         
         // Añadir evento de teclado para expandir/colapsar con la barra espaciadora
-        // y para fijar la información con Enter
+        // Ya no usamos Enter para fijar la información
         node.addEventListener('keydown', function(e) {
           if (e.key === ' ' || e.key === 'Spacebar') {
             e.preventDefault(); // Prevenir el desplazamiento de la página
@@ -1342,15 +1535,8 @@ taxonomia:
                 }
               }
             }
-          } else if (e.key === 'Enter') {
-            e.preventDefault();
-            
-            // Usar la función pinNode para manejar la fijación/desfijación
-            pinNode(this);
-            
-            // Actualizar el estado visual de los nodos
-            updateNodesVisualState(currentFocusedNode ? currentFocusedNode.getAttribute('data-id') : null);
           }
+          // Eliminar el bloque de código para Enter que fijaba el nodo
         });
       });
     }
@@ -1385,15 +1571,32 @@ taxonomia:
       
       // Añadir evento de teclado para navegación
       document.addEventListener('keydown', function(e) {
-        // Si se presiona Enter y hay un nodo enfocado
+        // Si se presiona Enter y hay un nodo enfocado (ahora abre el panel de metadatos)
         if (e.key === 'Enter' && currentFocusedNode) {
           e.preventDefault();
           
-          // Usar la función pinNode para manejar la fijación/desfijación
-          pinNode(currentFocusedNode);
+          // En lugar de fijar el nodo, expandir el panel de metadatos y enfocar el primer campo
+          const infoPanel = document.getElementById('info-panel');
+          infoPanel.classList.add('expanded');
           
-          // Actualizar el estado visual de los nodos
-          updateNodesVisualState(currentFocusedNode.getAttribute('data-id'));
+          // Si no hay metadatos, abrir el editor para añadir uno nuevo
+          const nodeId = currentFocusedNode.getAttribute('data-id');
+          if (!nodeMetadata[nodeId] || Object.keys(nodeMetadata[nodeId]).length === 0) {
+            document.getElementById('metadata-editor').classList.add('visible');
+            setTimeout(() => {
+              document.getElementById('metadata-key').focus();
+            }, 100);
+          } else {
+            // Si ya hay metadatos, enfocar la primera tarjeta
+            const firstCard = document.querySelector('.metadata-card');
+            if (firstCard) {
+              firstCard.classList.add('focused-card');
+              firstCard.scrollIntoView({ block: 'center', behavior: 'smooth' });
+              
+              // Añadir clase para resaltar la tarjeta enfocada
+              firstCard.style.boxShadow = '0 0 0 2px #4CAF50';
+            }
+          }
           
           return;
         }
@@ -2149,7 +2352,170 @@ taxonomia:
         }
       `;
       document.head.appendChild(additionalStyle);
+      
+      // Configurar el botón de edición de metadatos
+      document.getElementById('toggle-metadata').addEventListener('click', function() {
+        const metadataEditor = document.getElementById('metadata-editor');
+        const infoPanel = document.getElementById('info-panel');
+        
+        // Limpiar los campos del formulario
+        document.getElementById('metadata-key').value = '';
+        document.getElementById('metadata-value').value = '';
+        document.getElementById('metadata-key').removeAttribute('data-original-key');
+        
+        metadataEditor.classList.add('visible');
+        infoPanel.classList.add('expanded');
+        
+        // Enfocar el campo de título
+        document.getElementById('metadata-key').focus();
+      });
+      
+      // Configurar el botón de guardar metadatos
+      document.getElementById('save-metadata').addEventListener('click', function() {
+        const nodeId = document.getElementById('node-id').textContent;
+        if (nodeId && nodeId !== '-') {
+          const key = document.getElementById('metadata-key').value.trim();
+          const value = document.getElementById('metadata-value').value.trim();
+          const originalKey = document.getElementById('metadata-key').getAttribute('data-original-key');
+          
+          if (key && value) {
+            // Inicializar el objeto de metadatos para este nodo si no existe
+            if (!nodeMetadata[nodeId]) {
+              nodeMetadata[nodeId] = {};
+            }
+            
+            // Si estamos editando un metadato existente, eliminar la clave anterior
+            if (originalKey && originalKey !== key) {
+              delete nodeMetadata[nodeId][originalKey];
+            }
+            
+            // Guardar el nuevo valor
+            nodeMetadata[nodeId][key] = value;
+            
+            // Actualizar la visualización
+            renderMetadataCards(nodeId);
+            
+            // Ocultar el editor
+            document.getElementById('metadata-editor').classList.remove('visible');
+          }
+        }
+      });
+      
+      // Configurar el botón de cancelar
+      document.getElementById('cancel-metadata').addEventListener('click', function() {
+        document.getElementById('metadata-editor').classList.remove('visible');
+      });
     });
+    
+    // En la sección donde se configura el editor de metadatos
+    function setupMetadataEditor() {
+      const metadataKeyInput = document.getElementById('metadata-key');
+      const metadataValueInput = document.getElementById('metadata-value');
+      const saveButton = document.getElementById('save-metadata');
+      const cancelButton = document.getElementById('cancel-metadata');
+      
+      // Permitir que Enter avance del campo de título al campo de valor
+      metadataKeyInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          metadataValueInput.focus();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelMetadataEdit();
+        }
+      });
+      
+      // Permitir que Enter en el campo de valor guarde el formulario
+      metadataValueInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveButton.click();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelMetadataEdit();
+        }
+      });
+      
+      // Configurar los botones existentes
+      saveButton.addEventListener('click', function() {
+        saveMetadata();
+      });
+      
+      cancelButton.addEventListener('click', function() {
+        cancelMetadataEdit();
+      });
+      
+      // Añadir manejador de eventos global para ESC cuando el editor está visible
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          const metadataEditor = document.getElementById('metadata-editor');
+          if (metadataEditor.classList.contains('visible')) {
+            e.preventDefault();
+            cancelMetadataEdit();
+          }
+        }
+      });
+    }
+    
+    // Añadir esta función al final del script existente
+    document.addEventListener('DOMContentLoaded', function() {
+      // ... código existente ...
+      
+      // Configurar el editor de metadatos
+      setupMetadataEditor();
+    });
+    
+    // Función para guardar metadatos (actualizar la existente)
+    function saveMetadata() {
+      const nodeId = document.getElementById('node-id').textContent;
+      const metadataKey = document.getElementById('metadata-key').value.trim();
+      const metadataValue = document.getElementById('metadata-value').value.trim();
+      const originalKey = document.getElementById('metadata-key').getAttribute('data-original-key');
+      
+      if (!metadataKey || !metadataValue) {
+        alert('Por favor, completa ambos campos.');
+        return;
+      }
+      
+      // Inicializar el objeto de metadatos para este nodo si no existe
+      if (!nodeMetadata[nodeId]) {
+        nodeMetadata[nodeId] = {};
+      }
+      
+      // Si estamos editando un metadato existente, eliminar la clave anterior
+      if (originalKey && originalKey !== metadataKey) {
+        delete nodeMetadata[nodeId][originalKey];
+      }
+      
+      // Guardar el nuevo valor
+      nodeMetadata[nodeId][metadataKey] = metadataValue;
+      
+      // Actualizar la visualización
+      document.getElementById('metadata-editor').classList.remove('visible');
+      renderMetadataCards(nodeId);
+      
+      // Limpiar los campos
+      document.getElementById('metadata-key').value = '';
+      document.getElementById('metadata-value').value = '';
+      document.getElementById('metadata-key').removeAttribute('data-original-key');
+      
+      // Mantener el panel expandido para mostrar las tarjetas
+      document.getElementById('info-panel').classList.add('expanded');
+    }
+    
+    // Función para cancelar la edición
+    function cancelMetadataEdit() {
+      document.getElementById('metadata-editor').classList.remove('visible');
+      document.getElementById('metadata-key').value = '';
+      document.getElementById('metadata-value').value = '';
+      document.getElementById('metadata-key').removeAttribute('data-original-key');
+      
+      // Volver a enfocar el nodo activo
+      const focusedNode = document.querySelector('.pyramid-node.focused');
+      if (focusedNode) {
+        focusedNode.focus();
+      }
+    }
   </script>
 </body>
 </html>

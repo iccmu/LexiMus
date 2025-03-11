@@ -1,51 +1,57 @@
 {
-  "Taxonomía de Videojuegos": {
+  "Taxonomía de Videojue": {
     "Mecánicas de Juego": {
       "Sistemas de Control": {
         "Movimiento": {
           "value": null,
-          "id": "bfc5b858-04ef-4b1e-b8c9-47a0eb3de762"
+          "id": "89d28315-ce98-4c48-8d3e-9d95453a0bf1"
         },
         "Interacción": {
           "value": null,
-          "id": "df7f01c5-015a-4d27-937c-2303d75cf5db"
+          "id": "ed87aba5-f881-40bf-b129-f6c9ec96c4da"
         },
-        "id": "46594219-78e5-45a5-83a7-fee977e06b12"
+        "id": "e86023cf-815e-406e-91a6-04022a4f9f0a"
       },
       "Objetivos": {
         "Principales": {
           "value": null,
-          "id": "9c8a2ddf-81e5-4132-a731-87c2ebfd749e"
+          "id": "5b3d7820-be67-4ced-87e6-420ff5efb2d1"
         },
         "Secundarios": {
           "value": null,
-          "id": "d1c7ca81-386d-4b8c-8570-a21ca2acc9a1"
+          "id": "7c433bc8-3eee-476e-b89c-f3ff26d1cde1"
         },
-        "id": "29f69e33-4ead-4566-bb5f-4e3ad234728c"
+        "id": "d564dd8e-a9ef-404e-833b-c86b331572f6"
       },
-      "id": "bb1bf320-472a-4b2b-a667-f509c10db076"
+      "id": "b1b28f70-3101-48ab-b3ef-8f9f89f10d82"
     },
-    "id": "b55393c0-badc-49d2-accc-659032e8abe0"
+    "id": "c07e564c-3155-4c22-863e-f0435da48ce6"
   },
   "relationships": [
     {
       "type": "Transitiva",
       "from": "Sistemas de Control",
       "to": "Interacción",
-      "id": "75fa092a-d956-42e6-9da5-7ff43c14c7a4"
+      "id": "240f897f-27fa-4edf-afda-e4ddf9105201"
     },
     {
       "type": "Transitiva",
       "from": "Interacción",
       "to": "Secundarios",
-      "id": "a914237c-a8a8-4393-ac5b-e0b340395853"
+      "id": "4bdf6ca7-149c-40f4-b9cf-deee6f9bf4e5"
     },
     {
       "type": "Simétrica",
       "from": "Secundarios",
       "to": "Principales",
-      "id": "775e69a8-e616-47cc-8e0b-e4cbce64f1bc"
+      "id": "4e42ab0d-fa81-479e-818d-5b5276218121"
+    },
+    {
+      "type": "Inversa",
+      "from": "Sistemas de Control",
+      "to": "Objetivos",
+      "id": "f69ea218-e81d-4938-beb9-9019d69996b6"
     }
   ],
-  "id": "4adca021-1c03-4a17-bbea-7fa31e8939db"
+  "id": "6a36c26c-ab9e-49f4-976f-9bded07c1800"
 }
