@@ -51,33 +51,39 @@
     
     .main-content {
       display: flex;
-      height: calc(100vh - 60px - 40px);
+      flex-direction: row;
+      align-items: stretch;
+      overflow: hidden;
       position: relative;
+      width: 100%;
+      height: 100%;
     }
     
     .YAML-JSON {
-      width: 30%;
-      background-color: #f5f5f5;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow: auto;
-      transform: translateX(-100%);
       position: absolute;
+      left: 0;
+      top: 0;
       height: 100%;
-      transition: transform 0.3s ease;
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s ease;
+      flex-shrink: 0;
+      background-color: white;
       z-index: 10;
     }
     
     .YAML-JSON.visible {
-      transform: translateX(0);
+      width: 40%;
+      min-width: 300px;
+      max-width: 500px;
     }
     
     .nodes-container {
-      width: 100%;
-      height: 100%;
+      flex-grow: 1;
       overflow: auto;
-      padding: 20px;
-      box-sizing: border-box;
+      transition: margin-left 0.3s ease;
+      width: 100%;
+      position: relative;
     }
     
     .toggle-panel {
@@ -435,13 +441,13 @@
       padding: 10px 20px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start; /* Cambiado de center a flex-start */
+      align-items: flex-start;
       height: 40px;
       box-sizing: border-box;
       z-index: 30;
       font-size: 14px;
-      transition: height 0.3s ease;
-      overflow: hidden; /* Ocultar desbordamiento cuando está colapsado */
+      transition: height 0.3s ease, left 0.3s ease, width 0.3s ease;
+      overflow: hidden;
     }
     
     .info-panel.expanded {
@@ -799,6 +805,33 @@
     .metadata-card:focus {
       outline: none;
       box-shadow: 0 0 0 2px #4CAF50, 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    /* Ajustar el panel de información cuando el panel YAML está visible */
+    .main-content.panel-visible + .info-panel {
+      left: 40%; /* Debe coincidir con el ancho del panel YAML */
+      width: 60%; /* El resto del espacio disponible */
+    }
+    
+    /* Ajustar para pantallas más pequeñas */
+    @media (max-width: 1200px) {
+      .main-content.panel-visible + .info-panel {
+        left: 350px;
+        width: calc(100% - 350px);
+      }
+    }
+    
+    /* Ajustar cuando ambos paneles laterales están visibles */
+    .main-content.panel-visible.props-panel-visible + .info-panel {
+      left: 40%;
+      width: 20%;
+    }
+    
+    @media (max-width: 1200px) {
+      .main-content.panel-visible.props-panel-visible + .info-panel {
+        left: 350px;
+        width: calc(100% - 700px);
+      }
     }
   </style>
 </head>
@@ -1465,24 +1498,61 @@ taxonomia:
           node.classList.add('collapsed');
         }
         
+        // Evento de clic simple
         node.addEventListener('click', function() {
-          // Quitar el foco del nodo anterior
           if (currentFocusedNode) {
             currentFocusedNode.classList.remove('focused');
           }
           
-          // Establecer el foco en el nodo actual
           this.classList.add('focused');
           currentFocusedNode = this;
           
-          // Actualizar el estado visual de todos los nodos
           updateNodesVisualState(this.getAttribute('data-id'));
-          
-          // Actualizar la información del nodo en el panel inferior
           updateNodeInfo(this);
           
-          // Hacer scroll para asegurar que el nodo está visible
           this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+        });
+
+        // Añadir evento de doble clic
+        node.addEventListener('dblclick', function(e) {
+          e.preventDefault();
+          
+          const nodeId = this.getAttribute('data-id');
+          const childrenContainer = document.getElementById(`children_${nodeId}`);
+          
+          if (childrenContainer) {
+            // Alternar visibilidad del contenedor de hijos
+            childrenContainer.classList.toggle('visible');
+            
+            // Actualizar clase del nodo
+            if (childrenContainer.classList.contains('visible')) {
+              this.classList.remove('collapsed');
+              this.classList.add('expanded');
+              
+              // Si se expande, hacer visibles los nodos hijos para la navegación
+              const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+              childNodes.forEach(child => {
+                child.classList.remove('minimized');
+                child.classList.add('active-child');
+              });
+
+              // Seleccionar el primer ejemplo visible
+              const firstExample = childrenContainer.querySelector('.pyramid-node:not(.hidden)');
+              if (firstExample) {
+                firstExample.click();
+              }
+            } else {
+              this.classList.remove('expanded');
+              this.classList.add('collapsed');
+              
+              // Si estamos cerrando un contenedor y el nodo enfocado está dentro de él,
+              // devolver el foco al nodo padre
+              const focusedNodeContainer = document.querySelector('.pyramid-node.focused').closest('.children-container');
+              if (focusedNodeContainer && focusedNodeContainer.id === `children_${nodeId}`) {
+                this.click(); // Seleccionar el nodo padre
+              }
+            }
+          }
         });
         
         // Añadir evento de teclado para expandir/colapsar con la barra espaciadora
@@ -1538,387 +1608,212 @@ taxonomia:
           }
           // Eliminar el bloque de código para Enter que fijaba el nodo
         });
+
+        // Añadir evento de teclado para Enter
+        node.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Enfocar el editor de metadatos
+            document.getElementById('toggle-metadata').click();
+            
+            // Enfocar el campo de título después de un breve retraso
+            setTimeout(() => {
+              const metadataKey = document.getElementById('metadata-key');
+              if (metadataKey) {
+                metadataKey.focus();
+              }
+            }, 100);
+          } else if (e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            
+            const nodeId = this.getAttribute('data-id');
+            const childrenContainer = document.getElementById(`children_${nodeId}`);
+            
+            if (childrenContainer) {
+              // Alternar visibilidad del contenedor de hijos
+              childrenContainer.classList.toggle('visible');
+              
+              // Actualizar clase del nodo
+              if (childrenContainer.classList.contains('visible')) {
+                this.classList.remove('collapsed');
+                this.classList.add('expanded');
+                
+                // Si se expande, hacer visibles los nodos hijos para la navegación
+                const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+                childNodes.forEach(child => {
+                  child.classList.remove('minimized');
+                  child.classList.add('active-child');
+                });
+              } else {
+                this.classList.remove('expanded');
+                this.classList.add('collapsed');
+                
+                // Si estamos cerrando un contenedor y el nodo enfocado está dentro de él,
+                // devolver el foco al nodo padre
+                const focusedNodeContainer = document.querySelector('.pyramid-node.focused').closest('.children-container');
+                if (focusedNodeContainer && focusedNodeContainer.id === `children_${nodeId}`) {
+                  this.click(); // Seleccionar el nodo padre
+                }
+              }
+            }
+          }
+        });
       });
     }
     
     // Configurar navegación con teclado
     function setupKeyboardNavigation() {
       let currentFocusedNode = null;
-      
-      // Primero, añadir evento de clic a todos los nodos
       const nodes = document.querySelectorAll('.pyramid-node');
-      nodes.forEach(node => {
-        node.addEventListener('click', function() {
-          // Quitar el foco del nodo anterior
-          if (currentFocusedNode) {
-            currentFocusedNode.classList.remove('focused');
-          }
-          
-          // Establecer el foco en el nodo actual
-          this.classList.add('focused');
-          currentFocusedNode = this;
-          
-          // Actualizar el estado visual de todos los nodos
-          updateNodesVisualState(this.getAttribute('data-id'));
-          
-          // Actualizar la información del nodo en el panel inferior
-          updateNodeInfo(this);
-          
-          // Hacer scroll para asegurar que el nodo está visible
-          this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
-        });
-      });
       
-      // Añadir evento de teclado para navegación
       document.addEventListener('keydown', function(e) {
-        // Si se presiona Enter y hay un nodo enfocado (ahora abre el panel de metadatos)
-        if (e.key === 'Enter' && currentFocusedNode) {
-          e.preventDefault();
-          
-          // En lugar de fijar el nodo, expandir el panel de metadatos y enfocar el primer campo
-          const infoPanel = document.getElementById('info-panel');
-          infoPanel.classList.add('expanded');
-          
-          // Si no hay metadatos, abrir el editor para añadir uno nuevo
-          const nodeId = currentFocusedNode.getAttribute('data-id');
-          if (!nodeMetadata[nodeId] || Object.keys(nodeMetadata[nodeId]).length === 0) {
-            document.getElementById('metadata-editor').classList.add('visible');
-            setTimeout(() => {
-              document.getElementById('metadata-key').focus();
-            }, 100);
-          } else {
-            // Si ya hay metadatos, enfocar la primera tarjeta
-            const firstCard = document.querySelector('.metadata-card');
-            if (firstCard) {
-              firstCard.classList.add('focused-card');
-              firstCard.scrollIntoView({ block: 'center', behavior: 'smooth' });
-              
-              // Añadir clase para resaltar la tarjeta enfocada
-              firstCard.style.boxShadow = '0 0 0 2px #4CAF50';
-            }
-          }
-          
+        if (document.activeElement === document.getElementById('data-display')) {
           return;
         }
+
+        currentFocusedNode = document.querySelector('.pyramid-node.focused');
         
         if (!currentFocusedNode) {
-          // Si no hay nodo seleccionado, seleccionar el primero
           if (nodes.length > 0 && (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowLeft')) {
             nodes[0].click();
             e.preventDefault();
           }
           return;
         }
+
+        const isInChildrenContainer = currentFocusedNode.closest('.children-container') !== null;
+        const nodeId = currentFocusedNode.getAttribute('data-id');
+        const parentId = currentFocusedNode.getAttribute('data-parent');
+        const childrenContainer = document.getElementById(`children_${nodeId}`);
+        const hasChildren = childrenContainer !== null;
         
-        // Expandir/colapsar con la barra espaciadora
-        if (e.key === ' ' || e.key === 'Spacebar') {
-          e.preventDefault(); // Prevenir el desplazamiento de la página
-          
-          const nodeId = currentFocusedNode.getAttribute('data-id');
-          const childrenContainer = document.getElementById(`children_${nodeId}`);
-          
-          if (childrenContainer) {
-            // Alternar visibilidad del contenedor de hijos
-            childrenContainer.classList.toggle('visible');
-            
-            // Actualizar clase del nodo
-            if (childrenContainer.classList.contains('visible')) {
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (isInChildrenContainer) {
+              // Navegación dentro del contenedor de ejemplos
+              const container = currentFocusedNode.closest('.children-container');
+              const examples = Array.from(container.querySelectorAll('.pyramid-node:not(.hidden)'));
+              const currentIndex = examples.indexOf(currentFocusedNode);
+              
+              if (currentIndex < examples.length - 1) {
+                examples[currentIndex + 1].click();
+              }
+            } else if (hasChildren && !childrenContainer.classList.contains('visible')) {
+              // Si tiene hijos y están ocultos, mostrarlos y seleccionar el primero
+              childrenContainer.classList.add('visible');
               currentFocusedNode.classList.remove('collapsed');
               currentFocusedNode.classList.add('expanded');
               
-              // Si se expande, hacer visibles los nodos hijos para la navegación
-              const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
-              childNodes.forEach(child => {
-                child.classList.remove('minimized');
-                child.classList.add('active-child');
-              });
+              const firstExample = childrenContainer.querySelector('.pyramid-node:not(.hidden)');
+              if (firstExample) {
+                firstExample.click();
+              }
             } else {
-              currentFocusedNode.classList.remove('expanded');
-              currentFocusedNode.classList.add('collapsed');
+              // Buscar hijos directos del nodo actual
+              const children = Array.from(nodes).filter(node => 
+                node.getAttribute('data-parent') === nodeId &&
+                !node.classList.contains('hidden')
+              );
+              
+              if (children.length > 0) {
+                children[0].click();
+              }
             }
-          } else {
-            // Verificar si este nodo es hijo de otro nodo
-            const parentId = currentFocusedNode.getAttribute('data-parent');
-            if (parentId && parentId !== 'null') {
-              // Buscar el contenedor de hijos del padre
-              const parentContainer = document.getElementById(`children_${parentId}`);
-              if (parentContainer && parentContainer.classList.contains('visible')) {
-                // Colapsar el contenedor del padre
-                parentContainer.classList.remove('visible');
-                
-                // Actualizar la clase del nodo padre
+            break;
+
+          case 'ArrowUp':
+            e.preventDefault();
+            if (isInChildrenContainer) {
+              const container = currentFocusedNode.closest('.children-container');
+              const examples = Array.from(container.querySelectorAll('.pyramid-node:not(.hidden)'));
+              const currentIndex = examples.indexOf(currentFocusedNode);
+              
+              if (currentIndex > 0) {
+                examples[currentIndex - 1].click();
+              } else {
+                // Volver al nodo padre
                 const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
                 if (parentNode) {
-                  parentNode.classList.remove('expanded');
-                  parentNode.classList.add('collapsed');
-                  
-                  // Enfocar el nodo padre
+                  parentNode.click();
+                }
+              }
+            } else {
+              // Ir al padre del nodo actual
+              if (parentId && parentId !== 'null') {
+                const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+                if (parentNode) {
                   parentNode.click();
                 }
               }
             }
-          }
-          
-          return;
-        }
-        
-        // Obtener información del nodo actual
-        const currentRow = parseInt(currentFocusedNode.getAttribute('data-row'));
-        const currentId = currentFocusedNode.getAttribute('data-id');
-        const currentParent = currentFocusedNode.getAttribute('data-parent');
-        
-        let nextNode = null;
-        
-        switch (e.key) {
-          case 'ArrowUp':
-            // Verificar si estamos en un contenedor de hijos
-            const isInChildrenContainerUp = currentFocusedNode.closest('.children-container') !== null;
-            
-            if (isInChildrenContainerUp) {
-              // Si estamos en un contenedor de hijos, buscar el nodo anterior en el mismo contenedor
-              const container = currentFocusedNode.closest('.children-container');
-              const nodesInContainer = Array.from(container.querySelectorAll('.pyramid-node'));
-              const currentIndex = nodesInContainer.indexOf(currentFocusedNode);
-              
-              if (currentIndex > 0) {
-                // Ir al nodo anterior en el contenedor
-                nextNode = nodesInContainer[currentIndex - 1];
-                
-                // Si el nodo anterior está oculto, ajustar la visualización
-                if (nextNode.classList.contains('hidden')) {
-                  let visibleStart = parseInt(container.getAttribute('data-visible-start'));
-                  visibleStart--;
-                  container.setAttribute('data-visible-start', visibleStart);
-                  updateVisibleChildren(container, visibleStart);
-                  updateNavigationButtons(container, visibleStart, nodesInContainer.length);
-                }
-              } else {
-                // Si es el primer nodo del contenedor, ir al padre
-                const parentId = container.id.replace('children_', '');
-                nextNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
-              }
-            } else {
-              // Navegar al nivel superior (padre)
-              if (currentParent && currentParent !== 'null') {
-                nextNode = document.querySelector(`.pyramid-node[data-id="${currentParent}"]`);
-              } else {
-                // Si no hay padre, intentar navegar al nivel anterior en la pirámide
-                const prevLevel = document.querySelector(`.pyramid-level[data-level="${currentRow - 1}"]`);
-                if (prevLevel) {
-                  // Encontrar el nodo más cercano horizontalmente en el nivel anterior
-                  const currentRect = currentFocusedNode.getBoundingClientRect();
-                  const nodesInPrevLevel = prevLevel.querySelectorAll('.pyramid-node');
-                  
-                  if (nodesInPrevLevel.length > 0) {
-                    let closestNode = nodesInPrevLevel[0];
-                    let minDistance = Infinity;
-                    
-                    nodesInPrevLevel.forEach(node => {
-                      const nodeRect = node.getBoundingClientRect();
-                      const distance = Math.abs(nodeRect.left - currentRect.left);
-                      if (distance < minDistance) {
-                        minDistance = distance;
-                        closestNode = node;
-                      }
-                    });
-                    
-                    nextNode = closestNode;
-                  }
-                }
-              }
-            }
             break;
-            
-          case 'ArrowDown':
-            // Verificar si estamos en un contenedor de hijos
-            const isInChildrenContainerDown = currentFocusedNode.closest('.children-container') !== null;
-            
-            if (isInChildrenContainerDown) {
-              // Si estamos en un contenedor de hijos, buscar el nodo siguiente en el mismo contenedor
-              const container = currentFocusedNode.closest('.children-container');
-              const nodesInContainer = Array.from(container.querySelectorAll('.pyramid-node'));
-              const currentIndex = nodesInContainer.indexOf(currentFocusedNode);
-              
-              if (currentIndex < nodesInContainer.length - 1) {
-                // Ir al siguiente nodo en el contenedor
-                nextNode = nodesInContainer[currentIndex + 1];
-                
-                // Si el siguiente nodo está oculto, ajustar la visualización
-                if (nextNode.classList.contains('hidden')) {
-                  let visibleStart = parseInt(container.getAttribute('data-visible-start'));
-                  visibleStart++;
-                  container.setAttribute('data-visible-start', visibleStart);
-                  updateVisibleChildren(container, visibleStart);
-                  updateNavigationButtons(container, visibleStart, nodesInContainer.length);
-                }
-              } else {
-                // Si es el último nodo, intentar navegar al siguiente nivel o hermano
-                // Código existente para navegación fuera de contenedores
-                // ...
-              }
-            } else {
-              // Navegar al nivel inferior (primer hijo)
-              // Primero verificar si hay un contenedor de hijos visible
-              const childrenContainer = document.getElementById(`children_${currentId}`);
-              
-              // Verificar si el nodo tiene hijos y el contenedor existe pero no está visible
-              if (childrenContainer && !childrenContainer.classList.contains('visible')) {
-                // Abrir el contenedor de hijos
-                childrenContainer.classList.add('visible');
-                currentFocusedNode.classList.remove('collapsed');
-                currentFocusedNode.classList.add('expanded');
-                
-                // Hacer visibles los nodos hijos para la navegación
-                const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
-                childNodes.forEach(child => {
-                  child.classList.remove('minimized');
-                  child.classList.add('active-child');
-                });
-                
-                // Seleccionar el primer hijo dentro del contenedor
-                const visibleChildren = childrenContainer.querySelectorAll('.pyramid-node:not(.hidden)');
-                if (visibleChildren.length > 0) {
-                  nextNode = visibleChildren[0];
-                  break;
-                }
-              }
-              
-              // Si el contenedor ya está visible o no existe, continuar con la lógica anterior
-              if (childrenContainer && childrenContainer.classList.contains('visible')) {
-                // Si el contenedor está visible, seleccionar el primer hijo dentro del contenedor
-                const visibleChildren = childrenContainer.querySelectorAll('.pyramid-node:not(.hidden)');
-                if (visibleChildren.length > 0) {
-                  nextNode = visibleChildren[0];
-                  break;
-                }
-              }
-              
-              // Si no hay contenedor visible o está vacío, buscar hijos en el DOM general
-              const children = document.querySelectorAll(`.pyramid-node[data-parent="${currentId}"]`);
-              
-              if (children.length > 0) {
-                // Ordenar los hijos por su posición visual (izquierda a derecha)
-                const sortedChildren = Array.from(children).sort((a, b) => {
-                  const rectA = a.getBoundingClientRect();
-                  const rectB = b.getBoundingClientRect();
-                  return rectA.left - rectB.left;
-                });
-                
-                // Seleccionar el primer hijo (el más a la izquierda)
-                nextNode = sortedChildren[0];
-              } else {
-                // Si no hay hijos, intentar navegar al siguiente nivel en la pirámide
-                const nextLevel = document.querySelector(`.pyramid-level[data-level="${currentRow + 1}"]`);
-                if (nextLevel) {
-                  // Encontrar el nodo más cercano horizontalmente en el siguiente nivel
-                  const currentRect = currentFocusedNode.getBoundingClientRect();
-                  const nodesInNextLevel = nextLevel.querySelectorAll('.pyramid-node');
-                  
-                  if (nodesInNextLevel.length > 0) {
-                    let closestNode = nodesInNextLevel[0];
-                    let minDistance = Infinity;
-                    
-                    nodesInNextLevel.forEach(node => {
-                      const nodeRect = node.getBoundingClientRect();
-                      const distance = Math.abs(nodeRect.left - currentRect.left);
-                      if (distance < minDistance) {
-                        minDistance = distance;
-                        closestNode = node;
-                      }
-                    });
-                    
-                    nextNode = closestNode;
-                  }
-                }
-              }
-            }
-            break;
-            
-          case 'ArrowLeft':
-            // Verificar si estamos en un contenedor de hijos
-            const isInChildrenContainer = currentFocusedNode.closest('.children-container') !== null;
-            
+
+          case 'ArrowRight':
+            e.preventDefault();
             if (isInChildrenContainer) {
-              // Si estamos en un contenedor de hijos, ir al padre del contenedor
-              const container = currentFocusedNode.closest('.children-container');
-              const parentId = container.id.replace('children_', '');
-              nextNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
-              
-              // Colapsar el contenedor de hijos al salir
-              container.classList.remove('visible');
-              
-              // Actualizar la clase del nodo padre
+              return; // No hacer nada si estamos en ejemplos
+            }
+            
+            // Buscar hermanos del nodo actual
+            const siblings = Array.from(nodes).filter(node => 
+              node.getAttribute('data-parent') === parentId &&
+              !node.classList.contains('hidden') &&
+              !node.closest('.children-container')
+            );
+            
+            const currentIndex = siblings.indexOf(currentFocusedNode);
+            if (currentIndex < siblings.length - 1) {
+              siblings[currentIndex + 1].click();
+            }
+            break;
+
+          case 'ArrowLeft':
+            e.preventDefault();
+            if (isInChildrenContainer) {
+              // Volver al nodo padre desde los ejemplos
               const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
               if (parentNode) {
-                parentNode.classList.remove('expanded');
-                parentNode.classList.add('collapsed');
+                parentNode.click();
               }
             } else {
-              // Navegar al nodo a la izquierda en el mismo nivel
-              // Obtener todos los nodos del mismo nivel y con el mismo padre
-              const siblingNodes = document.querySelectorAll(
-                `.pyramid-node[data-row="${currentRow}"][data-parent="${currentParent}"]`
+              // Buscar hermanos del nodo actual
+              const siblings = Array.from(nodes).filter(node => 
+                node.getAttribute('data-parent') === parentId &&
+                !node.classList.contains('hidden') &&
+                !node.closest('.children-container')
               );
               
-              if (siblingNodes.length > 1) {
-                // Ordenar los nodos por su posición visual (izquierda a derecha)
-                const sortedSiblings = Array.from(siblingNodes).sort((a, b) => {
-                  const rectA = a.getBoundingClientRect();
-                  const rectB = b.getBoundingClientRect();
-                  return rectA.left - rectB.left;
-                });
+              const currentIndex = siblings.indexOf(currentFocusedNode);
+              if (currentIndex > 0) {
+                siblings[currentIndex - 1].click();
+              }
+            }
+            break;
+
+          case ' ':
+          case 'Spacebar':
+            e.preventDefault();
+            if (hasChildren) {
+              childrenContainer.classList.toggle('visible');
+              if (childrenContainer.classList.contains('visible')) {
+                currentFocusedNode.classList.remove('collapsed');
+                currentFocusedNode.classList.add('expanded');
+              } else {
+                currentFocusedNode.classList.remove('expanded');
+                currentFocusedNode.classList.add('collapsed');
                 
-                // Encontrar el índice del nodo actual
-                const currentIndex = sortedSiblings.findIndex(node => node === currentFocusedNode);
-                
-                // Seleccionar el nodo a la izquierda si existe
-                if (currentIndex > 0) {
-                  nextNode = sortedSiblings[currentIndex - 1];
+                // Si estamos cerrando un contenedor y el nodo enfocado está dentro de él,
+                // devolver el foco al nodo padre
+                const focusedNodeContainer = document.querySelector('.pyramid-node.focused').closest('.children-container');
+                if (focusedNodeContainer && focusedNodeContainer.id === `children_${nodeId}`) {
+                  currentFocusedNode.click(); // Seleccionar el nodo padre
                 }
               }
             }
             break;
-            
-          case 'ArrowRight':
-            // Verificar si estamos en un contenedor de hijos
-            const isInContainer = currentFocusedNode.closest('.children-container') !== null;
-            
-            if (isInContainer) {
-              // Si estamos en un contenedor de hijos, no hacer nada con la flecha derecha
-              // No abriremos conjuntos de nodos con flechas laterales
-              break;
-            } else {
-              // Navegar al nodo a la derecha en el mismo nivel
-              // Obtener todos los nodos del mismo nivel y con el mismo padre
-              const siblingNodesRight = document.querySelectorAll(
-                `.pyramid-node[data-row="${currentRow}"][data-parent="${currentParent}"]`
-              );
-              
-              if (siblingNodesRight.length > 1) {
-                // Ordenar los nodos por su posición visual (izquierda a derecha)
-                const sortedSiblingsRight = Array.from(siblingNodesRight).sort((a, b) => {
-                  const rectA = a.getBoundingClientRect();
-                  const rectB = b.getBoundingClientRect();
-                  return rectA.left - rectB.left;
-                });
-                
-                // Encontrar el índice del nodo actual
-                const currentIndexRight = sortedSiblingsRight.findIndex(node => node === currentFocusedNode);
-                
-                // Seleccionar el nodo a la derecha si existe
-                if (currentIndexRight < sortedSiblingsRight.length - 1) {
-                  nextNode = sortedSiblingsRight[currentIndexRight + 1];
-                }
-                // Ya no expandimos nodos con la flecha derecha
-              }
-              // Ya no expandimos nodos con la flecha derecha cuando no hay hermanos
-            }
-            break;
-        }
-        
-        if (nextNode) {
-          nextNode.click();
-          e.preventDefault();
         }
       });
     }
@@ -2413,8 +2308,20 @@ taxonomia:
       const metadataValueInput = document.getElementById('metadata-value');
       const saveButton = document.getElementById('save-metadata');
       const cancelButton = document.getElementById('cancel-metadata');
+      const metadataEditor = document.getElementById('metadata-editor');
       
-      // Permitir que Enter avance del campo de título al campo de valor
+      // Añadir el event listener para atrapar el foco a nivel del documento
+      document.addEventListener('keydown', trapFocusInMetadataEditor, true);
+      
+      // Cuando se abre el editor, enfocar el primer campo
+      document.getElementById('toggle-metadata').addEventListener('click', function() {
+        metadataEditor.classList.add('visible');
+        setTimeout(() => {
+          metadataKeyInput.focus();
+        }, 0);
+      });
+      
+      // Resto del código de configuración del editor...
       metadataKeyInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -2425,7 +2332,6 @@ taxonomia:
         }
       });
       
-      // Permitir que Enter en el campo de valor guarde el formulario
       metadataValueInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -2436,7 +2342,6 @@ taxonomia:
         }
       });
       
-      // Configurar los botones existentes
       saveButton.addEventListener('click', function() {
         saveMetadata();
       });
@@ -2444,71 +2349,37 @@ taxonomia:
       cancelButton.addEventListener('click', function() {
         cancelMetadataEdit();
       });
-      
-      // Añadir manejador de eventos global para ESC cuando el editor está visible
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          const metadataEditor = document.getElementById('metadata-editor');
-          if (metadataEditor.classList.contains('visible')) {
-            e.preventDefault();
-            cancelMetadataEdit();
-          }
-        }
-      });
     }
     
-    // Añadir esta función al final del script existente
-    document.addEventListener('DOMContentLoaded', function() {
-      // ... código existente ...
+    // Función para editar una tarjeta de metadatos
+    function editMetadataCard(card, key, value) {
+      const metadataEditor = document.getElementById('metadata-editor');
+      const metadataKeyInput = document.getElementById('metadata-key');
+      const metadataValueInput = document.getElementById('metadata-value');
       
-      // Configurar el editor de metadatos
-      setupMetadataEditor();
-    });
-    
-    // Función para guardar metadatos (actualizar la existente)
-    function saveMetadata() {
-      const nodeId = document.getElementById('node-id').textContent;
-      const metadataKey = document.getElementById('metadata-key').value.trim();
-      const metadataValue = document.getElementById('metadata-value').value.trim();
-      const originalKey = document.getElementById('metadata-key').getAttribute('data-original-key');
-      
-      if (!metadataKey || !metadataValue) {
-        alert('Por favor, completa ambos campos.');
-        return;
-      }
-      
-      // Inicializar el objeto de metadatos para este nodo si no existe
-      if (!nodeMetadata[nodeId]) {
-        nodeMetadata[nodeId] = {};
-      }
-      
-      // Si estamos editando un metadato existente, eliminar la clave anterior
-      if (originalKey && originalKey !== metadataKey) {
-        delete nodeMetadata[nodeId][originalKey];
-      }
-      
-      // Guardar el nuevo valor
-      nodeMetadata[nodeId][metadataKey] = metadataValue;
-      
-      // Actualizar la visualización
-      document.getElementById('metadata-editor').classList.remove('visible');
-      renderMetadataCards(nodeId);
-      
-      // Limpiar los campos
-      document.getElementById('metadata-key').value = '';
-      document.getElementById('metadata-value').value = '';
-      document.getElementById('metadata-key').removeAttribute('data-original-key');
-      
-      // Mantener el panel expandido para mostrar las tarjetas
+      metadataKeyInput.value = key;
+      metadataValueInput.value = value;
+      metadataEditor.classList.add('visible');
       document.getElementById('info-panel').classList.add('expanded');
+      
+      metadataKeyInput.setAttribute('data-original-key', key);
+      
+      // Asegurar que el foco se establezca en el campo de título
+      setTimeout(() => {
+        metadataKeyInput.focus();
+      }, 100);
     }
     
     // Función para cancelar la edición
     function cancelMetadataEdit() {
-      document.getElementById('metadata-editor').classList.remove('visible');
-      document.getElementById('metadata-key').value = '';
-      document.getElementById('metadata-value').value = '';
-      document.getElementById('metadata-key').removeAttribute('data-original-key');
+      const metadataEditor = document.getElementById('metadata-editor');
+      const metadataKeyInput = document.getElementById('metadata-key');
+      const metadataValueInput = document.getElementById('metadata-value');
+      
+      metadataEditor.classList.remove('visible');
+      metadataKeyInput.value = '';
+      metadataValueInput.value = '';
+      metadataKeyInput.removeAttribute('data-original-key');
       
       // Volver a enfocar el nodo activo
       const focusedNode = document.querySelector('.pyramid-node.focused');
@@ -2516,6 +2387,177 @@ taxonomia:
         focusedNode.focus();
       }
     }
+    
+    // Función para atrapar el foco dentro del editor de metadatos
+    function trapFocusInMetadataEditor(e) {
+      const metadataEditor = document.getElementById('metadata-editor');
+      
+      // Solo proceder si el editor está visible
+      if (!metadataEditor.classList.contains('visible')) {
+        return;
+      }
+      
+      // Si la tecla presionada es Tab
+      if (e.key === 'Tab') {
+        // Obtener todos los elementos focusables dentro del editor
+        const focusableElements = Array.from(metadataEditor.querySelectorAll(
+          'input, button, [href], select, textarea, [tabindex]:not([tabindex="-1"])'
+        )).filter(el => !el.disabled && el.offsetParent !== null);
+        
+        const firstFocusableElement = focusableElements[0];
+        const lastFocusableElement = focusableElements[focusableElements.length - 1];
+        
+        // Si no hay elementos focusables, no hacer nada
+        if (!firstFocusableElement) return;
+        
+        // Verificar si el elemento activo está dentro del editor
+        const isInEditor = metadataEditor.contains(document.activeElement);
+        
+        if (!isInEditor) {
+          // Si el foco está fuera del editor, forzar el foco al primer elemento
+          e.preventDefault();
+          firstFocusableElement.focus();
+          return;
+        }
+        
+        // Si se presiona Shift + Tab
+        if (e.shiftKey) {
+          // Si el foco está en el primer elemento, ir al último
+          if (document.activeElement === firstFocusableElement) {
+            e.preventDefault();
+            lastFocusableElement.focus();
+          }
+        } 
+        // Si solo se presiona Tab
+        else {
+          // Si el foco está en el último elemento, ir al primero
+          if (document.activeElement === lastFocusableElement) {
+            e.preventDefault();
+            firstFocusableElement.focus();
+          }
+        }
+      }
+    }
+    
+    // En el evento DOMContentLoaded, asegurarse de configurar el editor
+    document.addEventListener('DOMContentLoaded', function() {
+      // ... código existente ...
+      
+      // Configurar el editor de metadatos
+      setupMetadataEditor();
+      
+      // ... código existente ...
+    });
+    
+    // Configurar el manejo de teclas en el área de texto
+    document.getElementById('data-display').addEventListener('keydown', function(e) {
+      // Si estamos en el editor YAML, detener la propagación de teclas especiales
+      if (e.key === 'Tab' || e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.stopPropagation(); // Detener la propagación del evento
+      }
+
+      // Manejar la tecla Tab
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        
+        // Insertar dos espacios en la posición del cursor
+        this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+        
+        // Mover el cursor después de los espacios insertados
+        this.selectionStart = this.selectionEnd = start + 2;
+      }
+      
+      // Manejar la tecla Enter
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        const value = this.value;
+        
+        // Obtener la línea actual
+        const currentLine = value.substring(0, start).split('\n').pop();
+        
+        // Contar los espacios iniciales de la línea actual
+        const indentation = currentLine.match(/^\s*/)[0];
+        
+        // Insertar nueva línea con la misma indentación
+        this.value = value.substring(0, start) + '\n' + indentation + value.substring(end);
+        
+        // Mover el cursor después de la indentación
+        const newPosition = start + 1 + indentation.length;
+        this.selectionStart = this.selectionEnd = newPosition;
+      }
+
+      // Para la barra espaciadora, no necesitamos hacer nada especial
+      // Solo detenemos su propagación y dejamos que funcione normalmente
+      
+    }, { capture: true }); // Capturar el evento en la fase de captura
+
+    // Función para guardar metadatos
+    function saveMetadata() {
+      const key = document.getElementById('metadata-key').value.trim();
+      const value = document.getElementById('metadata-value').value.trim();
+      const originalKey = document.getElementById('metadata-key').getAttribute('data-original-key');
+      
+      // Obtener el nodo actualmente seleccionado
+      const focusedNode = document.querySelector('.pyramid-node.focused');
+      if (!focusedNode) return;
+      
+      const nodeId = focusedNode.getAttribute('data-id');
+      
+      // Inicializar el objeto de metadatos para este nodo si no existe
+      if (!nodeMetadata[nodeId]) {
+        nodeMetadata[nodeId] = {};
+      }
+      
+      // Si hay una clave original y es diferente a la nueva, eliminar la antigua
+      if (originalKey && originalKey !== key) {
+        delete nodeMetadata[nodeId][originalKey];
+      }
+      
+      // Guardar el nuevo metadato
+      if (key && value) {
+        nodeMetadata[nodeId][key] = value;
+      }
+      
+      // Limpiar el formulario
+      document.getElementById('metadata-key').value = '';
+      document.getElementById('metadata-value').value = '';
+      document.getElementById('metadata-key').removeAttribute('data-original-key');
+      
+      // Ocultar el editor
+      document.getElementById('metadata-editor').classList.remove('visible');
+      
+      // Actualizar la visualización de las tarjetas de metadatos
+      renderMetadataCards(nodeId);
+      
+      // Devolver el foco al nodo
+      if (focusedNode) {
+        focusedNode.focus();
+      }
+    }
+
+    // Añadir el evento al botón de guardar
+    document.getElementById('save-metadata').addEventListener('click', saveMetadata);
+
+    // Añadir eventos de teclado para el formulario de metadatos
+    document.getElementById('metadata-key').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('metadata-value').focus();
+      }
+    });
+
+    document.getElementById('metadata-value').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveMetadata();
+      }
+    });
   </script>
 </body>
 </html>
