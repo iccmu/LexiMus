@@ -833,6 +833,34 @@
         width: calc(100% - 700px);
       }
     }
+    
+    .prop-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      cursor: grab;
+      user-select: none;
+    }
+    
+    .prop-item-header.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+    
+    .prop-toggle {
+      cursor: pointer;
+      padding: 2px;
+    }
+    
+    .prop-label {
+      flex: 1;
+    }
+    
+    .prop-id {
+      color: #666;
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
@@ -873,25 +901,36 @@
     <!-- Panel de información del nodo -->
     <div class="info-panel" id="info-panel">
       <div class="info-panel-content">
-        <div class="info-basic">
-          <div><span class="info-label">Nodo:</span> <span id="node-name">Ninguno seleccionado</span></div>
-          <div><span class="info-label">ID:</span> <span id="node-id">-</span></div>
-          <button class="edit-button" id="toggle-metadata">Añadir Metadato</button>
-        </div>
-        <div class="metadata-editor" id="metadata-editor">
-          <div class="metadata-form">
-            <div class="metadata-input-group">
-              <input type="text" class="metadata-input" id="metadata-key" placeholder="Título (ej: Descripción, Autor, etc.)">
-              <input type="text" class="metadata-input" id="metadata-value" placeholder="Valor">
-            </div>
-            <div class="metadata-actions">
-              <button class="save-button" id="save-metadata">Guardar</button>
-              <button class="cancel-button" id="cancel-metadata">Cancelar</button>
+        <!-- Sección de metadatos (izquierda) -->
+        <div class="metadata-section">
+          <div class="info-basic">
+            <div><span class="info-label">Nodo:</span> <span id="node-name">Ninguno seleccionado</span></div>
+            <div><span class="info-label">ID:</span> <span id="node-id">-</span></div>
+            <button class="edit-button" id="toggle-metadata">Añadir Metadato</button>
+          </div>
+          <div class="metadata-editor" id="metadata-editor">
+            <div class="metadata-form">
+              <div class="metadata-input-group">
+                <input type="text" class="metadata-input" id="metadata-key" placeholder="Título (ej: Descripción, Autor, etc.)">
+                <input type="text" class="metadata-input" id="metadata-value" placeholder="Valor">
+              </div>
+              <div class="metadata-actions">
+                <button class="save-button" id="save-metadata">Guardar</button>
+                <button class="cancel-button" id="cancel-metadata">Cancelar</button>
+              </div>
             </div>
           </div>
+          <div class="metadata-cards-container" id="metadata-cards-container">
+            <!-- Las tarjetas de metadatos se generarán aquí dinámicamente -->
+          </div>
         </div>
-        <div class="metadata-cards-container" id="metadata-cards-container">
-          <!-- Las tarjetas de metadatos se generarán aquí dinámicamente -->
+        
+        <!-- Nueva sección de propiedades (derecha) -->
+        <div class="properties-section">
+          <div class="properties-title">Propiedades</div>
+          <div class="properties-list" id="properties-list">
+            <!-- Las propiedades se generarán aquí dinámicamente -->
+          </div>
         </div>
       </div>
     </div>
@@ -964,6 +1003,9 @@ taxonomia:
     
     // Objeto para almacenar metadatos de nodos
     const nodeMetadata = {};
+    
+    // Objeto para almacenar las propiedades asignadas a cada nodo
+    const nodeProperties = {};
     
     // Función para convertir YAML a JSON
     function yamlToJson(yamlString) {
@@ -1349,6 +1391,23 @@ taxonomia:
       
       // Siempre expandir el panel cuando se selecciona un nodo
       infoPanel.classList.add('expanded');
+      
+      const propertiesList = document.getElementById('properties-list');
+      propertiesList.innerHTML = ''; // Limpiar la lista actual
+      
+      // Agregar eventos de drop a la sección de propiedades
+      const propertiesSection = document.querySelector('.properties-section');
+      propertiesSection.addEventListener('dragover', handlePropertiesDragOver);
+      propertiesSection.addEventListener('dragenter', handlePropertiesDragEnter);
+      propertiesSection.addEventListener('dragleave', handlePropertiesDragLeave);
+      propertiesSection.addEventListener('drop', handlePropertiesDrop);
+      
+      // Mostrar las propiedades existentes del nodo
+      if (nodeId && nodeProperties[nodeId]) {
+        nodeProperties[nodeId].forEach(prop => {
+          addPropertyToList(prop.key, prop.id, nodeId);
+        });
+      }
     }
     
     // Función para renderizar las tarjetas de metadatos
@@ -2007,31 +2066,36 @@ taxonomia:
       }
     }
     
-    // Función para renderizar el árbol de propiedades
-    function renderPropertiesTree(data, parentElement = null) {
+    // Modificar la función renderPropertiesTree para incluir la ruta completa
+    function renderPropertiesTree(data, parentElement = null, parentPath = '') {
       const container = parentElement || document.getElementById('props-tree');
       
-      // Limpiar el contenedor si es el contenedor principal
       if (!parentElement) {
         container.innerHTML = '';
       }
       
-      // Recorrer las propiedades del objeto
       Object.entries(data).forEach(([key, value]) => {
-        // Ignorar la propiedad "id" cuando está sola
         if (key === 'id' || key === 'value') return;
+        
+        const currentPath = parentPath ? `${parentPath} > ${key}` : key;
         
         const itemDiv = document.createElement('div');
         itemDiv.className = 'prop-item';
         
         const headerDiv = document.createElement('div');
         headerDiv.className = 'prop-item-header';
+        headerDiv.draggable = true; // Hacer draggable el header en lugar del contenedor
         
-        // Determinar si este nodo tiene hijos
+        // Agregar los datos al header en lugar del contenedor
+        headerDiv.dataset.key = key;
+        headerDiv.dataset.fullPath = currentPath;
+        if (value && value.id) {
+          headerDiv.dataset.id = value.id;
+        }
+        
         const hasChildren = typeof value === 'object' && value !== null && 
                             Object.keys(value).some(k => k !== 'id' && k !== 'value');
         
-        // Crear el contenido del encabezado
         let headerContent = '';
         if (hasChildren) {
           headerContent += '<span class="prop-toggle">▶</span>';
@@ -2039,45 +2103,165 @@ taxonomia:
           headerContent += '<span class="prop-toggle" style="visibility:hidden">▶</span>';
         }
         
-        headerContent += key;
+        headerContent += `<span class="prop-label">${key}</span>`;
         
-        // Añadir el ID si existe
         if (value && value.id) {
           headerContent += `<span class="prop-id">(ID: ${value.id})</span>`;
-        }
-        
-        // Añadir el valor si existe y no es null
-        if (value && value.value !== undefined && value.value !== null) {
-          headerContent += `<span class="prop-value">${value.value}</span>`;
         }
         
         headerDiv.innerHTML = headerContent;
         itemDiv.appendChild(headerDiv);
         
-        // Si tiene hijos, crear un contenedor para ellos
+        // Agregar eventos de arrastre al header
+        headerDiv.addEventListener('dragstart', handleDragStart);
+        headerDiv.addEventListener('dragend', handleDragEnd);
+        
         if (hasChildren) {
           const childrenDiv = document.createElement('div');
           childrenDiv.className = 'prop-children';
           itemDiv.appendChild(childrenDiv);
           
-          // Añadir evento para expandir/colapsar
-          headerDiv.addEventListener('click', function() {
+          // Mover el evento de clic al toggle
+          headerDiv.querySelector('.prop-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
             childrenDiv.classList.toggle('visible');
-            const toggle = this.querySelector('.prop-toggle');
-            if (childrenDiv.classList.contains('visible')) {
-              toggle.textContent = '▼';
-              
-              // Si aún no se han renderizado los hijos, hacerlo ahora
-              if (childrenDiv.children.length === 0) {
-                renderPropertiesTree(value, childrenDiv);
-              }
-            } else {
-              toggle.textContent = '▶';
+            this.textContent = childrenDiv.classList.contains('visible') ? '▼' : '▶';
+            
+            if (childrenDiv.classList.contains('visible') && childrenDiv.children.length === 0) {
+              renderPropertiesTree(value, childrenDiv, currentPath);
             }
           });
         }
         
         container.appendChild(itemDiv);
+      });
+    }
+    
+    // Funciones para manejar el arrastre
+    let draggedItem = null;
+    let dragIndicator = null;
+    
+    // Modificar handleDragStart para asegurar que captura el elemento correcto
+    function handleDragStart(e) {
+      e.stopPropagation(); // Evitar que el evento se propague al padre
+      draggedItem = this;
+      this.classList.add('dragging');
+      
+      console.log('Elemento arrastrado:', {
+        key: this.dataset.key,
+        fullPath: this.dataset.fullPath,
+        id: this.dataset.id
+      });
+      
+      const dragData = {
+        key: this.dataset.key,
+        fullPath: this.dataset.fullPath,
+        id: this.dataset.id,
+        type: 'property'
+      };
+      
+      e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+      e.dataTransfer.effectAllowed = 'copy';
+    }
+    
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+      if (dragIndicator) {
+        dragIndicator.remove();
+        dragIndicator = null;
+      }
+      
+      // Limpiar clases de destino en todos los elementos
+      document.querySelectorAll('.prop-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+    }
+    
+    function handleDragOver(e) {
+      e.preventDefault();
+      
+      if (draggedItem === this) return;
+      
+      // Actualizar posición del indicador
+      const rect = this.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const height = rect.height;
+      
+      if (dragIndicator) {
+        dragIndicator.style.position = 'absolute';
+        dragIndicator.style.width = `${rect.width}px`;
+        dragIndicator.style.left = `${rect.left}px`;
+        dragIndicator.style.display = 'block';
+        
+        if (y < height / 2) {
+          dragIndicator.style.top = `${rect.top}px`;
+        } else {
+          dragIndicator.style.top = `${rect.bottom}px`;
+        }
+      }
+    }
+    
+    function handleDragEnter(e) {
+      e.preventDefault();
+      if (draggedItem !== this) {
+        this.classList.add('drag-over');
+      }
+    }
+    
+    function handleDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+    
+    // Modificar handlePropertiesDrop para verificar los datos recibidos
+    function handlePropertiesDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      try {
+        const rawData = e.dataTransfer.getData('text/plain');
+        console.log('Datos recibidos en drop (raw):', rawData);
+        
+        const data = JSON.parse(rawData);
+        console.log('Datos procesados en drop:', data);
+        
+        const nodeId = document.getElementById('node-id').textContent;
+        console.log('ID del nodo destino:', nodeId);
+        
+        if (nodeId && nodeId !== '-') {
+          if (!nodeProperties[nodeId]) {
+            nodeProperties[nodeId] = [];
+          }
+          
+          const propertyExists = nodeProperties[nodeId].some(prop => prop.id === data.id);
+          console.log('¿La propiedad ya existe?:', propertyExists);
+          
+          if (!propertyExists) {
+            const newProperty = {
+              key: data.key,
+              fullPath: data.fullPath,
+              id: data.id
+            };
+            
+            console.log('Añadiendo nueva propiedad:', newProperty);
+            nodeProperties[nodeId].push(newProperty);
+            
+            addPropertyToList(data.fullPath || data.key, data.id, nodeId);
+            console.log('Estado actual de nodeProperties:', nodeProperties);
+          }
+        }
+      } catch (error) {
+        console.error('Error al procesar el drop:', error);
+      }
+    }
+    
+    // Función para actualizar el modelo de datos después del arrastre
+    function updateDataModel(draggedElement, targetElement, insertBefore) {
+      // Aquí implementarías la lógica para actualizar el modelo de datos
+      // según tus necesidades específicas
+      console.log('Actualizando modelo de datos:', {
+        dragged: draggedElement.dataset.key,
+        target: targetElement.dataset.key,
+        insertBefore: insertBefore
       });
     }
     
@@ -2558,6 +2742,76 @@ taxonomia:
         saveMetadata();
       }
     });
+
+    // Funciones para manejar el drag and drop en la sección de propiedades
+    function handlePropertiesDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy'; // Indicar que se está copiando el elemento
+    }
+
+    function handlePropertiesDragEnter(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    }
+
+    function handlePropertiesDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+
+    // Modificar addPropertyToList para verificar los datos
+    function addPropertyToList(fullPath, id, nodeId) {
+      console.log('Añadiendo a la lista visual:', { fullPath, id, nodeId });
+      
+      const propertiesList = document.getElementById('properties-list');
+      if (!propertiesList) {
+        console.error('No se encontró el elemento properties-list');
+        return;
+      }
+      
+      const propertyItem = document.createElement('div');
+      propertyItem.className = 'property-item';
+      propertyItem.innerHTML = `
+        <span class="property-key">${fullPath}</span>
+        <span class="remove-property" title="Eliminar propiedad">×</span>
+      `;
+      
+      propertyItem.querySelector('.remove-property').addEventListener('click', () => {
+        console.log('Eliminando propiedad:', { id, nodeId });
+        nodeProperties[nodeId] = nodeProperties[nodeId].filter(prop => prop.id !== id);
+        propertyItem.remove();
+      });
+      
+      propertiesList.appendChild(propertyItem);
+    }
+
+    // Función para manejar el drop dentro de la jerarquía de propiedades
+    function handleDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      if (draggedItem === this) return;
+      
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        const rect = this.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        
+        // Solo permitir reordenamiento si es un elemento de propiedad
+        if (data.type === 'property') {
+          // Determinar si insertar antes o después del elemento destino
+          if (y < rect.height / 2) {
+            this.parentNode.insertBefore(draggedItem, this);
+          } else {
+            this.parentNode.insertBefore(draggedItem, this.nextSibling);
+          }
+          
+          // Actualizar el modelo de datos
+          updateDataModel(draggedItem, this, y < rect.height / 2);
+        }
+      } catch (error) {
+        console.error('Error al procesar el drop:', error);
+      }
+    }
   </script>
 </body>
 </html>
