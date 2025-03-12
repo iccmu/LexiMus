@@ -1209,106 +1209,79 @@
     };
     
     // Datos de ejemplo en formato YAML
-    const yamlData = `# Ejemplo de taxonomía en YAML
+    const yamlData = `# Las pasiones del alma
 taxonomia:
-  - categoria: Animales
+  - categoria: Admiración
     subcategorias:
-      - nombre: Mamíferos
+      - nombre: Conexiones de Admiración
         ejemplos:
-          - Perro
-          - Gato
-          - Elefante
-          - León
-          - Tigre
-          - Oso
-          - Jirafa
-          - Cebra
-          - Rinoceronte
-          - Hipopótamo
-      - nombre: Aves
-        ejemplos:
-          - Águila
-          - Pingüino
-          - Colibrí
-          - Búho
-          - Pato
-          - Gallina
-          - Pavo
-          - Flamenco
-  - categoria: Plantas
+          - Orgullo
+          - Generosidad
+          - Bajeza
+          - Humildad
+          - Aprecio
+          - Menosprecio
+          - Veneración
+          - Desdén
+
+  - categoria: Deseo
     subcategorias:
-      - nombre: Árboles
+      - nombre: Conexiones de Deseo
         ejemplos:
-          - Roble
-          - Pino
-          - Sauce
-          - Abeto
-          - Cedro
-          - Arce
-          - Olmo
-      - nombre: Flores
-        ejemplos:
-          - Rosa
-          - Tulipán
-          - Girasol
-          - Margarita
-          - Orquídea
-          - Lirio
-          - Clavel
-          - Violeta
-  - categoria: Minerales
+          - Valor
+          - Cobardía
+          - Esperanza
+          - Temor
+          - Irresolución
+          - Audacia
+          - Espanto 
+          - Confianza
+          - Desesperación
+          - Emulación
+          - Curiosidad
+          - Celos
+          - Amor erótico
+          - Aversión
+
+  - categoria: Amor
     subcategorias:
-      - nombre: Metales
+      - nombre: Conexiones de Amor
         ejemplos:
-          - Oro
-          - Plata
-          - Cobre
-          - Hierro
-          - Platino
-          - Aluminio
-      - nombre: Gemas
-        ejemplos:
-          - Diamante
-          - Rubí
-          - Esmeralda
-          - Zafiro
-          - Ópalo
-          - Amatista
-  - categoria: Elementos
+          - Devoción
+          - Amistad
+          - Afecto
+          - Simpatía
+          - Gratitud
+          - Complacencia
+
+  - categoria: Odio
     subcategorias:
-      - nombre: Gases
+      - nombre: Conexiones de Odio
         ejemplos:
-          - Hidrógeno
-          - Oxígeno
-          - Nitrógeno
-          - Helio
-          - Neón
-          - Argón
-      - nombre: Metales Alcalinos
-        ejemplos:
-          - Litio
-          - Sodio
-          - Potasio
-          - Rubidio
-          - Cesio
-  - categoria: Ecosistemas
+          - Indignación
+          - Ira
+          - Horror
+
+  - categoria: Alegría
     subcategorias:
-      - nombre: Terrestres
+      - nombre: Conexiones de Alegría
         ejemplos:
-          - Bosque
-          - Desierto
-          - Sabana
-          - Tundra
-          - Pradera
-          - Selva
-      - nombre: Acuáticos
+          - Burla
+          - Gloria
+          - Autosatisfacción
+          - Júbilo
+
+  - categoria: Tristeza
+    subcategorias:
+      - nombre: Conexiones de Tristeza
         ejemplos:
-          - Océano
-          - Río
-          - Lago
-          - Arrecife
-          - Manglar
-          - Pantano`;
+          - Piedad
+          - Envidia
+          - Vergüenza
+          - Remordimiento
+          - Arrepentimiento
+          - Pesar
+          - Hastío`;
 
     // Variables globales
     let currentFocusedNode = null;
@@ -2451,41 +2424,153 @@ taxonomia:
     async function loadPropertiesHierarchy() {
       try {
         // En un entorno real, esto sería una llamada a la API
-        // Por ahora, usamos el ejemplo de props.json directamente
+        // Por ahora, usamos propiedades relevantes para emociones
         const propsData = {
-          "id": "root-game-123",
-          "VideoJuego": {
-            "id": "game-root-456",
-            "Personajes": {
-              "id": "characters-789",
-              "Heroe": {
-                "id": "hero-abc",
+          "id": "root-props-123",
+          "PropiedadesEmocionales": {
+            "id": "emotional-props-456",
+            "Intensidad": {
+              "id": "intensity-789",
+              "Alta": {
+                "id": "high-intensity-abc",
                 "value": null
               },
-              "Villano": {
-                "id": "villain-def",
+              "Media": {
+                "id": "medium-intensity-def",
+                "value": null
+              },
+              "Baja": {
+                "id": "low-intensity-ghi",
                 "value": null
               }
             },
-            "Items": {
-              "id": "items-ghi",
-              "Arma": {
-                "id": "weapon-jkl",
+            "Valencia": {
+              "id": "valence-jkl",
+              "Positiva": {
+                "id": "positive-mno",
                 "value": null
               },
-              "Pocion": {
-                "id": "potion-mno",
+              "Negativa": {
+                "id": "negative-pqr",
+                "value": null
+              },
+              "Ambivalente": {
+                "id": "ambivalent-stu",
                 "value": null
               }
             },
-            "Aliados": {
-              "id": "allies-pqr",
-              "Guerrero": {
-                "id": "warrior-stu",
+            "ExpresiónFísica": {
+              "id": "physical-vwx",
+              "Facial": {
+                "id": "facial-yza",
+                "Sonrisa": {
+                  "id": "smile-bcd",
+                  "value": null
+                },
+                "Ceño": {
+                  "id": "frown-efg",
+                  "value": null
+                },
+                "Ojos": {
+                  "id": "eyes-hij",
+                  "value": null
+                }
+              },
+              "Corporal": {
+                "id": "body-klm",
+                "Postura": {
+                  "id": "posture-nop",
+                  "value": null
+                },
+                "Gestos": {
+                  "id": "gestures-qrs",
+                  "value": null
+                },
+                "Tensión": {
+                  "id": "tension-tuv",
+                  "value": null
+                }
+              }
+            },
+            "Duración": {
+              "id": "duration-wxy",
+              "Momentánea": {
+                "id": "momentary-zab",
                 "value": null
               },
-              "Mago": {
-                "id": "mage-vwx",
+              "Prolongada": {
+                "id": "prolonged-cde",
+                "value": null
+              },
+              "Crónica": {
+                "id": "chronic-fgh",
+                "value": null
+              }
+            },
+            "ContextoSocial": {
+              "id": "social-context-ijk",
+              "Individual": {
+                "id": "individual-lmn",
+                "value": null
+              },
+              "Interpersonal": {
+                "id": "interpersonal-opq",
+                "value": null
+              },
+              "Grupal": {
+                "id": "group-rst",
+                "value": null
+              }
+            },
+            "ComponenteCognitivo": {
+              "id": "cognitive-uvw",
+              "Evaluaciones": {
+                "id": "appraisals-xyz",
+                "Amenaza": {
+                  "id": "threat-123",
+                  "value": null
+                },
+                "Pérdida": {
+                  "id": "loss-456",
+                  "value": null
+                },
+                "Recompensa": {
+                  "id": "reward-789",
+                  "value": null
+                }
+              },
+              "Creencias": {
+                "id": "beliefs-012",
+                "Controlabilidad": {
+                  "id": "controllability-345",
+                  "value": null
+                },
+                "Certeza": {
+                  "id": "certainty-678",
+                  "value": null
+                },
+                "Responsabilidad": {
+                  "id": "responsibility-901",
+                  "value": null
+                }
+              }
+            },
+            "FunciónAdaptativa": {
+              "id": "adaptive-234",
+              "Supervivencia": {
+                "id": "survival-567",
+                "value": null
+              },
+              "Vinculación": {
+                "id": "bonding-890",
+                "value": null
+              },
+              "Comunicación": {
+                "id": "communication-123a",
+                "value": null
+              },
+              "Motivación": {
+                "id": "motivation-456b",
                 "value": null
               }
             }
