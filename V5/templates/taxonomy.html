@@ -5,7 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visualizador de Taxonomía</title>
   <style>
+    /* Actualización de colores y estilos base */
+    :root {
+      --primary: #008a9b;
+      --primary-dark: #006d7a;
+      --secondary: #64748b;
+      --success: #00968f;
+      --danger: #dc5b5b;
+      --warning: #b88746;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text: #2c3e50;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --shadow: rgba(0, 138, 155, 0.1);
+    }
+    
     body {
+      background-color: var(--background);
+      color: var(--text);
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
@@ -20,14 +38,15 @@
     }
     
     .top-bar {
-      background-color: #333;
-      color: white;
+      background-color: var(--surface);
+      color: var(--text);
       padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       height: 60px;
       box-sizing: border-box;
+      box-shadow: 0 1px 3px var(--shadow);
     }
     
     .top-bar h1 {
@@ -40,13 +59,22 @@
       gap: 10px;
     }
     
-    .controls button, .controls select {
-      padding: 5px 10px;
-      border: none;
-      border-radius: 4px;
-      background-color: #4CAF50;
+    .controls button, .controls select,
+    #update-visualization {
+      background-color: var(--primary);
       color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
       cursor: pointer;
+    }
+    
+    .controls button:hover,
+    .controls select:hover,
+    #update-visualization:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
     }
     
     .main-content {
@@ -92,8 +120,8 @@
       left: 10px;
       width: 40px;
       height: 40px;
-      background-color: #4CAF50;
-      color: white;
+      background-color: var(--surface);
+      color: var(--text);
       border: none;
       border-radius: 50%;
       font-size: 20px;
@@ -103,7 +131,7 @@
       justify-content: center;
       z-index: 20;
       transform: translateY(-50%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 8px var(--shadow);
     }
     
     .toggle-props-panel {
@@ -112,8 +140,8 @@
       right: 10px;
       width: 40px;
       height: 40px;
-      background-color: #333;
-      color: white;
+      background-color: var(--surface);
+      color: var(--text);
       border: none;
       border-radius: 50%;
       font-size: 20px;
@@ -123,12 +151,14 @@
       justify-content: center;
       z-index: 1001;
       transform: translateY(-50%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 8px var(--shadow);
     }
     
     .toggle-panel:hover, .toggle-props-panel:hover {
+      background-color: var(--primary);
+      color: white;
       transform: translateY(-50%) scale(1.1);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 12px var(--shadow);
       transition: all 0.2s ease;
     }
     
@@ -205,8 +235,8 @@
       border-radius: 8px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px var(--shadow);
       min-width: 100px;
       max-width: 150px;
       word-wrap: break-word;
@@ -214,6 +244,8 @@
       position: relative;
       /* Eliminar tabindex para evitar que los nodos reciban foco con Tab */
       outline: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
     }
     
     /* Nodos minimizados (subnodos cuando su padre no está activo) */
@@ -225,41 +257,60 @@
     
     /* Estilos para los diferentes tipos de nodos */
     .pyramid-node.main {
-      background-color: #2196F3; /* Azul para el nodo principal */
+      background-color: var(--primary);
       color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.main::selection {
+      background-color: #ff7564; /* Complementario de --primary (#008a9b) */
+      color: black;
     }
     
     .pyramid-node.category {
-      background-color: #4CAF50; /* Verde para categorías */
+      background-color: #009b8a;
       color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.category::selection {
+      background-color: #ff6475; /* Complementario de #009b8a */
+      color: black;
     }
     
     .pyramid-node.subcategory {
-      background-color: #FF9800; /* Naranja para subcategorías */
+      background-color: #3a7b8c;
       color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.subcategory::selection {
+      background-color: #c58473; /* Complementario de #3a7b8c */
+      color: black;
     }
     
     .pyramid-node.example {
-      background-color: #9C27B0; /* Púrpura para ejemplos */
+      background-color: #5f8a93;
       color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.example::selection {
+      background-color: #93756c; /* Complementario de #5f8a93 */
+      color: black;
     }
     
     /* Nodo actualmente seleccionado/enfocado */
     .pyramid-node.focused {
-      transform: scale(1.1);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 138, 155, 0.2);
       z-index: 5;
-      background-color: #1976D2; /* Azul más oscuro para el nodo enfocado */
-      border: 3px solid #0D47A1; /* Borde azul oscuro */
+      background-color: var(--primary);
+      border: 2px solid var(--primary);
       color: white;
-      font-weight: bold;
     }
     
     /* Efecto de brillo para el nodo enfocado */
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(25, 118, 210, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(0, 138, 155, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 138, 155, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 138, 155, 0); }
     }
     
     .pyramid-node.focused {
@@ -436,8 +487,8 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      background-color: #333;
-      color: white;
+      background-color: var(--surface);
+      color: var(--text);
       padding: 10px 20px;
       display: flex;
       justify-content: space-between;
@@ -448,6 +499,8 @@
       font-size: 14px;
       transition: height 0.3s ease, left 0.3s ease, width 0.3s ease;
       overflow: hidden;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -1px 3px var(--shadow);
     }
     
     .info-panel.expanded {
@@ -489,18 +542,19 @@
     }
     
     .metadata-card {
-      background-color: #444;
-      border-radius: 5px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       padding: 8px 12px;
       min-width: 150px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px var(--shadow);
       display: flex;
       flex-direction: column;
     }
     
     .metadata-card-title {
       font-weight: bold;
-      color: #4CAF50;
+      color: var(--primary);
       margin-bottom: 5px;
       font-size: 12px;
     }
@@ -511,16 +565,16 @@
     }
     
     .add-metadata-card {
-      background-color: #555;
-      border: 2px dashed #777;
-      border-radius: 5px;
+      background-color: transparent;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
       padding: 8px 12px;
       min-width: 150px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #aaa;
+      color: var(--text-light);
     }
     
     .add-metadata-card:hover {
@@ -674,11 +728,12 @@
       right: 0;
       top: 0;
       bottom: 0;
-      background-color: #f5f5f5;
+      background-color: var(--surface);
       z-index: 100;
-      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      box-shadow: -2px 0 10px var(--shadow);
       padding: 0;
       box-sizing: border-box;
+      border-left: 1px solid var(--border);
     }
     
     .props-panel.visible {
@@ -693,8 +748,8 @@
       right: 10px;
       top: 10px;
       z-index: 1001;
-      background-color: #333;
-      color: white;
+      background-color: var(--surface);
+      color: var(--text);
       border: none;
       border-radius: 4px;
       width: 30px;
@@ -704,11 +759,12 @@
       justify-content: center;
       cursor: pointer;
       font-size: 18px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 5px var(--shadow);
     }
     
     .toggle-props-panel:hover {
-      background-color: #555;
+      background-color: var(--primary);
+      color: white;
     }
     
     .main-content.props-panel-visible .nodes-container {
@@ -732,9 +788,10 @@
     .prop-item {
       margin-bottom: 8px;
       padding: 8px;
-      border-radius: 4px;
-      background-color: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 6px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px var(--shadow);
     }
     
     .prop-item-header {
@@ -797,14 +854,14 @@
     
     .metadata-card.focused-card {
       transform: scale(1.05);
-      box-shadow: 0 0 0 2px #4CAF50, 0 4px 8px rgba(0,0,0,0.3) !important;
+      box-shadow: 0 0 0 2px var(--primary), 0 4px 8px var(--shadow) !important;
       transition: all 0.2s ease;
     }
     
     /* Añadir navegación con teclado entre tarjetas */
     .metadata-card:focus {
       outline: none;
-      box-shadow: 0 0 0 2px #4CAF50, 0 4px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 0 0 2px var(--primary), 0 4px 8px var(--shadow);
     }
     
     /* Ajustar el panel de información cuando el panel YAML está visible */
