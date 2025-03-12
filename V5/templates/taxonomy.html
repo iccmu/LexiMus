@@ -168,18 +168,20 @@
       flex-direction: column;
       align-items: center;
       gap: 30px;
-      padding: 40px 20px;
+      padding: 40px 10px; /* Reducir el padding horizontal de 20px a 10px */
       width: 100%;
       box-sizing: border-box;
+      max-width: 100%; /* Asegurar que use todo el ancho disponible */
     }
     
     .pyramid-level {
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 20px;
       width: 100%;
-      padding: 0 10px;
+      padding: 0 5px; /* Reducir el padding horizontal de 10px a 5px */
+      overflow-x: hidden;
     }
     
     /* Contenedor para un nodo y sus hijos */
@@ -231,14 +233,14 @@
     }
     
     .pyramid-node {
-      padding: 12px 20px;
+      padding: 12px 15px; /* Reducir el padding horizontal */
+      min-width: 100px; /* Reducir el ancho mínimo de 120px a 100px */
+      max-width: 150px;
       border-radius: 8px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px var(--shadow);
-      min-width: 100px;
-      max-width: 150px;
       word-wrap: break-word;
       flex-shrink: 0;
       position: relative;
@@ -918,6 +920,207 @@
       color: #666;
       font-size: 0.9em;
     }
+    
+    /* Añadir estilos CSS para los controles de navegación de nivel */
+    .level-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      gap: 10px;
+    }
+    
+    .level-nav-prev, .level-nav-next {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .level-nav-prev:hover, .level-nav-next:hover {
+      background-color: var(--primary-dark);
+      transform: scale(1.1);
+    }
+    
+    .level-nav-prev:disabled, .level-nav-next:disabled {
+      background-color: var(--secondary);
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+    }
+    
+    .level-nav-indicator {
+      font-size: 14px;
+      color: var(--text);
+      min-width: 100px;
+      text-align: center;
+    }
+    
+    /* Asegurar que los niveles tengan espacio para los controles */
+    .pyramid-level {
+      position: relative;
+      padding-bottom: 40px;
+    }
+    
+    /* Función para ajustar dinámicamente la cantidad de nodos visibles */
+    function adjustVisibleNodesCount() {
+      const pyramidLevels = document.querySelectorAll('.pyramid-level');
+      
+      pyramidLevels.forEach(level => {
+        const levelWidth = level.clientWidth;
+        const nodeGroups = level.querySelectorAll('.node-group');
+        
+        if (nodeGroups.length === 0) return;
+        
+        // Calcular el ancho promedio de un nodo
+        const sampleNode = nodeGroups[0].querySelector('.pyramid-node');
+        if (!sampleNode) return;
+        
+        // Usar un margen más razonable entre nodos
+        const nodeWidth = sampleNode.offsetWidth + 20;
+        
+        // Reducir el margen de seguridad para que se active la paginación cuando sea necesario
+        const safetyMargin = 10;
+        
+        // Calcular cuántos nodos caben en el nivel
+        const maxNodesInView = Math.floor((levelWidth - safetyMargin) / nodeWidth);
+        
+        // Asegurar que maxNodesInView sea al menos 1 menos que el total para mostrar la paginación
+        // cuando hay muchos nodos, incluso si técnicamente podrían caber
+        const adjustedMaxNodes = Math.min(maxNodesInView, nodeGroups.length > 5 ? nodeGroups.length - 1 : nodeGroups.length);
+        
+        // Si no caben todos los nodos o tenemos más de 5 nodos, mostrar controles de navegación
+        if (adjustedMaxNodes < nodeGroups.length || nodeGroups.length > 5) {
+          // Ocultar nodos que no caben
+          nodeGroups.forEach((node, index) => {
+            if (index < adjustedMaxNodes) {
+              node.style.display = 'block';
+            } else {
+              node.style.display = 'none';
+            }
+          });
+          
+          // Eliminar los controles de navegación anteriores si existen
+          const oldNavControls = level.querySelector('.level-navigation');
+          if (oldNavControls) {
+            oldNavControls.remove();
+          }
+          
+          // Crear nuevos controles de navegación y colocarlos debajo de los nodos
+          const navControls = document.createElement('div');
+          navControls.className = 'level-navigation';
+          
+          // Asegurar que el texto del indicador sea completo
+          const totalNodes = nodeGroups.length;
+          navControls.innerHTML = `
+            <button class="level-nav-prev" disabled>◀</button>
+            <span class="level-nav-indicator">${1}-${adjustedMaxNodes} de ${totalNodes}</span>
+            <button class="level-nav-next">▶</button>
+          `;
+          
+          // Insertar los controles después del último nodo visible
+          level.appendChild(navControls);
+          
+          // Configurar eventos para los botones de navegación
+          setupLevelNavigation(level, navControls, nodeGroups, adjustedMaxNodes);
+        } else {
+          // Si caben todos los nodos, mostrarlos todos y quitar controles de navegación
+          nodeGroups.forEach(node => {
+            node.style.display = 'block';
+          });
+          
+          const navControls = level.querySelector('.level-navigation');
+          if (navControls) {
+            navControls.remove();
+          }
+        }
+      });
+    }
+    
+    /* Actualizar los estilos CSS para los controles de navegación */
+    const levelNavStyles = `
+      .level-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 15px;
+        margin-bottom: 10px;
+        gap: 10px;
+        width: 100%;
+        padding: 0 5px;
+        box-sizing: border-box;
+      }
+      
+      .level-nav-prev, .level-nav-next {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+      
+      .level-nav-prev:hover, .level-nav-next:hover {
+        background-color: var(--primary-dark);
+        transform: scale(1.1);
+      }
+      
+      .level-nav-prev:disabled, .level-nav-next:disabled {
+        background-color: var(--secondary);
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+      }
+      
+      .level-nav-indicator {
+        font-size: 14px;
+        color: var(--text);
+        min-width: 120px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: visible;
+      }
+      
+      /* Ajustar el espaciado de los niveles para los controles */
+      .pyramid-level {
+        position: relative;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        width: 100%;
+        overflow: visible;
+      }
+    `;
+    
+    /* Asegurar que los estilos se apliquen */
+    function applyLevelNavigationStyles() {
+      let styleElement = document.getElementById('level-nav-styles');
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'level-nav-styles';
+        styleElement.textContent = levelNavStyles;
+        document.head.appendChild(styleElement);
+      }
+    }
+    
+    /* Llamar a esta función al inicio */
+    document.addEventListener('DOMContentLoaded', function() {
+      applyLevelNavigationStyles();
+    });
   </style>
 </head>
 <body>
@@ -1052,7 +1255,60 @@ taxonomia:
           - Orquídea
           - Lirio
           - Clavel
-          - Violeta`;
+          - Violeta
+  - categoria: Minerales
+    subcategorias:
+      - nombre: Metales
+        ejemplos:
+          - Oro
+          - Plata
+          - Cobre
+          - Hierro
+          - Platino
+          - Aluminio
+      - nombre: Gemas
+        ejemplos:
+          - Diamante
+          - Rubí
+          - Esmeralda
+          - Zafiro
+          - Ópalo
+          - Amatista
+  - categoria: Elementos
+    subcategorias:
+      - nombre: Gases
+        ejemplos:
+          - Hidrógeno
+          - Oxígeno
+          - Nitrógeno
+          - Helio
+          - Neón
+          - Argón
+      - nombre: Metales Alcalinos
+        ejemplos:
+          - Litio
+          - Sodio
+          - Potasio
+          - Rubidio
+          - Cesio
+  - categoria: Ecosistemas
+    subcategorias:
+      - nombre: Terrestres
+        ejemplos:
+          - Bosque
+          - Desierto
+          - Sabana
+          - Tundra
+          - Pradera
+          - Selva
+      - nombre: Acuáticos
+        ejemplos:
+          - Océano
+          - Río
+          - Lago
+          - Arrecife
+          - Manglar
+          - Pantano`;
 
     // Variables globales
     let currentFocusedNode = null;
@@ -1218,6 +1474,19 @@ taxonomia:
         
         console.log("HTML generado:", html);
         
+        // Después de generar el HTML y antes de configurar eventos
+        // Ajustar el ancho del contenedor para usar todo el espacio disponible
+        const nodesContainer = document.getElementById('nodes-container');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (nodesContainer && mainContent) {
+          // Asegurar que el contenedor de nodos use todo el ancho disponible
+          nodesContainer.style.width = '100%';
+          
+          // Forzar un reflow para que los cambios surtan efecto
+          nodesContainer.offsetHeight;
+        }
+        
         // Configurar eventos para los nodos
         setupNodeEvents();
         
@@ -1277,6 +1546,146 @@ taxonomia:
           }
         });
       });
+      
+      // Ajustar inicialmente la cantidad de nodos visibles según el espacio disponible
+      adjustVisibleNodesCount();
+      
+      // Configurar evento de redimensionamiento para ajustar dinámicamente
+      window.addEventListener('resize', adjustVisibleNodesCount);
+    }
+    
+    // Nueva función para ajustar dinámicamente la cantidad de nodos visibles
+    function adjustVisibleNodesCount() {
+      const pyramidLevels = document.querySelectorAll('.pyramid-level');
+      
+      pyramidLevels.forEach(level => {
+        const levelWidth = level.clientWidth;
+        const nodeGroups = level.querySelectorAll('.node-group');
+        
+        if (nodeGroups.length === 0) return;
+        
+        // Calcular el ancho promedio de un nodo
+        const sampleNode = nodeGroups[0].querySelector('.pyramid-node');
+        if (!sampleNode) return;
+        
+        // Usar un margen más razonable entre nodos
+        const nodeWidth = sampleNode.offsetWidth + 20;
+        
+        // Reducir el margen de seguridad para que se active la paginación cuando sea necesario
+        const safetyMargin = 10;
+        
+        // Calcular cuántos nodos caben en el nivel
+        const maxNodesInView = Math.floor((levelWidth - safetyMargin) / nodeWidth);
+        
+        // Asegurar que maxNodesInView sea al menos 1 menos que el total para mostrar la paginación
+        // cuando hay muchos nodos, incluso si técnicamente podrían caber
+        const adjustedMaxNodes = Math.min(maxNodesInView, nodeGroups.length > 5 ? nodeGroups.length - 1 : nodeGroups.length);
+        
+        // Si no caben todos los nodos o tenemos más de 5 nodos, mostrar controles de navegación
+        if (adjustedMaxNodes < nodeGroups.length || nodeGroups.length > 5) {
+          // Ocultar nodos que no caben
+          nodeGroups.forEach((node, index) => {
+            if (index < adjustedMaxNodes) {
+              node.style.display = 'block';
+            } else {
+              node.style.display = 'none';
+            }
+          });
+          
+          // Eliminar los controles de navegación anteriores si existen
+          const oldNavControls = level.querySelector('.level-navigation');
+          if (oldNavControls) {
+            oldNavControls.remove();
+          }
+          
+          // Crear nuevos controles de navegación y colocarlos debajo de los nodos
+          const navControls = document.createElement('div');
+          navControls.className = 'level-navigation';
+          
+          // Asegurar que el texto del indicador sea completo
+          const totalNodes = nodeGroups.length;
+          navControls.innerHTML = `
+            <button class="level-nav-prev" disabled>◀</button>
+            <span class="level-nav-indicator">${1}-${adjustedMaxNodes} de ${totalNodes}</span>
+            <button class="level-nav-next">▶</button>
+          `;
+          
+          // Insertar los controles después del último nodo visible
+          level.appendChild(navControls);
+          
+          // Configurar eventos para los botones de navegación
+          setupLevelNavigation(level, navControls, nodeGroups, adjustedMaxNodes);
+        } else {
+          // Si caben todos los nodos, mostrarlos todos y quitar controles de navegación
+          nodeGroups.forEach(node => {
+            node.style.display = 'block';
+          });
+          
+          const navControls = level.querySelector('.level-navigation');
+          if (navControls) {
+            navControls.remove();
+          }
+        }
+      });
+    }
+    
+    // Función para configurar la navegación en niveles
+    function setupLevelNavigation(level, navControls, nodeGroups, maxNodesInView) {
+      const prevButton = navControls.querySelector('.level-nav-prev');
+      const nextButton = navControls.querySelector('.level-nav-next');
+      const indicator = navControls.querySelector('.level-nav-indicator');
+      const totalNodes = nodeGroups.length;
+      
+      // Inicializar el atributo de datos
+      level.setAttribute('data-visible-start', '0');
+      
+      prevButton.addEventListener('click', function() {
+        let visibleStart = parseInt(level.getAttribute('data-visible-start'));
+        
+        if (visibleStart > 0) {
+          visibleStart--;
+          level.setAttribute('data-visible-start', visibleStart);
+          
+          // Actualizar visibilidad de los nodos
+          updateLevelVisibleNodes(nodeGroups, visibleStart, maxNodesInView);
+          
+          // Actualizar indicador y estado de botones
+          const endIndex = Math.min(visibleStart + maxNodesInView, totalNodes);
+          indicator.textContent = `${visibleStart + 1}-${endIndex} de ${totalNodes}`;
+          prevButton.disabled = visibleStart === 0;
+          nextButton.disabled = false;
+        }
+      });
+      
+      nextButton.addEventListener('click', function() {
+        let visibleStart = parseInt(level.getAttribute('data-visible-start'));
+        const maxStart = totalNodes - maxNodesInView;
+        
+        if (visibleStart < maxStart) {
+          visibleStart++;
+          level.setAttribute('data-visible-start', visibleStart);
+          
+          // Actualizar visibilidad de los nodos
+          updateLevelVisibleNodes(nodeGroups, visibleStart, maxNodesInView);
+          
+          // Actualizar indicador y estado de botones
+          const endIndex = Math.min(visibleStart + maxNodesInView, totalNodes);
+          indicator.textContent = `${visibleStart + 1}-${endIndex} de ${totalNodes}`;
+          prevButton.disabled = false;
+          nextButton.disabled = visibleStart >= maxStart;
+        }
+      });
+    }
+    
+    // Función para actualizar la visibilidad de los nodos en un nivel
+    function updateLevelVisibleNodes(nodeGroups, startIndex, maxVisible) {
+      nodeGroups.forEach((node, index) => {
+        if (index >= startIndex && index < startIndex + maxVisible) {
+          node.style.display = 'block';
+        } else {
+          node.style.display = 'none';
+        }
+      });
     }
     
     // Función para actualizar la visibilidad de los nodos hijos
@@ -1323,32 +1732,9 @@ taxonomia:
       
       // Primero, restablecer todos los nodos a su estado minimizado
       allNodes.forEach(node => {
-        node.classList.remove('focused', 'active-child', 'pinned', 'secondary-pinned');
+        node.classList.remove('focused', 'active-child');
         node.classList.add('minimized');
-        
-        // Restaurar colores originales según el tipo de nodo
-        const nodeType = node.classList.contains('main') ? 'main' : 
-                         node.classList.contains('category') ? 'category' :
-                         node.classList.contains('subcategory') ? 'subcategory' : 'example';
-        
-        // Marcar nodos que tienen hijos
-        const nodeId = node.getAttribute('data-id');
-        const hasChildren = document.querySelector(`.pyramid-node[data-parent="${nodeId}"]`) !== null;
-        
-        if (hasChildren) {
-          node.classList.add('has-children');
-        } else {
-          node.classList.remove('has-children');
-        }
       });
-      
-      // Ya no necesitamos el código para nodos fijados
-      /* 
-      if (pinnedNode) {
-        pinnedNode.classList.add('pinned');
-        pinnedNode.classList.remove('minimized');
-      }
-      */
       
       if (focusedNodeId) {
         // Obtener el nodo enfocado
@@ -1359,50 +1745,40 @@ taxonomia:
           focusedNode.classList.add('focused');
           focusedNode.classList.remove('minimized');
           
-          // Mostrar información del nodo enfocado en la consola (para depuración)
-          console.log('Nodo enfocado:', focusedNode.textContent, 'ID:', focusedNodeId);
+          // Activar la cadena de padres hasta la raíz
+          let currentNode = focusedNode;
+          let parentNode = null;
           
-          // Activar el padre del nodo enfocado
-          const parentId = focusedNode.getAttribute('data-parent');
-          if (parentId && parentId !== 'null') {
-            const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
-            if (parentNode) {
-              parentNode.classList.remove('minimized');
+          while (currentNode) {
+            const parentId = currentNode.getAttribute('data-parent');
+            if (parentId && parentId !== 'null') {
+              parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+              if (parentNode) {
+                parentNode.classList.remove('minimized');
+                currentNode = parentNode;
+              } else {
+                break;
+              }
+            } else {
+              break;
             }
-            
-            // Activar los hermanos del nodo enfocado
-            const siblings = document.querySelectorAll(`.pyramid-node[data-parent="${parentId}"]`);
-            siblings.forEach(sibling => {
-              sibling.classList.remove('minimized');
-              sibling.classList.add('active-child');
-            });
           }
           
-          // Activar los hijos del nodo enfocado
+          // Activar SOLO los hijos directos del nodo enfocado
           const childrenNodes = document.querySelectorAll(`.pyramid-node[data-parent="${focusedNodeId}"]`);
           childrenNodes.forEach(child => {
             child.classList.remove('minimized');
             child.classList.add('active-child');
           });
-          
-          // Si el nodo enfocado es un hijo, activar sus hermanos
-          const focusedParentId = focusedNode.getAttribute('data-parent');
-          if (focusedParentId && focusedParentId !== 'null') {
-            const siblings = document.querySelectorAll(`.pyramid-node[data-parent="${focusedParentId}"]`);
-            siblings.forEach(sibling => {
-              sibling.classList.remove('minimized');
-              sibling.classList.add('active-child');
-            });
-          }
         }
       } else {
-        // Si no hay nodo enfocado, mostrar el nodo raíz y sus hijos normalmente
+        // Si no hay nodo enfocado, mostrar solo el nodo raíz y sus hijos directos
         const rootNode = document.querySelector('.pyramid-node[data-id="root"]');
         if (rootNode) {
           rootNode.classList.remove('minimized');
           rootNode.classList.add('focused');
           
-          // Mostrar los hijos del nodo raíz normalmente
+          // Mostrar solo los hijos directos del nodo raíz
           const rootChildren = document.querySelectorAll('.pyramid-node[data-parent="root"]');
           rootChildren.forEach(child => {
             child.classList.remove('minimized');
@@ -2869,6 +3245,18 @@ taxonomia:
         console.error('Error al procesar el drop:', error);
       }
     }
+
+    // Añadir un evento de redimensionamiento para ajustar el layout cuando cambia el tamaño de la ventana
+    window.addEventListener('resize', function() {
+      // Ajustar el ancho del contenedor de nodos
+      const nodesContainer = document.getElementById('nodes-container');
+      if (nodesContainer) {
+        nodesContainer.style.width = '100%';
+      }
+      
+      // Ajustar la cantidad de nodos visibles
+      adjustVisibleNodesCount();
+    });
   </script>
 </body>
 </html>
