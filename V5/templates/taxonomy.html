@@ -117,14 +117,13 @@
       transform: translateY(-1px);
     }
     
+    /* Ajustar los estilos del contenedor principal y el contenedor de nodos */
     .main-content {
       display: flex;
       flex-direction: row;
       align-items: stretch;
       overflow: hidden;
-      position: relative;
-      width: 100%;
-      height: 100%;
+      height: 100vh; /* Asegurar que ocupe toda la altura de la ventana */
     }
     
     .YAML-JSON {
@@ -148,9 +147,10 @@
     
     .nodes-container {
       flex-grow: 1;
-      overflow: auto;
-      transition: margin-left 0.3s ease;
-      width: 100%;
+      overflow-y: auto; /* Permitir scroll vertical */
+      overflow-x: auto; /* Mantener scroll horizontal */
+      height: 100%; /* Ocupar toda la altura disponible */
+      padding: 20px; /* Añadir algo de padding para mejor visualización */
       position: relative;
     }
     
@@ -204,24 +204,19 @@
     
     /* Estilos para la visualización de nodos */
     .pyramid-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 30px;
-      padding: 40px 10px; /* Reducir el padding horizontal de 20px a 10px */
+      min-height: min-content; /* Permitir que crezca según el contenido */
       width: 100%;
+      padding-bottom: 50px; /* Espacio extra al final para mejor scroll */
       box-sizing: border-box;
       max-width: 100%; /* Asegurar que use todo el ancho disponible */
     }
     
     .pyramid-level {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      flex-wrap: nowrap;
-      gap: 20px;
+      margin-bottom: 30px; /* Aumentar espacio entre niveles */
       width: 100%;
-      padding: 0 5px; /* Reducir el padding horizontal de 10px a 5px */
-      overflow-x: hidden;
     }
     
     /* Contenedor para un nodo y sus hijos */
