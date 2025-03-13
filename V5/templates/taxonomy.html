@@ -57,15 +57,28 @@
     .ascii-char {
       display: inline-block;
       color: #65b8c4; /* Color azul claro por defecto */
-      transition: color 0.2s ease;
       position: relative;
-      will-change: transform; /* Optimiza el rendimiento de las animaciones */
+      will-change: color; /* Optimiza el rendimiento de las animaciones */
+      transition: color 0.1s ease;
     }
     
-    .ascii-char:hover {
-      color: #006d7a; /* Color azul oscuro al hacer hover */
-      transform: scale(1.4); /* Ligera ampliación para efecto adicional */
-      z-index: 1; /* Asegura que los caracteres en hover estén por encima */
+    .ascii-char.active {
+      color: #007a90; /* Color cuando está activo */
+    }
+    
+    /* Estilo para el cursor personalizado */
+    #custom-cursor {
+      position: absolute;
+      font-family: monospace;
+      font-size: 10px;
+      line-height: 1;
+      white-space: pre;
+      color: rgba(255, 255, 255, 0.8);
+      text-shadow: 0 0 5px #65b8c4, 0 0 10px #65b8c4;
+      pointer-events: none; /* Para que no interfiera con los eventos del mouse */
+      display: none; /* Inicialmente oculto */
+      transform: translate(-50%, -50%); /* Centrar en el cursor */
+      z-index: 10;
     }
     
     /* Ajustar el layout de la barra superior */
@@ -1148,6 +1161,17 @@
     document.addEventListener('DOMContentLoaded', function() {
       applyLevelNavigationStyles();
     });
+    
+    /* Estilo para el cursor de texto */
+    #text-cursor {
+      position: absolute;
+      width: 2px;
+      height: 16px;
+      background-color: rgba(255, 255, 255, 0.8);
+      pointer-events: none; /* Para que no interfiera con los eventos del mouse */
+      box-shadow: 0 0 8px #fff, 0 0 12px #65b8c4;
+      display: none; /* Inicialmente oculto */
+    }
   </style>
 </head>
 <body>
@@ -1155,6 +1179,7 @@
     <div class="top-bar">
       <div class="ascii-logo">
         <div id="ascii-container"></div>
+        <div id="custom-cursor">@@@@@@@@<br>@@<br>@@<br>@@<br>@@@@@@<br>@@<br>@@<br>@@<br>@@@@<br>@@@@@@@@@@</div>
       </div>
       <div class="controls">
         <button id="load-data">Cargar Datos</button>
@@ -3376,26 +3401,39 @@ taxonomia:
   <script>
     // Este script se ejecutará cuando la página se haya cargado completamente
     document.addEventListener('DOMContentLoaded', function() {
-      const asciiArt = `                                                                                                                                                                                                                                                                                      
-                                                                #####                                                                                                                                                                                                                     
-                                                                  #                                                                                                                                                                                                                       
-#############               #####      ###########  #######  ########   ###########          ##########   #######   #######        #####  # 
-#############             #########     ##########  #######  ########   ###########         ###########   #######   #######      ###   #### 
-    #####               ####   ######      #######  ###         #####       ########        #######         #####      ####     ###      ##
-    #####              #######   ####        ########           #####       ## #####       ## #####         #####      ####     ##########  
-    #####              ###########            #######           #####       ## ######     ### #####         #####      ####      ###########                   
-    #####              ##### ###              #########         #####       ##  #####     ##  #####         #####      ####     ## #########                               
-    #####              #####       ##        ##   ######        #####       ##  ######   ##   #####         #####     #####     ##        ##                                                         
-    #####               #####     ###      ###      ######      #####       ##   ######  ##   #####          ##### ########     ####      ##                                                                                
+      const asciiArt = `                                                                                                                                                                                                                                                               
+                                                                #####                                                                                                                                                                                               
+                                                                  #                                                                                                                                                                                                       
+#############               #####      ###########  #######  ########   ###########          ##########   #######   #######        #####  #         
+#############             #########     ##########  #######  ########   ###########         ###########   #######   #######      ###   ####    
+    #####               ####   ######      #######  ###         #####       ########        #######         #####      ####     ###      ## 
+    #####              #######   ####        ########           #####       ## #####       ## #####         #####      ####     ##########    
+    #####              ###########            #######           #####       ## ######     ### #####         #####      ####      ###########  
+    #####              ##### ###              #########         #####       ##  #####     ##  #####         #####      ####     ## #########                                                
+    #####              #####       ##        ##   ######        #####       ##  ######   ##   #####         #####     #####     ##        ##                                                                                
+    #####               #####     ###      ###      ######      #####       ##   ######  ##   #####          ##### ########     ####      ##                                                                               
     #####                 #########     #######   ########## ##########     ##    ##### ##    #####           #######  #######  ###########                                                                               
-    #####            ##                                                     ##    ########    #####                                                                                                                                                                                  
-    #####            ##                                                     ##     ######     #####                                                                                                                                                                                       
-    #####           ###                                                     ##     #####      #####                                                                                                                                                                                       
-    #####          ####                                                     ##      ####      #####                                                                                                                                                                                       
+    #####            ##                                                     ##    ########    #####                                                                                                                                             
+    #####            ##                                                     ##     ######     #####                                                                                                                                                                      
+    #####           ###                                                     ##     #####      #####                                                                                                                     
+    #####          ####                                                     ##      ####      #####                                                                                                                                                   
 ######################                                                  ##########   ##   #############`;
 
       const container = document.getElementById('ascii-container');
+      const customCursor = document.getElementById('custom-cursor');
       
+      // Actualizar el contenido del cursor personalizado con espacios adecuados
+      customCursor.innerHTML = `
+      @@@@@@@@      
+         @         
+         @         
+         @         
+       @@@@@       
+         @         
+         @         
+         @                 
+     @@@@@@@@@@`;
+    
       // Procesar cada carácter del logo ASCII
       let htmlContent = '';
       for (let i = 0; i < asciiArt.length; i++) {
@@ -3403,64 +3441,94 @@ taxonomia:
         if (char === '\n') {
           htmlContent += '<br>';
         } else {
-          htmlContent += `<span class="ascii-char">${char}</span>`;
+          htmlContent += `<span class="ascii-char" data-original="${char}">${char}</span>`;
         }
       }
       
       container.innerHTML = htmlContent;
       
-      // Obtener todos los caracteres para el efecto magnético
+      // Obtener todos los caracteres
       const chars = document.querySelectorAll('.ascii-char');
+      const charPositions = []; // Pre-calcular las posiciones iniciales
       const containerRect = container.getBoundingClientRect();
       
-      // Configuración del efecto imán
-      const magnetStrength = 20; // Qué tan fuerte es el efecto imán
-      const magnetRadius = 30;   // Radio de influencia del cursor
+      // Almacenar las posiciones iniciales para mejorar el rendimiento
+      chars.forEach(char => {
+        const rect = char.getBoundingClientRect();
+        charPositions.push({
+          x: rect.left + rect.width/2 - containerRect.left,
+          y: rect.top + rect.height/2 - containerRect.top,
+          elem: char
+        });
+      });
       
-      // Añadir efecto magnético para seguir el cursor
-      container.addEventListener('mousemove', function(e) {
-        // Calcular la posición relativa del cursor dentro del contenedor
-        const mouseX = e.clientX - containerRect.left;
-        const mouseY = e.clientY - containerRect.top;
+      // Configuración
+      // const effectRadius = 40;   // Radio de influencia del cursor - ELIMINADO
+      let ticking = false;       // Para limitar las actualizaciones de renderizado
+      let lastMoveEvent = null;  // Almacenar el último evento de movimiento
+      
+      // Configuración del cursor parpadeante
+      let cursorVisible = true;
+      setInterval(() => {
+        if (lastMoveEvent) { // Solo parpadea cuando el mouse está dentro
+          cursorVisible = !cursorVisible;
+          customCursor.style.opacity = cursorVisible ? 1 : 0.6;
+        }
+      }, 700); // Intervalo de parpadeo (700ms)
+      
+      // Función para actualizar el efecto visual (sin movimiento de imán)
+      function updateVisualEffect() {
+        if (!lastMoveEvent) return;
         
-        // Aplicar efecto magnético a cada carácter
-        chars.forEach(char => {
-          const charRect = char.getBoundingClientRect();
-          const charX = charRect.left + charRect.width/2 - containerRect.left;
-          const charY = charRect.top + charRect.height/2 - containerRect.top;
+        // Calcular la posición relativa del cursor dentro del contenedor
+        const containerRect = container.getBoundingClientRect();
+        const mouseX = lastMoveEvent.clientX - containerRect.left;
+        const mouseY = lastMoveEvent.clientY - containerRect.top;
+        
+        // Mostrar y posicionar el cursor personalizado
+        customCursor.style.display = 'block';
+        customCursor.style.left = `${mouseX}px`;
+        customCursor.style.top = `${mouseY}px`;
+        
+        // Actualizar solo el color y el contenido de los caracteres cercanos
+        charPositions.forEach(charPos => {
+          const char = charPos.elem;
           
           // Calcular distancia entre el carácter y el cursor
-          const distX = mouseX - charX;
-          const distY = mouseY - charY;
-          const distance = Math.sqrt(distX * distX + distY * distY);
+          const distX = mouseX - charPos.x;
+          const distY = mouseY - charPos.y;
           
-          // Solo afectar caracteres dentro del radio de influencia
-          if (distance < magnetRadius) {
-            // Calcular fuerza del efecto basado en la distancia
-            const strength = (magnetRadius - distance) / magnetRadius;
-            
-            // Calcular el desplazamiento
-            const moveX = (distX * strength) / (magnetStrength * 2);
-            const moveY = (distY * strength) / (magnetStrength * 2);
-            
-            // Aplicar transformación
-            char.style.transform = `translate(${moveX}px, ${moveY}px) scale(${1 + strength * 0.4})`;
-            char.style.color = `#${Math.floor(6 + 99 * strength).toString(16)}${Math.floor(109 + 10 * strength).toString(16)}${Math.floor(122 + 10 * strength).toString(16)}`;
-            char.style.zIndex = '1';
-          } else {
-            char.style.transform = 'translate(0, 0) scale(1)';
-            char.style.color = '#65b8c4';
-            char.style.zIndex = '0';
-          }
+          // Quitar la lógica basada en el radio de efecto
+          // Cambiar el carácter a @ o % aleatoriamente (sin condición de distancia)
+          char.textContent = Math.random() > 0.5 ? '@' : '%';
+          
+          // Aplicar un color fijo sin depender de la distancia
+          char.style.color = '#65b8c4';
         });
+        
+        ticking = false;
+      }
+      
+      // Manejar el movimiento del mouse de manera eficiente
+      container.addEventListener('mousemove', function(e) {
+        lastMoveEvent = e;
+        
+        if (!ticking) {
+          window.requestAnimationFrame(updateVisualEffect);
+          ticking = true;
+        }
       });
       
       // Restaurar cuando el cursor sale del contenedor
       container.addEventListener('mouseleave', function() {
+        lastMoveEvent = null;
+        customCursor.style.display = 'none';
+        
         chars.forEach(char => {
-          char.style.transform = 'translate(0, 0) scale(1)';
+          // Restaurar el carácter original
+          const originalChar = char.getAttribute('data-original');
+          char.textContent = originalChar;
           char.style.color = '#65b8c4';
-          char.style.zIndex = '0';
         });
       });
     });
