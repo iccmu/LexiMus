@@ -37,16 +37,37 @@
       flex-direction: column;
     }
     
+    /* Estilos para el logo ASCII con caracteres individuales reactivos */
+    .ascii-logo {
+      display: flex;
+      align-items: center;
+    }
+    
+    #ascii-container {
+      font-family: monospace;
+      font-size: 10px;
+      line-height: 1;
+      white-space: pre;
+      letter-spacing: 0;
+    }
+    
+    .ascii-char {
+      display: inline-block;
+      color: #65b8c4; /* Color azul claro por defecto */
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    
+    .ascii-char:hover {
+      color: #006d7a; /* Color azul oscuro al hacer hover */
+      transform: scale(1.2); /* Ligera ampliación para efecto adicional */
+    }
+    
+    /* Ajustar el layout de la barra superior */
     .top-bar {
-      background-color: var(--surface);
-      color: var(--text);
-      padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 60px;
-      box-sizing: border-box;
-      box-shadow: 0 1px 3px var(--shadow);
+      padding: 10px 20px;
     }
     
     .top-bar h1 {
@@ -1126,7 +1147,9 @@
 <body>
   <div class="container">
     <div class="top-bar">
-      <h1>Visualizador de Taxonomía</h1>
+      <div class="ascii-logo">
+        <div id="ascii-container"></div>
+      </div>
       <div class="controls">
         <button id="load-data">Cargar Datos</button>
         <select id="format-selector">
@@ -3342,6 +3365,75 @@ taxonomia:
       // Ajustar la cantidad de nodos visibles
       adjustVisibleNodesCount();
     });
+  </script>
+
+  <script>
+    // Este script se ejecutará cuando la página se haya cargado completamente
+    document.addEventListener('DOMContentLoaded', function() {
+      const asciiArt = `
+     ██╗                        ███╗   ███╗         ███████╗
+     ██║                     ██ ████╗ ████║         ██╔════╝
+     ██║     ██████╗ ██╗  ██╗   ██╔████╔██║██║   ██║███████╗
+     ██║     ██╔═══╝  ╚███╔╝ ██ ██║╚██╔╝██║██║   ██║╚════██║
+     ███████╗███████╗██╔╝ ██╗██ ██║ ╚═╝ ██║╚██████╔╝███████║
+     ╚══════╝╚══════╝╚═╝  ╚═╝╚═ ╚═╝     ╚═╝ ╚═════╝ ╚══════╝`;
+
+      const container = document.getElementById('ascii-container');
+      
+      // Procesar cada carácter del logo ASCII
+      let htmlContent = '';
+      for (let i = 0; i < asciiArt.length; i++) {
+        const char = asciiArt[i];
+        if (char === '\n') {
+          htmlContent += '<br>';
+        } else {
+          htmlContent += `<span class="ascii-char">${char}</span>`;
+        }
+      }
+      
+      container.innerHTML = htmlContent;
+    });
+  </script>
+
+  <style>
+    /* Estilos adicionales para el logo ASCII */
+    .ascii-logo pre {
+      margin: 0;
+      font-family: monospace;
+      font-size: 10px;
+      color: #008a9b;
+      line-height: 1;
+      white-space: pre;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+
+    .ascii-logo pre:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+
+    @keyframes rainbow { 
+      0% { background-position: 0% 50%; } 
+      100% { background-position: 100% 50%; }
+    }
+  </style>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const logoElement = document.getElementById('ascii-logo');
+    
+    logoElement.addEventListener('mouseenter', function() {
+      console.log('Mouse entered the logo');
+      // Este log nos ayudará a verificar si el evento se está detectando
+    });
+  });
   </script>
 </body>
 </html>
