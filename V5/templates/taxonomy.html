@@ -1172,6 +1172,51 @@
       box-shadow: 0 0 8px #fff, 0 0 12px #65b8c4;
       display: none; /* Inicialmente oculto */
     }
+
+    /* Estilos adicionales para el logo ASCII */
+    .ascii-logo pre {
+      margin: 0;
+      font-family: monospace;
+      font-size: 10px;
+      color: #008a9b;
+      line-height: 1;
+      white-space: pre;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+
+    .ascii-logo pre:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+
+    /* Nuevos estilos para mejorar la visibilidad del ASCII art */
+    .ascii-highlight {
+      color: #005a6b !important; /* Color más oscuro para los caracteres # */
+      font-weight: bold;
+      text-shadow: 0 0 1px rgba(0,0,0,0.2); /* Sombra sutil para mejorar legibilidad */
+    }
+
+    #ascii-container {
+      background-color: rgba(240, 250, 255, 0.05); /* Fondo muy sutil */
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    #custom-cursor {
+      color: rgba(0, 138, 155, 0.8); /* Cursor semi-transparente */
+    }
+
+    @keyframes rainbow { 
+      0% { background-position: 0% 50%; } 
+      100% { background-position: 100% 50%; }
+    }
   </style>
 </head>
 <body>
@@ -3401,30 +3446,32 @@ taxonomia:
   <script>
     // Este script se ejecutará cuando la página se haya cargado completamente
     document.addEventListener('DOMContentLoaded', function() {
-      const asciiArt = `                                                                                                                                                                                                                                                               
-                                                                #####                                                                                                                                                                                               
-                                                                  #                                                                                                                                                                                                       
-#############               #####      ###########  #######  ########   ###########          ##########   #######   #######        #####  #         
-#############             #########     ##########  #######  ########   ###########         ###########   #######   #######      ###   ####    
-    #####               ####   ######      #######  ###         #####       ########        #######         #####      ####     ###      ## 
-    #####              #######   ####        ########           #####       ## #####       ## #####         #####      ####     ##########    
+      const asciiArt = `
+                                                                #####    
+                                                                  # 
+#############               #####      ###########  #######  ########   ###########          ##########   #######   #######        #####  # 
+#############             #########     ##########  #######  ########   ###########         ###########   #######   #######      ###   ####  
+    #####               ####   ######      #######  ###         #####       ########        #######         #####      ####     ###      ##  
+    #####              #######   ####        ########           #####       ## #####       ## #####         #####      ####     ##########  
     #####              ###########            #######           #####       ## ######     ### #####         #####      ####      ###########  
-    #####              ##### ###              #########         #####       ##  #####     ##  #####         #####      ####     ## #########                                                
-    #####              #####       ##        ##   ######        #####       ##  ######   ##   #####         #####     #####     ##        ##                                                                                
-    #####               #####     ###      ###      ######      #####       ##   ######  ##   #####          ##### ########     ####      ##                                                                               
-    #####                 #########     #######   ########## ##########     ##    ##### ##    #####           #######  #######  ###########                                                                               
-    #####            ##                                                     ##    ########    #####                                                                                                                                             
-    #####            ##                                                     ##     ######     #####                                                                                                                                                                      
-    #####           ###                                                     ##     #####      #####                                                                                                                     
-    #####          ####                                                     ##      ####      #####                                                                                                                                                   
-######################                                                  ##########   ##   #############`;
+    #####              ##### ###              #########         #####       ##  #####     ##  #####         #####      ####     ## #########   
+    #####              #####       ##        ##   ######        #####       ##  ######   ##   #####         #####     #####     ##        ##   
+    #####               #####     ###      ###      ######      #####       ##   ######  ##   #####          ##### ########     ####      ##    
+    #####                 #########     #######   ########## ##########     ##    ##### ##    #####           #######  #######  ###########   
+    #####            ##                                                     ##    ########    ##### 
+    #####            ##                                                     ##     ######     #####  
+    #####           ###                                                     ##     #####      ##### 
+    #####          ####                                                     ##      ####      ##### 
+######################                                                  ##########   ##   #############
+####################   
+`;
 
       const container = document.getElementById('ascii-container');
       const customCursor = document.getElementById('custom-cursor');
       
       // Actualizar el contenido del cursor personalizado con espacios adecuados
       customCursor.innerHTML = `
-              @@@@@@@@      
+              @@@@@@@      
                  @         
                  @         
                  @         
@@ -3432,7 +3479,7 @@ taxonomia:
                  @         
                  @         
                  @                 
-             @@@@@@@@@@`;
+              @@@@@@@`;
     
       // Procesar cada carácter del logo ASCII
       let htmlContent = '';
