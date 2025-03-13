@@ -41,11 +41,14 @@
     .ascii-logo {
       display: flex;
       align-items: center;
+      overflow-x: auto; /* Permitir desplazamiento horizontal si es necesario */
+      max-width: 100%;
+      position: relative;
     }
     
     #ascii-container {
       font-family: monospace;
-      font-size: 10px;
+      font-size: 8px; /* Reducido para ajustarse mejor */
       line-height: 1;
       white-space: pre;
       letter-spacing: 0;
@@ -54,12 +57,15 @@
     .ascii-char {
       display: inline-block;
       color: #65b8c4; /* Color azul claro por defecto */
-      transition: color 0.2s ease, transform 0.2s ease;
+      transition: color 0.2s ease;
+      position: relative;
+      will-change: transform; /* Optimiza el rendimiento de las animaciones */
     }
     
     .ascii-char:hover {
       color: #006d7a; /* Color azul oscuro al hacer hover */
-      transform: scale(1.2); /* Ligera ampliación para efecto adicional */
+      transform: scale(1.4); /* Ligera ampliación para efecto adicional */
+      z-index: 1; /* Asegura que los caracteres en hover estén por encima */
     }
     
     /* Ajustar el layout de la barra superior */
@@ -3370,13 +3376,23 @@ taxonomia:
   <script>
     // Este script se ejecutará cuando la página se haya cargado completamente
     document.addEventListener('DOMContentLoaded', function() {
-      const asciiArt = `
-     ██╗                        ███╗   ███╗         ███████╗
-     ██║                     ██ ████╗ ████║         ██╔════╝
-     ██║     ██████╗ ██╗  ██╗   ██╔████╔██║██║   ██║███████╗
-     ██║     ██╔═══╝  ╚███╔╝ ██ ██║╚██╔╝██║██║   ██║╚════██║
-     ███████╗███████╗██╔╝ ██╗██ ██║ ╚═╝ ██║╚██████╔╝███████║
-     ╚══════╝╚══════╝╚═╝  ╚═╝╚═ ╚═╝     ╚═╝ ╚═════╝ ╚══════╝`;
+      const asciiArt = `                                                                                                                                                                                                                                                                                      
+                                                                #####                                                                                                                                                                                                                     
+                                                                  #                                                                                                                                                                                                                       
+#############               #####      ###########  #######  ########   ###########          ##########   #######   #######        #####  # 
+#############             #########     ##########  #######  ########   ###########         ###########   #######   #######      ###   #### 
+    #####               ####   ######      #######  ###         #####       ########        #######         #####      ####     ###      ##
+    #####              #######   ####        ########           #####       ## #####       ## #####         #####      ####     ##########  
+    #####              ###########            #######           #####       ## ######     ### #####         #####      ####      ###########                   
+    #####              ##### ###              #########         #####       ##  #####     ##  #####         #####      ####     ## #########                               
+    #####              #####       ##        ##   ######        #####       ##  ######   ##   #####         #####     #####     ##        ##                                                         
+    #####               #####     ###      ###      ######      #####       ##   ######  ##   #####          ##### ########     ####      ##                                                                                
+    #####                 #########     #######   ########## ##########     ##    ##### ##    #####           #######  #######  ###########                                                                               
+    #####            ##                                                     ##    ########    #####                                                                                                                                                                                  
+    #####            ##                                                     ##     ######     #####                                                                                                                                                                                       
+    #####           ###                                                     ##     #####      #####                                                                                                                                                                                       
+    #####          ####                                                     ##      ####      #####                                                                                                                                                                                       
+######################                                                  ##########   ##   #############`;
 
       const container = document.getElementById('ascii-container');
       
@@ -3392,6 +3408,61 @@ taxonomia:
       }
       
       container.innerHTML = htmlContent;
+      
+      // Obtener todos los caracteres para el efecto magnético
+      const chars = document.querySelectorAll('.ascii-char');
+      const containerRect = container.getBoundingClientRect();
+      
+      // Configuración del efecto imán
+      const magnetStrength = 20; // Qué tan fuerte es el efecto imán
+      const magnetRadius = 30;   // Radio de influencia del cursor
+      
+      // Añadir efecto magnético para seguir el cursor
+      container.addEventListener('mousemove', function(e) {
+        // Calcular la posición relativa del cursor dentro del contenedor
+        const mouseX = e.clientX - containerRect.left;
+        const mouseY = e.clientY - containerRect.top;
+        
+        // Aplicar efecto magnético a cada carácter
+        chars.forEach(char => {
+          const charRect = char.getBoundingClientRect();
+          const charX = charRect.left + charRect.width/2 - containerRect.left;
+          const charY = charRect.top + charRect.height/2 - containerRect.top;
+          
+          // Calcular distancia entre el carácter y el cursor
+          const distX = mouseX - charX;
+          const distY = mouseY - charY;
+          const distance = Math.sqrt(distX * distX + distY * distY);
+          
+          // Solo afectar caracteres dentro del radio de influencia
+          if (distance < magnetRadius) {
+            // Calcular fuerza del efecto basado en la distancia
+            const strength = (magnetRadius - distance) / magnetRadius;
+            
+            // Calcular el desplazamiento
+            const moveX = (distX * strength) / (magnetStrength * 2);
+            const moveY = (distY * strength) / (magnetStrength * 2);
+            
+            // Aplicar transformación
+            char.style.transform = `translate(${moveX}px, ${moveY}px) scale(${1 + strength * 0.4})`;
+            char.style.color = `#${Math.floor(6 + 99 * strength).toString(16)}${Math.floor(109 + 10 * strength).toString(16)}${Math.floor(122 + 10 * strength).toString(16)}`;
+            char.style.zIndex = '1';
+          } else {
+            char.style.transform = 'translate(0, 0) scale(1)';
+            char.style.color = '#65b8c4';
+            char.style.zIndex = '0';
+          }
+        });
+      });
+      
+      // Restaurar cuando el cursor sale del contenedor
+      container.addEventListener('mouseleave', function() {
+        chars.forEach(char => {
+          char.style.transform = 'translate(0, 0) scale(1)';
+          char.style.color = '#65b8c4';
+          char.style.zIndex = '0';
+        });
+      });
     });
   </script>
 
