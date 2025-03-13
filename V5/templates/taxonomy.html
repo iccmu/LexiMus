@@ -3578,6 +3578,74 @@ taxonomia:
           char.style.color = '#65b8c4';
         });
       });
+
+      // Variables para el contador de clics y el estado del color
+      let clickCount = 0;
+      let isComplementaryColor = false;
+      const originalColor = '#65b8c4';
+      const complementaryColor = '#c4715b'; // Color complementario del azul original
+
+      // Función para cambiar el color de todo el ASCII art
+      function toggleComplementaryColor() {
+        const chars = document.querySelectorAll('.ascii-char');
+        chars.forEach(char => {
+          char.style.color = isComplementaryColor ? originalColor : complementaryColor;
+        });
+        isComplementaryColor = !isComplementaryColor;
+      }
+
+      // Agregar el evento de clic al contenedor
+      container.addEventListener('click', function() {
+        clickCount++;
+        
+        // Si alcanzamos 4 clics
+        if (clickCount === 4) {
+          toggleComplementaryColor();
+          clickCount = 0; // Reiniciar el contador
+        }
+
+        // Agregar un pequeño efecto visual para feedback
+        container.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          container.style.transform = 'scale(1)';
+        }, 100);
+      });
+
+      // Modificar la función updateVisualEffect para mantener el color complementario
+      function updateVisualEffect() {
+        if (!lastMoveEvent) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        const mouseX = lastMoveEvent.clientX - containerRect.left;
+        const mouseY = lastMoveEvent.clientY - containerRect.top;
+        
+        customCursor.style.display = 'block';
+        customCursor.style.left = `${mouseX}px`;
+        customCursor.style.top = `${mouseY}px`;
+        
+        charPositions.forEach(charPos => {
+          const char = charPos.elem;
+          char.textContent = Math.random() > 0.5 ? '@' : '%';
+          
+          // Usar el color actual según el estado
+          char.style.color = isComplementaryColor ? complementaryColor : originalColor;
+        });
+        
+        ticking = false;
+      }
+
+      // Modificar el evento mouseleave para respetar el color actual
+      container.addEventListener('mouseleave', function() {
+        lastMoveEvent = null;
+        customCursor.style.display = 'none';
+        
+        chars.forEach(char => {
+          const originalChar = char.getAttribute('data-original');
+          char.textContent = originalChar;
+          // Mantener el color según el estado actual
+          char.style.color = isComplementaryColor ? complementaryColor : originalColor;
+        });
+      });
     });
   </script>
 
@@ -3613,12 +3681,16 @@ taxonomia:
 
   <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const logoElement = document.getElementById('ascii-logo');
+    // Cambiar logoElement por container
+    const container = document.getElementById('ascii-container');
     
-    logoElement.addEventListener('mouseenter', function() {
-      console.log('Mouse entered the logo');
-      // Este log nos ayudará a verificar si el evento se está detectando
-    });
+    if (container) { // Verificar que el elemento existe
+        container.addEventListener('mouseenter', function() {
+            console.log('Mouse entered the logo');
+        });
+    } else {
+        console.error('ASCII container not found');
+    }
   });
   </script>
 </body>
