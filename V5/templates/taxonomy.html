@@ -1262,12 +1262,12 @@
     <!-- Panel de información del nodo -->
     <div class="info-panel" id="info-panel">
       <div class="info-panel-content">
-        <!-- Sección de metadatos (izquierda) -->
+        <!-- Sección de definiciones (izquierda) -->
         <div class="metadata-section">
           <div class="info-basic">
             <div><span class="info-label">Nodo:</span> <span id="node-name">Ninguno seleccionado</span></div>
             <div><span class="info-label">ID:</span> <span id="node-id">-</span></div>
-            <button class="edit-button" id="toggle-metadata">Añadir Metadato</button>
+            <button class="edit-button" id="toggle-metadata">Añadir Definición</button>
           </div>
           <div class="metadata-editor" id="metadata-editor">
             <div class="metadata-form">
@@ -1282,7 +1282,7 @@
             </div>
           </div>
           <div class="metadata-cards-container" id="metadata-cards-container">
-            <!-- Las tarjetas de metadatos se generarán aquí dinámicamente -->
+            <!-- Las tarjetas de definiciones se generarán aquí dinámicamente -->
           </div>
         </div>
         
@@ -1319,7 +1319,7 @@
     let currentFocusedNode = null;
     // let pinnedNode = null; // Eliminar esta variable
     
-    // Objeto para almacenar metadatos de nodos
+    // Objeto para almacenar definiciones de nodos
     const nodeMetadata = {};
     
     // Objeto para almacenar las propiedades asignadas a cada nodo
@@ -1811,10 +1811,10 @@
       document.getElementById('node-name').textContent = nodeName;
       document.getElementById('node-id').textContent = nodeId;
       
-      // Ocultar el editor de metadatos
+      // Ocultar el editor de definiciones
       metadataEditor.classList.remove('visible');
       
-      // Mostrar las tarjetas de metadatos existentes
+      // Mostrar las tarjetas de definiciones existentes
       renderMetadataCards(nodeId);
       
       // Siempre expandir el panel cuando se selecciona un nodo
@@ -1838,14 +1838,14 @@
       }
     }
     
-    // Función para renderizar las tarjetas de metadatos
+    // Función para renderizar las tarjetas de definiciones
     function renderMetadataCards(nodeId) {
       const container = document.getElementById('metadata-cards-container');
       container.innerHTML = '';
       
-      // Si no hay metadatos para este nodo, mostrar solo el botón de añadir
+      // Si no hay definiciones para este nodo, mostrar solo el botón de añadir
       if (!nodeMetadata[nodeId] || Object.keys(nodeMetadata[nodeId]).length === 0) {
-        container.innerHTML = '<div class="add-metadata-card" id="add-metadata-card" tabindex="0">+ Añadir metadato</div>';
+        container.innerHTML = '<div class="add-metadata-card" id="add-metadata-card" tabindex="0">+ Añadir definición</div>';
         
         // Añadir evento al botón de añadir
         setTimeout(() => {
@@ -1868,7 +1868,7 @@
         return;
       }
       
-      // Crear tarjetas para cada metadato
+      // Crear tarjetas para cada definición
       let index = 0;
       for (const [key, value] of Object.entries(nodeMetadata[nodeId])) {
         const card = document.createElement('div');
@@ -1918,11 +1918,11 @@
         container.appendChild(card);
       }
       
-      // Añadir el botón para agregar nuevo metadato
+      // Añadir el botón para agregar nueva definición
       const addButton = document.createElement('div');
       addButton.className = 'add-metadata-card';
       addButton.setAttribute('tabindex', '0');
-      addButton.textContent = '+ Añadir metadato';
+      addButton.textContent = '+ Añadir definición';
       
       addButton.addEventListener('click', function() {
         document.getElementById('toggle-metadata').click();
@@ -1952,7 +1952,7 @@
       container.appendChild(addButton);
     }
     
-    // Función auxiliar para editar una tarjeta de metadatos
+    // Función auxiliar para editar una tarjeta de definición
     function editMetadataCard(card, key, value) {
       // Abrir el editor con los valores de esta tarjeta
       document.getElementById('metadata-key').value = key;
@@ -2102,7 +2102,7 @@
             e.preventDefault();
             e.stopPropagation();
             
-            // Enfocar el editor de metadatos
+            // Enfocar el editor de definiciones
             document.getElementById('toggle-metadata').click();
             
             // Enfocar el campo de título después de un breve retraso
@@ -2949,7 +2949,7 @@
       `;
       document.head.appendChild(additionalStyle);
       
-      // Configurar el botón de edición de metadatos
+      // Configurar el botón de edición de definiciones
       document.getElementById('toggle-metadata').addEventListener('click', function() {
         const metadataEditor = document.getElementById('metadata-editor');
         const infoPanel = document.getElementById('info-panel');
@@ -2966,7 +2966,7 @@
         document.getElementById('metadata-key').focus();
       });
       
-      // Configurar el botón de guardar metadatos
+      // Configurar el botón de guardar definiciones
       document.getElementById('save-metadata').addEventListener('click', function() {
         const nodeId = document.getElementById('node-id').textContent;
         if (nodeId && nodeId !== '-') {
@@ -2975,12 +2975,12 @@
           const originalKey = document.getElementById('metadata-key').getAttribute('data-original-key');
           
           if (key && value) {
-            // Inicializar el objeto de metadatos para este nodo si no existe
+            // Inicializar el objeto de definiciones para este nodo si no existe
             if (!nodeMetadata[nodeId]) {
               nodeMetadata[nodeId] = {};
             }
             
-            // Si estamos editando un metadato existente, eliminar la clave anterior
+            // Si estamos editando una definición existente, eliminar la clave anterior
             if (originalKey && originalKey !== key) {
               delete nodeMetadata[nodeId][originalKey];
             }
@@ -3003,7 +3003,7 @@
       });
     });
     
-    // En la sección donde se configura el editor de metadatos
+    // En la sección donde se configura el editor de definiciones
     function setupMetadataEditor() {
       const metadataKeyInput = document.getElementById('metadata-key');
       const metadataValueInput = document.getElementById('metadata-value');
@@ -3052,7 +3052,7 @@
       });
     }
     
-    // Función para editar una tarjeta de metadatos
+    // Función para editar una tarjeta de definición
     function editMetadataCard(card, key, value) {
       const metadataEditor = document.getElementById('metadata-editor');
       const metadataKeyInput = document.getElementById('metadata-key');
@@ -3089,7 +3089,7 @@
       }
     }
     
-    // Función para atrapar el foco dentro del editor de metadatos
+    // Función para atrapar el foco dentro del editor de definiciones
     function trapFocusInMetadataEditor(e) {
       const metadataEditor = document.getElementById('metadata-editor');
       
@@ -3144,7 +3144,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       // ... código existente ...
       
-      // Configurar el editor de metadatos
+      // Configurar el editor de definiciones
       setupMetadataEditor();
       
       // ... código existente ...
@@ -3198,7 +3198,7 @@
       
     }, { capture: true }); // Capturar el evento en la fase de captura
 
-    // Función para guardar metadatos
+    // Función para guardar definiciones
     function saveMetadata() {
       const key = document.getElementById('metadata-key').value.trim();
       const value = document.getElementById('metadata-value').value.trim();
@@ -3210,7 +3210,7 @@
       
       const nodeId = focusedNode.getAttribute('data-id');
       
-      // Inicializar el objeto de metadatos para este nodo si no existe
+      // Inicializar el objeto de definiciones para este nodo si no existe
       if (!nodeMetadata[nodeId]) {
         nodeMetadata[nodeId] = {};
       }
@@ -3220,7 +3220,7 @@
         delete nodeMetadata[nodeId][originalKey];
       }
       
-      // Guardar el nuevo metadato
+      // Guardar la nueva definición
       if (key && value) {
         nodeMetadata[nodeId][key] = value;
       }
@@ -3233,7 +3233,7 @@
       // Ocultar el editor
       document.getElementById('metadata-editor').classList.remove('visible');
       
-      // Actualizar la visualización de las tarjetas de metadatos
+      // Actualizar la visualización de las tarjetas de definiciones
       renderMetadataCards(nodeId);
       
       // Devolver el foco al nodo
@@ -3245,7 +3245,7 @@
     // Añadir el evento al botón de guardar
     document.getElementById('save-metadata').addEventListener('click', saveMetadata);
 
-    // Añadir eventos de teclado para el formulario de metadatos
+    // Añadir eventos de teclado para el formulario de definiciones
     document.getElementById('metadata-key').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -3347,17 +3347,17 @@
     // Este script se ejecutará cuando la página se haya cargado completamente
     document.addEventListener('DOMContentLoaded', function() {
       const asciiArt = `
-                                                                 ###
-                                                                 ###    
+                                                                  ###
+                                                                  ###    
                                                                    
-#############               #####       ##########   #######  ########  ########                 ######  ######    ########       #####  #  
-    #####                 #########        #####      ##        #####       #####               ####       ####       ####      ##########  
-    #####               ###     #####        ####   ##          #####       ######             #####       ####       ####     ###      ##  
-    #####              #####     ###          #####             #####       #######           ######       ####       ####     ########    
-    #####              ###########             #####            #####       ## #####         ## ####       ####       ####       ##########  
-    #####              ##### ###              ########          #####       ##  #####       ##  ####       ####       ####    ##   #########   
-    #####              #####       ##        ##    #####        #####       ##   #####     ##   ####       ####      #####    ###        ##   
-    #####               #####     ###      ###       #####      #####       ##    #####   ##    ####        ###############   #####     ###    
+#############               #####       ##########  ########  ########  ########                 ######  ######    ########       #####  #  
+    #####                 #########        #####      ##          ###       #####               ####       ####       ####      ##########  
+    #####               ###     #####        ####   ##            ###       ######             #####       ####       ####     ###      ##  
+    #####              #####     ###          #####               ###       #######           ######       ####       ####     ########    
+    #####              ###########             #####              ###       ## #####         ## ####       ####       ####       ##########  
+    #####              ##### ###              ########            ###       ##  #####       ##  ####       ####       ####    ##   #########   
+    #####              #####       ##        ##    #####          ###       ##   #####     ##   ####       ####      #####    ###        ##   
+    #####               #####     ###      ###       #####        ###       ##    #####   ##    ####        ###############   #####     ###    
     #####                 #########    ########   ########## ##########     ##     ##### ##     ####         #######  ######  ## #########  
     #####            ##      ###                                            ##      ######      #### 
     #####            ##                                                     ##       ####       ####  
