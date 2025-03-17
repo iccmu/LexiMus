@@ -47,23 +47,18 @@
     }
     
     #ascii-container {
+      margin: 0;
       font-family: monospace;
-      font-size: 8px; /* Reducido para ajustarse mejor */
-      line-height: 1;
+      font-size: 4px;  /* Tamaño más pequeño */
+      line-height: 0.8;
       white-space: pre;
       letter-spacing: 0;
+      cursor: pointer;
     }
     
     .ascii-char {
-      display: inline-block;
-      color: #65b8c4; /* Color azul claro por defecto */
-      position: relative;
-      will-change: color; /* Optimiza el rendimiento de las animaciones */
-      transition: color 0.1s ease;
-    }
-    
-    .ascii-char.active {
-      color: #007a90; /* Color cuando está activo */
+      font-size: 4px;  /* Asegurar que los caracteres individuales también sean pequeños */
+      line-height: 0.8;
     }
     
     /* Estilo para el cursor personalizado */
@@ -1172,9 +1167,9 @@
     .ascii-logo pre {
       margin: 0;
       font-family: monospace;
-      font-size: 10px;
+      font-size: 8px;  /* Cambiado de 10px a 8px */
       color: #008a9b;
-      line-height: 1;
+      line-height: 0.8;  /* Ajustado para mejor espaciado vertical */
       white-space: pre;
       letter-spacing: 0;
       cursor: pointer;
@@ -1211,6 +1206,18 @@
     @keyframes rainbow { 
       0% { background-position: 0% 50%; } 
       100% { background-position: 100% 50%; }
+    }
+
+    /* Mantener los estilos existentes del hover */
+    #ascii-container:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
     }
   </style>
 </head>
@@ -3445,8 +3452,8 @@ taxonomia:
                                                                  ###
                                                                  ###    
                                                                    
-                            #####       #########   #######  ########                                    ######    ########       #####  #  
-#############             #########        #####      ##        #####  ##########               ########   ####       ####      ##########  
+#############               #####       ##########   #######  ########  ########                 ######  ######    ########       #####  #  
+    #####                 #########        #####      ##        #####       #####               ####       ####       ####      ##########  
     #####               ###     #####        ####   ##          #####       ######             #####       ####       ####     ###      ##  
     #####              #####     ###          #####             #####       #######           ######       ####       ####     ########    
     #####              ###########             #####            #####       ## #####         ## ####       ####       ####       ##########  
@@ -3650,9 +3657,9 @@ taxonomia:
     .ascii-logo pre {
       margin: 0;
       font-family: monospace;
-      font-size: 10px;
+      font-size: 5px;  /* Cambiado de 10px a 8px */
       color: #008a9b;
-      line-height: 1;
+      line-height: 0.8;  /* Ajustado para mejor espaciado vertical */
       white-space: pre;
       letter-spacing: 0;
       cursor: pointer;
