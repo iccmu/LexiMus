@@ -1230,6 +1230,7 @@
       </div>
       <div class="controls">
         <button id="load-data">Cargar Datos</button>
+        <button id="open-ontology">Ontología</button>
         <select id="format-selector">
           <option value="yaml">YAML</option>
           <option value="json">JSON</option>
@@ -2709,7 +2710,7 @@
     // Función para cargar el archivo YAML
     async function loadYamlFile() {
       try {
-        const response = await fetch('/SEMINARIO/V5/templates/pasiones.yml');
+        const response = await fetch('/SEMINARIO/V6/data/pasiones.yml');
         if (!response.ok) {
           throw new Error(`Error al cargar el archivo: ${response.status}`);
         }
@@ -2731,7 +2732,7 @@
     // Función para cargar el archivo JSON de propiedades
     async function loadPropertiesFile() {
       try {
-        const response = await fetch('/SEMINARIO/V5/templates/propiedades.json');
+        const response = await fetch('/SEMINARIO/V6/data/propiedades.json');
         if (!response.ok) {
           throw new Error(`Error al cargar el archivo de propiedades: ${response.status}`);
         }
@@ -3593,6 +3594,17 @@
         console.error('ASCII container not found');
     }
   });
+  </script>
+
+  <script>
+  // ... existing code ...
+
+  // Añadir evento para abrir la ventana de ontología
+  document.getElementById('open-ontology').addEventListener('click', function() {
+    window.open('ontology.html', '_blank', 'width=900,height=600');
+  });
+
+  // ... existing code ...
   </script>
 </body>
 </html>
