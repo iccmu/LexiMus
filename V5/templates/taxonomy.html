@@ -1313,57 +1313,7 @@
     const yamlData = `Las pasiones del alma:
       - Admiración:
         - Orgullo
-        - Generosidad
-        - Bajeza
-        - Humildad
-        - Aprecio
-        - Menosprecio
-        - Veneración
-        - Desdén
-      
-      - Deseo:
-        - Valor
-        - Cobardía
-        - Esperanza
-        - Temor
-        - Irresolución
-        - Audacia
-        - Espanto 
-        - Confianza
-        - Desesperación
-        - Emulación
-        - Curiosidad
-        - Celos
-        - Amor erótico
-        - Aversión
-
-      - Amor:
-        - Devoción
-        - Amistad
-        - Afecto
-        - Simpatía
-        - Gratitud
-        - Complacencia
-
-      - Odio:
-        - Indignación
-        - Ira
-        - Horror
-
-      - Alegría:
-        - Burla
-        - Gloria
-        - Autosatisfacción
-        - Júbilo
-
-      - Tristeza:
-        - Piedad
-        - Envidia
-        - Vergüenza
-        - Remordimiento
-        - Arrepentimiento
-        - Pesar
-        - Hastío`;
+`;
 
     // Variables globales
     let currentFocusedNode = null;
@@ -2855,6 +2805,32 @@
       });
     }
     
+    // Modificar la sección de datos YAML
+    // En lugar de tener los datos hardcodeados, los cargaremos desde un archivo externo
+    // Usar la variable yamlData existente en lugar de declararla nuevamente
+    
+    // Función para cargar el archivo YAML
+    async function loadYamlFile() {
+      try {
+        const response = await fetch('/SEMINARIO/V5/templates/pasiones.yml');
+        if (!response.ok) {
+          throw new Error(`Error al cargar el archivo: ${response.status}`);
+        }
+        const loadedYamlData = await response.text();
+        console.log("Datos YAML cargados correctamente");
+        
+        // Una vez cargados los datos, actualizar la visualización
+        document.getElementById('data-display').value = loadedYamlData;
+        updateNodeVisualization(loadedYamlData);
+      } catch (error) {
+        console.error("Error al cargar el archivo YAML:", error);
+        // Usar datos de respaldo en caso de error
+        const fallbackData = "Las pasiones del alma:\n  - Error al cargar datos";
+        document.getElementById('data-display').value = fallbackData;
+        updateNodeVisualization(fallbackData);
+      }
+    }
+    
     // Inicializar la visualización al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
       // Verificar que jsyaml esté cargado
@@ -2865,8 +2841,8 @@
         return;
       }
       
-      // Cargar datos iniciales
-      document.getElementById('data-display').value = yamlData;
+      // Cargar datos desde el archivo YAML
+      loadYamlFile();
       
       // Generar visualización inicial
       updateNodeVisualization(yamlData);
