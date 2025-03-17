@@ -1,6 +1,6 @@
 {
     "id": "root-props-123",
-    "PropiedadesEmocionales": {
+    "Propiedades": {
       "id": "emotional-props-456",
       "Intensidad": {
         "id": "intensity-789",
@@ -148,4 +148,4 @@
         }
       }
     }
-  };
+}

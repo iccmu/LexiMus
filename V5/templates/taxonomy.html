@@ -2445,160 +2445,25 @@
     // Función para cargar y mostrar la jerarquía de propiedades
     async function loadPropertiesHierarchy() {
       try {
-        // En un entorno real, esto sería una llamada a la API
-        // Por ahora, usamos propiedades relevantes para emociones
-        const propsData = {
-          "id": "root-props-123",
-          "PropiedadesEmocionales": {
-            "id": "emotional-props-456",
-            "Intensidad": {
-              "id": "intensity-789",
-              "Alta": {
-                "id": "high-intensity-abc",
-                "value": null
-              },
-              "Media": {
-                "id": "medium-intensity-def",
-                "value": null
-              },
-              "Baja": {
-                "id": "low-intensity-ghi",
-                "value": null
-              }
-            },
-            "Valencia": {
-              "id": "valence-jkl",
-              "Positiva": {
-                "id": "positive-mno",
-                "value": null
-              },
-              "Negativa": {
-                "id": "negative-pqr",
-                "value": null
-              },
-              "Ambivalente": {
-                "id": "ambivalent-stu",
-                "value": null
-              }
-            },
-            "ExpresiónFísica": {
-              "id": "physical-vwx",
-              "Facial": {
-                "id": "facial-yza",
-                "Sonrisa": {
-                  "id": "smile-bcd",
-                  "value": null
-                },
-                "Ceño": {
-                  "id": "frown-efg",
-                  "value": null
-                },
-                "Ojos": {
-                  "id": "eyes-hij",
-                  "value": null
-                }
-              },
-              "Corporal": {
-                "id": "body-klm",
-                "Postura": {
-                  "id": "posture-nop",
-                  "value": null
-                },
-                "Gestos": {
-                  "id": "gestures-qrs",
-                  "value": null
-                },
-                "Tensión": {
-                  "id": "tension-tuv",
-                  "value": null
-                }
-              }
-            },
-            "Duración": {
-              "id": "duration-wxy",
-              "Momentánea": {
-                "id": "momentary-zab",
-                "value": null
-              },
-              "Prolongada": {
-                "id": "prolonged-cde",
-                "value": null
-              },
-              "Crónica": {
-                "id": "chronic-fgh",
-                "value": null
-              }
-            },
-            "ContextoSocial": {
-              "id": "social-context-ijk",
-              "Individual": {
-                "id": "individual-lmn",
-                "value": null
-              },
-              "Interpersonal": {
-                "id": "interpersonal-opq",
-                "value": null
-              },
-              "Grupal": {
-                "id": "group-rst",
-                "value": null
-              }
-            },
-            "ComponenteCognitivo": {
-              "id": "cognitive-uvw",
-              "Evaluaciones": {
-                "id": "appraisals-xyz",
-                "Amenaza": {
-                  "id": "threat-123",
-                  "value": null
-                },
-                "Pérdida": {
-                  "id": "loss-456",
-                  "value": null
-                },
-                "Recompensa": {
-                  "id": "reward-789",
-                  "value": null
-                }
-              },
-              "Creencias": {
-                "id": "beliefs-012",
-                "Controlabilidad": {
-                  "id": "controllability-345",
-                  "value": null
-                },
-                "Certeza": {
-                  "id": "certainty-678",
-                  "value": null
-                },
-                "Responsabilidad": {
-                  "id": "responsibility-901",
-                  "value": null
-                }
-              }
-            },
-            "FunciónAdaptativa": {
-              "id": "adaptive-234",
-              "Supervivencia": {
-                "id": "survival-567",
-                "value": null
-              },
-              "Vinculación": {
-                "id": "bonding-890",
-                "value": null
-              },
-              "Comunicación": {
-                "id": "communication-123a",
-                "value": null
-              },
-              "Motivación": {
-                "id": "motivation-456b",
-                "value": null
-              }
-            }
-          }
-        };
+        // Usar los datos cargados desde el archivo externo
+        // En lugar de usar datos hardcodeados
+        console.log("Cargando propiedades desde archivo externo");
         
+        // Si ya tenemos las propiedades cargadas, usarlas
+        if (window.emotionalProperties) {
+          console.log("Usando propiedades previamente cargadas:", window.emotionalProperties);
+          renderPropertiesTree(window.emotionalProperties);
+          return;
+        }
+        
+        // Si no, cargarlas ahora
+        const propsData = await loadPropertiesFile();
+        console.log("Propiedades cargadas dinámicamente:", propsData);
+        
+        // Guardar para uso futuro
+        window.emotionalProperties = propsData;
+        
+        // Renderizar el árbol con los datos cargados
         renderPropertiesTree(propsData);
       } catch (error) {
         console.error('Error loading properties hierarchy:', error);
@@ -2606,8 +2471,13 @@
       }
     }
     
-    // Modificar la función renderPropertiesTree para incluir la ruta completa
+    // Eliminar completamente los datos hardcodeados de propiedades
+    // No debe haber ninguna definición de propsData aquí
+    
+    // Modificar la función renderPropertiesTree para depurar mejor
     function renderPropertiesTree(data, parentElement = null, parentPath = '') {
+      console.log("Renderizando árbol de propiedades con datos:", data);
+      
       const container = parentElement || document.getElementById('props-tree');
       
       if (!parentElement) {
@@ -2676,6 +2546,33 @@
         container.appendChild(itemDiv);
       });
     }
+    
+    // Asegurarse de que loadPropertiesFile se llame primero y solo una vez
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log("DOM cargado, iniciando carga de archivos");
+      
+      try {
+        // Cargar primero el archivo de propiedades
+        console.log("Cargando archivo de propiedades...");
+        const properties = await loadPropertiesFile();
+        console.log("Propiedades cargadas exitosamente:", properties);
+        
+        // Guardar para uso global
+        window.emotionalProperties = properties;
+        
+        // Ahora cargar el YAML
+        console.log("Cargando archivo YAML...");
+        await loadYamlFile();
+        
+        // Cargar la jerarquía de propiedades con los datos ya cargados
+        console.log("Inicializando jerarquía de propiedades...");
+        await loadPropertiesHierarchy();
+        
+        console.log("Inicialización completa");
+      } catch (error) {
+        console.error("Error durante la inicialización:", error);
+      }
+    });
     
     // Funciones para manejar el arrastre
     let draggedItem = null;
@@ -2830,6 +2727,60 @@
         updateNodeVisualization(fallbackData);
       }
     }
+    
+    // Función para cargar el archivo JSON de propiedades
+    async function loadPropertiesFile() {
+      try {
+        const response = await fetch('/SEMINARIO/V5/templates/propiedades.json');
+        if (!response.ok) {
+          throw new Error(`Error al cargar el archivo de propiedades: ${response.status}`);
+        }
+        const propertiesData = await response.json();
+        console.log("Datos JSON de propiedades cargados correctamente");
+        
+        // Actualizar la visualización o almacenar los datos para su uso posterior
+        // Dependiendo de cómo se utilicen las propiedades en tu aplicación
+        return propertiesData;
+      } catch (error) {
+        console.error("Error al cargar el archivo JSON de propiedades:", error);
+        // Proporcionar datos de respaldo en caso de error
+        return {
+          "id": "root-props-fallback",
+          "PropiedadesEmocionales": {
+            "id": "emotional-props-fallback",
+            "Mensaje": "Error al cargar las propiedades"
+          }
+        };
+      }
+    }
+    
+    // Inicializar la carga de datos al cargar la página
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Verificar que las bibliotecas necesarias estén cargadas
+      if (typeof jsyaml === 'undefined') {
+        console.error("Error: jsyaml no está cargado");
+        document.getElementById('node-visualization').innerHTML = 
+          '<p>Error: No se pudo cargar la biblioteca js-yaml. Verifica las dependencias.</p>';
+        return;
+      }
+      
+      // Cargar datos desde los archivos externos
+      loadYamlFile(); // Cargar pasiones.yml
+      
+      // Cargar propiedades.json y almacenar el resultado
+      const properties = await loadPropertiesFile();
+      
+      // Hacer disponible las propiedades para su uso en la aplicación
+      window.emotionalProperties = properties;
+      
+      // Cargar la jerarquía de propiedades con los datos cargados
+      loadPropertiesHierarchy();
+      
+      // Si hay alguna función que necesite usar las propiedades, llámala aquí
+      // Por ejemplo: initializePropertiesPanel(properties);
+      
+      // ... existing code ...
+    });
     
     // Inicializar la visualización al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
