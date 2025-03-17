@@ -1310,79 +1310,60 @@
     };
     
     // Datos de ejemplo en formato YAML
-    const yamlData = `# Las pasiones del alma
-taxonomia:
-  - categoria: Admiración
-    subcategorias:
-      - nombre: Conexiones de Admiración
-        ejemplos:
-          - Orgullo
-          - Generosidad
-          - Bajeza
-          - Humildad
-          - Aprecio
-          - Menosprecio
-          - Veneración
-          - Desdén
+    const yamlData = `Las pasiones del alma:
+      - Admiración:
+        - Orgullo
+        - Generosidad
+        - Bajeza
+        - Humildad
+        - Aprecio
+        - Menosprecio
+        - Veneración
+        - Desdén
+      
+      - Deseo:
+        - Valor
+        - Cobardía
+        - Esperanza
+        - Temor
+        - Irresolución
+        - Audacia
+        - Espanto 
+        - Confianza
+        - Desesperación
+        - Emulación
+        - Curiosidad
+        - Celos
+        - Amor erótico
+        - Aversión
 
-  - categoria: Deseo
-    subcategorias:
-      - nombre: Conexiones de Deseo
-        ejemplos:
-          - Valor
-          - Cobardía
-          - Esperanza
-          - Temor
-          - Irresolución
-          - Audacia
-          - Espanto 
-          - Confianza
-          - Desesperación
-          - Emulación
-          - Curiosidad
-          - Celos
-          - Amor erótico
-          - Aversión
+      - Amor:
+        - Devoción
+        - Amistad
+        - Afecto
+        - Simpatía
+        - Gratitud
+        - Complacencia
 
-  - categoria: Amor
-    subcategorias:
-      - nombre: Conexiones de Amor
-        ejemplos:
-          - Devoción
-          - Amistad
-          - Afecto
-          - Simpatía
-          - Gratitud
-          - Complacencia
+      - Odio:
+        - Indignación
+        - Ira
+        - Horror
 
-  - categoria: Odio
-    subcategorias:
-      - nombre: Conexiones de Odio
-        ejemplos:
-          - Indignación
-          - Ira
-          - Horror
+      - Alegría:
+        - Burla
+        - Gloria
+        - Autosatisfacción
+        - Júbilo
 
-  - categoria: Alegría
-    subcategorias:
-      - nombre: Conexiones de Alegría
-        ejemplos:
-          - Burla
-          - Gloria
-          - Autosatisfacción
-          - Júbilo
-
-  - categoria: Tristeza
-    subcategorias:
-      - nombre: Conexiones de Tristeza
-        ejemplos:
-          - Piedad
-          - Envidia
-          - Vergüenza
-          - Remordimiento
-          - Arrepentimiento
-          - Pesar
-          - Hastío`;
+      - Tristeza:
+        - Piedad
+        - Envidia
+        - Vergüenza
+        - Remordimiento
+        - Arrepentimiento
+        - Pesar
+        - Hastío`;
 
     // Variables globales
     let currentFocusedNode = null;
@@ -1418,43 +1399,33 @@ taxonomia:
         
         // Estructura para organizar los nodos por niveles
         const levels = [
-          [{ text: 'Taxonomía', type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz
+          [{ text: 'Las pasiones del alma', type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz
           [], // Nivel 1: Categorías
-          [], // Nivel 2: Subcategorías
-          []  // Nivel 3: Ejemplos
+          []  // Nivel 2: Ejemplos
         ];
         
         // Procesar categorías (nivel 1)
-        if (data.taxonomia && Array.isArray(data.taxonomia)) {
-          data.taxonomia.forEach((categoria, catIndex) => {
+        const categories = data['Las pasiones del alma'];
+        if (Array.isArray(categories)) {
+          categories.forEach((categoryObj, catIndex) => {
+            const categoryName = Object.keys(categoryObj)[0];
             levels[1].push({
-              text: categoria.categoria,
+              text: categoryName,
               type: 'category',
               parent: 'root',
               id: `cat_${catIndex}`
             });
             
-            // Procesar subcategorías (nivel 2)
-            if (categoria.subcategorias && Array.isArray(categoria.subcategorias)) {
-              categoria.subcategorias.forEach((subcategoria, subIndex) => {
+            // Procesar ejemplos (nivel 2)
+            const examples = categoryObj[categoryName];
+            if (Array.isArray(examples)) {
+              examples.forEach((example, ejIndex) => {
                 levels[2].push({
-                  text: subcategoria.nombre,
-                  type: 'subcategory',
+                  text: example,
+                  type: 'example',
                   parent: `cat_${catIndex}`,
-                  id: `subcat_${catIndex}_${subIndex}`
+                  id: `example_${catIndex}_${ejIndex}`
                 });
-                
-                // Procesar ejemplos (nivel 3)
-                if (subcategoria.ejemplos && Array.isArray(subcategoria.ejemplos)) {
-                  subcategoria.ejemplos.forEach((ejemplo, ejIndex) => {
-                    levels[3].push({
-                      text: ejemplo,
-                      type: 'example',
-                      parent: `subcat_${catIndex}_${subIndex}`,
-                      id: `example_${catIndex}_${subIndex}_${ejIndex}`
-                    });
-                  });
-                }
               });
             }
           });
