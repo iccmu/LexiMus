@@ -1,0 +1,3598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador de Taxonomía</title>
+  <style>
+    /* Actualización de colores y estilos base */
+    :root {
+      --primary: #008a9b;
+      --primary-dark: #006d7a;
+      --secondary: #64748b;
+      --success: #00968f;
+      --danger: #dc5b5b;
+      --warning: #b88746;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text: #2c3e50;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --shadow: rgba(0, 138, 155, 0.1);
+    }
+    
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Estilos para el logo ASCII con caracteres individuales reactivos */
+    .ascii-logo {
+      display: flex;
+      align-items: center;
+      overflow-x: auto; /* Permitir desplazamiento horizontal si es necesario */
+      max-width: 100%;
+      position: relative;
+    }
+    
+    #ascii-container {
+      margin: 0;
+      font-family: monospace;
+      font-size: 4px;  /* Tamaño más pequeño */
+      line-height: 0.8;
+      white-space: pre;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+    
+    .ascii-char {
+      font-size: 4px;  /* Asegurar que los caracteres individuales también sean pequeños */
+      line-height: 0.8;
+    }
+    
+    /* Estilo para el cursor personalizado */
+    #custom-cursor {
+      position: absolute;
+      font-family: monospace;
+      font-size: 10px;
+      line-height: 1;
+      white-space: pre;
+      color: rgba(255, 255, 255, 0.8);
+      text-shadow: 0 0 5px #65b8c4, 0 0 10px #65b8c4;
+      pointer-events: none; /* Para que no interfiera con los eventos del mouse */
+      display: none; /* Inicialmente oculto */
+      transform: translate(-50%, -50%); /* Centrar en el cursor */
+      z-index: 10;
+    }
+    
+    /* Ajustar el layout de la barra superior */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+    }
+    
+    .top-bar h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .controls button, .controls select,
+    #update-visualization {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .controls button:hover,
+    .controls select:hover,
+    #update-visualization:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    /* Ajustar los estilos del contenedor principal y el contenedor de nodos */
+    .main-content {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      overflow: hidden;
+      height: 100vh; /* Asegurar que ocupe toda la altura de la ventana */
+    }
+    
+    .YAML-JSON {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s ease;
+      flex-shrink: 0;
+      background-color: white;
+      z-index: 10;
+    }
+    
+    .YAML-JSON.visible {
+      width: 40%;
+      min-width: 300px;
+      max-width: 500px;
+    }
+    
+    .nodes-container {
+      flex-grow: 1;
+      overflow-y: auto; /* Permitir scroll vertical */
+      overflow-x: auto; /* Mantener scroll horizontal */
+      height: 100%; /* Ocupar toda la altura disponible */
+      padding: 20px; /* Añadir algo de padding para mejor visualización */
+      position: relative;
+    }
+    
+    .toggle-panel {
+      position: fixed;
+      top: 50%;
+      left: 10px;
+      width: 40px;
+      height: 40px;
+      background-color: var(--surface);
+      color: var(--text);
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      transform: translateY(-50%);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    
+    .toggle-props-panel {
+      position: fixed;
+      top: 50%;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      background-color: var(--surface);
+      color: var(--text);
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      transform: translateY(-50%);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    
+    .toggle-panel:hover, .toggle-props-panel:hover {
+      background-color: var(--primary);
+      color: white;
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 4px 12px var(--shadow);
+      transition: all 0.2s ease;
+    }
+    
+    /* Estilos para la visualización de nodos */
+    .pyramid-container {
+      min-height: min-content; /* Permitir que crezca según el contenido */
+      width: 100%;
+      padding-bottom: 50px; /* Espacio extra al final para mejor scroll */
+      box-sizing: border-box;
+      max-width: 100%; /* Asegurar que use todo el ancho disponible */
+    }
+    
+    .pyramid-level {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 30px; /* Aumentar espacio entre niveles */
+      width: 100%;
+    }
+    
+    /* Contenedor para un nodo y sus hijos */
+    .node-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    /* Contenedor para los hijos de un nodo */
+    .children-container {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+      background-color: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      max-width: 300px;
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .children-container.visible {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    /* Estilos para nodos colapsados/expandidos */
+    .pyramid-node.collapsed::after {
+      content: "▶";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    
+    .pyramid-node.expanded::after {
+      content: "▼";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    
+    .pyramid-node {
+      padding: 12px 15px; /* Reducir el padding horizontal */
+      min-width: 100px; /* Reducir el ancho mínimo de 120px a 100px */
+      max-width: 150px;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px var(--shadow);
+      word-wrap: break-word;
+      flex-shrink: 0;
+      position: relative;
+      /* Eliminar tabindex para evitar que los nodos reciban foco con Tab */
+      outline: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    
+    /* Nodos minimizados (subnodos cuando su padre no está activo) */
+    .pyramid-node.minimized {
+      transform: scale(0.8);
+      opacity: 0.7;
+      filter: saturate(0.7);
+    }
+    
+    /* Estilos para los diferentes tipos de nodos */
+    .pyramid-node.main {
+      background-color: var(--primary);
+      color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.main::selection {
+      background-color: #ff7564; /* Complementario de --primary (#008a9b) */
+      color: black;
+    }
+    
+    .pyramid-node.category {
+      background-color: #009b8a;
+      color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.category::selection {
+      background-color: #ff6475; /* Complementario de #009b8a */
+      color: black;
+    }
+    
+    .pyramid-node.subcategory {
+      background-color: #3a7b8c;
+      color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.subcategory::selection {
+      background-color: #c58473; /* Complementario de #3a7b8c */
+      color: black;
+    }
+    
+    .pyramid-node.example {
+      background-color: #5f8a93;
+      color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pyramid-node.example::selection {
+      background-color: #93756c; /* Complementario de #5f8a93 */
+      color: black;
+    }
+    
+    /* Nodo actualmente seleccionado/enfocado */
+    .pyramid-node.focused {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 138, 155, 0.2);
+      z-index: 5;
+      background-color: var(--primary);
+      border: 2px solid var(--primary);
+      color: white;
+    }
+    
+    /* Efecto de brillo para el nodo enfocado */
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 138, 155, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 138, 155, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 138, 155, 0); }
+    }
+    
+    .pyramid-node.focused {
+      animation: pulse 2s infinite;
+    }
+    
+    /* Hijos directos del nodo activo */
+    .pyramid-node.active-child {
+      transform: scale(1);
+      opacity: 1;
+      filter: saturate(1);
+      box-shadow: 0 3px 7px rgba(0,0,0,0.25);
+    }
+    
+    /* Indicador visual para nodos con hijos */
+    .pyramid-node.has-children::after {
+      content: "▼";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 70%;
+      font-family: monospace;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      resize: none;
+    }
+    
+    #update-visualization {
+      margin-top: 10px;
+      padding: 8px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    /* Estilos para pantallas pequeñas */
+    @media (max-width: 768px) {
+      .pyramid-node {
+        min-width: 80px;
+        padding: 10px 15px;
+        font-size: 14px;
+      }
+      
+      .pyramid-level {
+        gap: 15px;
+      }
+    }
+    
+    /* Indicadores de navegación */
+    .navigation-indicator {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    
+    .indicator-left {
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .indicator-right {
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .indicator-up {
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .indicator-down {
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    /* Estilos para el indicador de más nodos */
+    .more-nodes-indicator {
+      background-color: #607D8B;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      display: inline-block;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .more-nodes-indicator:hover {
+      background-color: #455A64;
+      transform: scale(1.05);
+    }
+    
+    /* Contenedor para los nodos ocultos */
+    .hidden-nodes-container {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+      background-color: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .hidden-nodes-container.visible {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .pyramid-node.hidden {
+      display: none;
+    }
+    
+    .children-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      gap: 5px;
+    }
+    
+    .nav-prev, .nav-next {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .nav-prev:disabled, .nav-next:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .nav-indicator {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    /* Estilos para el panel de información con tarjetas de metadatos */
+    .info-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--surface);
+      color: var(--text);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 40px;
+      box-sizing: border-box;
+      z-index: 30;
+      font-size: 14px;
+      transition: height 0.3s ease, left 0.3s ease, width 0.3s ease;
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -1px 3px var(--shadow);
+    }
+    
+    .info-panel.expanded {
+      height: 250px; /* Aumentado para dar más espacio */
+      overflow-y: auto; /* Permitir scroll cuando está expandido */
+      align-items: flex-start; /* Asegurar que el contenido comience desde arriba */
+    }
+    
+    .info-panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      padding-bottom: 15px; /* Añadir espacio en la parte inferior */
+    }
+    
+    .info-basic {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap; /* Permitir que los elementos se envuelvan en pantallas pequeñas */
+      margin-bottom: 5px; /* Espacio antes de las tarjetas */
+    }
+    
+    .info-label {
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    
+    /* Estilos para las tarjetas de metadatos */
+    .metadata-cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      overflow-y: visible; /* Cambiar a visible para evitar cortes */
+      max-height: 160px; /* Aumentar altura máxima */
+      padding-bottom: 10px; /* Espacio adicional en la parte inferior */
+    }
+    
+    .metadata-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      min-width: 150px;
+      box-shadow: 0 2px 4px var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .metadata-card-title {
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+    
+    .metadata-card-content {
+      font-size: 13px;
+      color: #fff;
+    }
+    
+    .add-metadata-card {
+      background-color: transparent;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      min-width: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+    }
+    
+    .add-metadata-card:hover {
+      background-color: #666;
+      color: white;
+    }
+    
+    .metadata-editor {
+      width: 100%;
+      display: none;
+    }
+    
+    .metadata-editor.visible {
+      display: block;
+    }
+    
+    .metadata-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .metadata-input-group {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .metadata-input {
+      flex: 1;
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    
+    .metadata-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    
+    .edit-button, .save-button, .cancel-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    
+    .cancel-button {
+      background-color: #f44336;
+    }
+    
+    .edit-button:hover, .save-button:hover {
+      background-color: #45a049;
+    }
+    
+    .cancel-button:hover {
+      background-color: #d32f2f;
+    }
+    
+    .pyramid-node.pinned {
+      border: 3px solid #FFD700 !important; /* Borde dorado para el nodo fijado */
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.7) !important; /* Sombra dorada */
+      z-index: 10 !important; /* Asegurar que esté por encima de otros nodos */
+    }
+    
+    .pyramid-node.pinned::before {
+      content: "📌";
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      font-size: 12px;
+      background-color: #FFD700;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    .pyramid-node.secondary-pinned::before {
+      content: "📌";
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      font-size: 12px;
+      background-color: #1E90FF;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    /* Estilos para el desplazamiento del contenedor de nodos */
+    .nodes-container {
+      transition: margin-left 0.3s ease;
+    }
+    
+    .nodes-container.shifted {
+      margin-left: 0; /* El panel YAML-JSON tiene su propio espacio */
+    }
+    
+    /* Ajustar el diseño para evitar superposiciones */
+    .main-content {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      overflow: hidden;
+    }
+    
+    .YAML-JSON {
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s ease;
+      flex-shrink: 0;
+    }
+    
+    .YAML-JSON.visible {
+      width: 40%; /* Ancho del panel cuando está visible */
+      min-width: 300px;
+      max-width: 500px;
+    }
+    
+    .nodes-container {
+      flex-grow: 1;
+      overflow: auto;
+      transition: margin-left 0.3s ease;
+    }
+    
+    /* Asegurar que el botón de alternar siempre esté visible */
+    .toggle-panel {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      z-index: 1000;
+    }
+    
+    /* Estilos para el panel de propiedades */
+    .props-panel {
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s ease;
+      flex-shrink: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      background-color: var(--surface);
+      z-index: 100;
+      box-shadow: -2px 0 10px var(--shadow);
+      padding: 0;
+      box-sizing: border-box;
+      border-left: 1px solid var(--border);
+    }
+    
+    .props-panel.visible {
+      width: 40%;
+      min-width: 300px;
+      max-width: 500px;
+      padding: 20px;
+    }
+    
+    .toggle-props-panel {
+      position: fixed;
+      right: 10px;
+      top: 10px;
+      z-index: 1001;
+      background-color: var(--surface);
+      color: var(--text);
+      border: none;
+      border-radius: 4px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      box-shadow: 0 2px 5px var(--shadow);
+    }
+    
+    .toggle-props-panel:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .main-content.props-panel-visible .nodes-container {
+      margin-right: 40%;
+      width: 60%;
+    }
+    
+    /* Cuando ambos paneles están visibles */
+    .main-content.panel-visible.props-panel-visible .nodes-container {
+      margin-left: 40%;
+      margin-right: 40%;
+      width: 20%;
+    }
+    
+    /* Estilos para la visualización del árbol de propiedades */
+    #props-tree {
+      overflow: auto;
+      max-height: calc(100% - 50px);
+    }
+    
+    .prop-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 6px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px var(--shadow);
+    }
+    
+    .prop-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .prop-children {
+      margin-left: 20px;
+      padding-left: 10px;
+      border-left: 2px solid #ddd;
+      margin-top: 8px;
+      display: none;
+    }
+    
+    .prop-children.visible {
+      display: block;
+    }
+    
+    .prop-toggle {
+      margin-right: 5px;
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      text-align: center;
+      line-height: 12px;
+    }
+    
+    .prop-id {
+      color: #666;
+      font-size: 0.8em;
+      margin-left: 10px;
+    }
+    
+    .prop-value {
+      color: #28a745;
+      font-style: italic;
+    }
+    
+    @media (max-width: 1200px) {
+      .props-panel.visible {
+        width: 350px;
+        min-width: 300px;
+      }
+      
+      .main-content.props-panel-visible .nodes-container {
+        margin-right: 350px;
+        width: calc(100% - 350px);
+      }
+      
+      .main-content.panel-visible.props-panel-visible .nodes-container {
+        margin-left: 350px;
+        margin-right: 350px;
+        width: calc(100% - 700px);
+      }
+    }
+    
+    .metadata-card.focused-card {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 2px var(--primary), 0 4px 8px var(--shadow) !important;
+      transition: all 0.2s ease;
+    }
+    
+    /* Añadir navegación con teclado entre tarjetas */
+    .metadata-card:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--primary), 0 4px 8px var(--shadow);
+    }
+    
+    /* Ajustar el panel de información cuando el panel YAML está visible */
+    .main-content.panel-visible + .info-panel {
+      left: 40%; /* Debe coincidir con el ancho del panel YAML */
+      width: 60%; /* El resto del espacio disponible */
+    }
+    
+    /* Ajustar para pantallas más pequeñas */
+    @media (max-width: 1200px) {
+      .main-content.panel-visible + .info-panel {
+        left: 350px;
+        width: calc(100% - 350px);
+      }
+    }
+    
+    /* Ajustar cuando ambos paneles laterales están visibles */
+    .main-content.panel-visible.props-panel-visible + .info-panel {
+      left: 40%;
+      width: 20%;
+    }
+    
+    @media (max-width: 1200px) {
+      .main-content.panel-visible.props-panel-visible + .info-panel {
+        left: 350px;
+        width: calc(100% - 700px);
+      }
+    }
+    
+    .prop-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      cursor: grab;
+      user-select: none;
+    }
+    
+    .prop-item-header.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+    
+    .prop-toggle {
+      cursor: pointer;
+      padding: 2px;
+    }
+    
+    .prop-label {
+      flex: 1;
+    }
+    
+    .prop-id {
+      color: #666;
+      font-size: 0.9em;
+    }
+    
+    /* Añadir estilos CSS para los controles de navegación de nivel */
+    .level-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      gap: 10px;
+    }
+    
+    .level-nav-prev, .level-nav-next {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .level-nav-prev:hover, .level-nav-next:hover {
+      background-color: var(--primary-dark);
+      transform: scale(1.1);
+    }
+    
+    .level-nav-prev:disabled, .level-nav-next:disabled {
+      background-color: var(--secondary);
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+    }
+    
+    .level-nav-indicator {
+      font-size: 14px;
+      color: var(--text);
+      min-width: 100px;
+      text-align: center;
+    }
+    
+    /* Asegurar que los niveles tengan espacio para los controles */
+    .pyramid-level {
+      position: relative;
+      padding-bottom: 40px;
+    }
+    
+    /* Función para ajustar dinámicamente la cantidad de nodos visibles */
+    function adjustVisibleNodesCount() {
+      const pyramidLevels = document.querySelectorAll('.pyramid-level');
+      
+      pyramidLevels.forEach(level => {
+        const levelWidth = level.clientWidth;
+        const nodeGroups = level.querySelectorAll('.node-group');
+        
+        if (nodeGroups.length === 0) return;
+        
+        // Calcular el ancho promedio de un nodo
+        const sampleNode = nodeGroups[0].querySelector('.pyramid-node');
+        if (!sampleNode) return;
+        
+        // Usar un margen más razonable entre nodos
+        const nodeWidth = sampleNode.offsetWidth + 20;
+        
+        // Reducir el margen de seguridad para que se active la paginación cuando sea necesario
+        const safetyMargin = 10;
+        
+        // Calcular cuántos nodos caben en el nivel
+        const maxNodesInView = Math.floor((levelWidth - safetyMargin) / nodeWidth);
+        
+        // Asegurar que maxNodesInView sea al menos 1 menos que el total para mostrar la paginación
+        // cuando hay muchos nodos, incluso si técnicamente podrían caber
+        const adjustedMaxNodes = Math.min(maxNodesInView, nodeGroups.length > 5 ? nodeGroups.length - 1 : nodeGroups.length);
+        
+        // Si no caben todos los nodos o tenemos más de 5 nodos, mostrar controles de navegación
+        if (adjustedMaxNodes < nodeGroups.length || nodeGroups.length > 5) {
+          // Ocultar nodos que no caben
+          nodeGroups.forEach((node, index) => {
+            if (index < adjustedMaxNodes) {
+              node.style.display = 'block';
+            } else {
+              node.style.display = 'none';
+            }
+          });
+          
+          // Eliminar los controles de navegación anteriores si existen
+          const oldNavControls = level.querySelector('.level-navigation');
+          if (oldNavControls) {
+            oldNavControls.remove();
+          }
+          
+          // Crear nuevos controles de navegación y colocarlos debajo de los nodos
+          const navControls = document.createElement('div');
+          navControls.className = 'level-navigation';
+          
+          // Asegurar que el texto del indicador sea completo
+          const totalNodes = nodeGroups.length;
+          navControls.innerHTML = `
+            <button class="level-nav-prev" disabled>◀</button>
+            <span class="level-nav-indicator">${1}-${adjustedMaxNodes} de ${totalNodes}</span>
+            <button class="level-nav-next">▶</button>
+          `;
+          
+          // Insertar los controles después del último nodo visible
+          level.appendChild(navControls);
+          
+          // Configurar eventos para los botones de navegación
+          setupLevelNavigation(level, navControls, nodeGroups, adjustedMaxNodes);
+        } else {
+          // Si caben todos los nodos, mostrarlos todos y quitar controles de navegación
+          nodeGroups.forEach(node => {
+            node.style.display = 'block';
+          });
+          
+          const navControls = level.querySelector('.level-navigation');
+          if (navControls) {
+            navControls.remove();
+          }
+        }
+      });
+    }
+    
+    /* Actualizar los estilos CSS para los controles de navegación */
+    const levelNavStyles = `
+      .level-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 15px;
+        margin-bottom: 10px;
+        gap: 10px;
+        width: 100%;
+        padding: 0 5px;
+        box-sizing: border-box;
+      }
+      
+      .level-nav-prev, .level-nav-next {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+      
+      .level-nav-prev:hover, .level-nav-next:hover {
+        background-color: var(--primary-dark);
+        transform: scale(1.1);
+      }
+      
+      .level-nav-prev:disabled, .level-nav-next:disabled {
+        background-color: var(--secondary);
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+      }
+      
+      .level-nav-indicator {
+        font-size: 14px;
+        color: var(--text);
+        min-width: 120px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: visible;
+      }
+      
+      /* Ajustar el espaciado de los niveles para los controles */
+      .pyramid-level {
+        position: relative;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        width: 100%;
+        overflow: visible;
+      }
+    `;
+    
+    /* Asegurar que los estilos se apliquen */
+    function applyLevelNavigationStyles() {
+      let styleElement = document.getElementById('level-nav-styles');
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'level-nav-styles';
+        styleElement.textContent = levelNavStyles;
+        document.head.appendChild(styleElement);
+      }
+    }
+    
+    /* Llamar a esta función al inicio */
+    document.addEventListener('DOMContentLoaded', function() {
+      applyLevelNavigationStyles();
+    });
+    
+    /* Estilo para el cursor de texto */
+    #text-cursor {
+      position: absolute;
+      width: 2px;
+      height: 16px;
+      background-color: rgba(255, 255, 255, 0.8);
+      pointer-events: none; /* Para que no interfiera con los eventos del mouse */
+      box-shadow: 0 0 8px #fff, 0 0 12px #65b8c4;
+      display: none; /* Inicialmente oculto */
+    }
+
+    /* Estilos adicionales para el logo ASCII */
+    .ascii-logo pre {
+      margin: 0;
+      font-family: monospace;
+      font-size: 8px;  /* Cambiado de 10px a 8px */
+      color: #008a9b;
+      line-height: 0.8;  /* Ajustado para mejor espaciado vertical */
+      white-space: pre;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+
+    .ascii-logo pre:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+
+    /* Nuevos estilos para mejorar la visibilidad del ASCII art */
+    .ascii-highlight {
+      color: #005a6b !important; /* Color más oscuro para los caracteres # */
+      font-weight: bold;
+      text-shadow: 0 0 1px rgba(0,0,0,0.2); /* Sombra sutil para mejorar legibilidad */
+    }
+
+    #ascii-container {
+      background-color: rgba(240, 250, 255, 0.05); /* Fondo muy sutil */
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    #custom-cursor {
+      color: rgba(0, 138, 155, 0.8); /* Cursor semi-transparente */
+    }
+
+    @keyframes rainbow { 
+      0% { background-position: 0% 50%; } 
+      100% { background-position: 100% 50%; }
+    }
+
+    /* Mantener los estilos existentes del hover */
+    #ascii-container:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <div class="ascii-logo">
+        <div id="ascii-container"></div>
+        <div id="custom-cursor">@@@@@@@@<br>@@<br>@@<br>@@<br>@@@@@@<br>@@<br>@@<br>@@<br>@@@@<br>@@@@@@@@@@</div>
+      </div>
+      <div class="controls">
+        <button id="load-data">Cargar Datos</button>
+        <select id="format-selector">
+          <option value="yaml">YAML</option>
+          <option value="json">JSON</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="main-content">
+      <button class="toggle-panel" id="toggle-panel">≡</button>
+      <button class="toggle-props-panel" id="toggle-props-panel">⚙</button>
+      
+      <div class="YAML-JSON" id="yaml-json-panel">
+        <h2>Datos en formato <span id="current-format">YAML</span></h2>
+        <textarea id="data-display"></textarea>
+        <button id="update-visualization">Actualizar Visualización</button>
+      </div>
+      
+      <div class="nodes-container" id="nodes-container">
+        <div id="node-visualization">
+          <!-- La visualización se generará aquí dinámicamente -->
+        </div>
+      </div>
+      
+      <div class="props-panel" id="props-panel">
+        <h2>Jerarquía de Propiedades</h2>
+        <div id="props-tree"></div>
+      </div>
+    </div>
+    
+    <!-- Panel de información del nodo -->
+    <div class="info-panel" id="info-panel">
+      <div class="info-panel-content">
+        <!-- Sección de definiciones (izquierda) -->
+        <div class="metadata-section">
+          <div class="info-basic">
+            <div><span class="info-label">Nodo:</span> <span id="node-name">Ninguno seleccionado</span></div>
+            <div><span class="info-label">ID:</span> <span id="node-id">-</span></div>
+            <button class="edit-button" id="toggle-metadata">Añadir Definición</button>
+          </div>
+          <div class="metadata-editor" id="metadata-editor">
+            <div class="metadata-form">
+              <div class="metadata-input-group">
+                <input type="text" class="metadata-input" id="metadata-key" placeholder="Título (ej: Descripción, Autor, etc.)">
+                <input type="text" class="metadata-input" id="metadata-value" placeholder="Valor">
+              </div>
+              <div class="metadata-actions">
+                <button class="save-button" id="save-metadata">Guardar</button>
+                <button class="cancel-button" id="cancel-metadata">Cancelar</button>
+              </div>
+            </div>
+          </div>
+          <div class="metadata-cards-container" id="metadata-cards-container">
+            <!-- Las tarjetas de definiciones se generarán aquí dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Nueva sección de propiedades (derecha) -->
+        <div class="properties-section">
+          <div class="properties-title">Propiedades</div>
+          <div class="properties-list" id="properties-list">
+            <!-- Las propiedades se generarán aquí dinámicamente -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incluir la biblioteca js-yaml para procesar YAML -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  
+  <script>
+    // Configuración personalizable
+    const config = {
+      maxVisibleChildren: 6,  // Número máximo de nodos hijos visibles inicialmente
+      animationDuration: 300, // Duración de las animaciones en milisegundos
+      autoScrollDelay: 100,   // Retraso para el desplazamiento automático
+      collapseByDefault: true // Colapsar nodos hijos por defecto
+    };
+    
+    // Datos de ejemplo en formato YAML
+    const yamlData = `Las pasiones del alma:
+      - Admiración:
+        - Orgullo
+`;
+
+    // Variables globales
+    let currentFocusedNode = null;
+    // let pinnedNode = null; // Eliminar esta variable
+    
+    // Objeto para almacenar definiciones de nodos
+    const nodeMetadata = {};
+    
+    // Objeto para almacenar las propiedades asignadas a cada nodo
+    const nodeProperties = {};
+    
+    // Función para convertir YAML a JSON
+    function yamlToJson(yamlString) {
+      return jsyaml.load(yamlString);
+    }
+    
+    // Función para convertir JSON a YAML
+    function jsonToYaml(jsonObj) {
+      return jsyaml.dump(jsonObj);
+    }
+    
+    // Función para generar la visualización de nodos
+    function updateNodeVisualization(data) {
+      const nodeVisualization = document.getElementById('node-visualization');
+      
+      try {
+        if (typeof data === 'string') {
+          // Si es YAML, convertir a JSON
+          data = yamlToJson(data);
+        }
+        
+        console.log("Datos procesados:", data);
+        
+        // Estructura para organizar los nodos por niveles
+        const levels = [
+          [{ text: 'Las pasiones del alma', type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz
+          [], // Nivel 1: Categorías
+          []  // Nivel 2: Ejemplos
+        ];
+        
+        // Procesar categorías (nivel 1)
+        const categories = data['Las pasiones del alma'];
+        if (Array.isArray(categories)) {
+          categories.forEach((categoryObj, catIndex) => {
+            const categoryName = Object.keys(categoryObj)[0];
+            levels[1].push({
+              text: categoryName,
+              type: 'category',
+              parent: 'root',
+              id: `cat_${catIndex}`
+            });
+            
+            // Procesar ejemplos (nivel 2)
+            const examples = categoryObj[categoryName];
+            if (Array.isArray(examples)) {
+              examples.forEach((example, ejIndex) => {
+                levels[2].push({
+                  text: example,
+                  type: 'example',
+                  parent: `cat_${catIndex}`,
+                  id: `example_${catIndex}_${ejIndex}`
+                });
+              });
+            }
+          });
+        }
+        
+        console.log("Niveles generados:", levels);
+        
+        // Generar HTML para la visualización
+        let html = '<div class="pyramid-container">';
+        
+        // Para cada nivel (excepto el último que se manejará de forma especial)
+        for (let levelIndex = 0; levelIndex < levels.length - 1; levelIndex++) {
+          const level = levels[levelIndex];
+          
+          if (level.length > 0) {
+            html += `<div class="pyramid-level" data-level="${levelIndex}">`;
+            
+            // Agrupar nodos por padre
+            const nodesByParent = {};
+            level.forEach(node => {
+              const parentId = node.parent || 'null';
+              if (!nodesByParent[parentId]) {
+                nodesByParent[parentId] = [];
+              }
+              nodesByParent[parentId].push(node);
+            });
+            
+            // Para cada grupo de nodos con el mismo padre
+            const possibleParents = Object.keys(nodesByParent);
+            possibleParents.forEach(parentId => {
+              const children = nodesByParent[parentId] || [];
+              
+              children.forEach((node, nodeIndex) => {
+                const nodeType = node.type;
+                const parentAttr = node.parent ? `data-parent="${node.parent}"` : 'data-parent="null"';
+                const hasChildren = levels[levelIndex + 1].some(child => child.parent === node.id);
+                const collapseClass = hasChildren ? 'collapsed' : '';
+                
+                // Crear un grupo para el nodo y sus posibles hijos
+                html += `<div class="node-group" data-node-id="${node.id}">`;
+                
+                // El nodo principal
+                html += `<div class="pyramid-node ${nodeType} ${collapseClass}" tabindex="0" 
+                             data-row="${levelIndex}" data-col="${nodeIndex}" 
+                             ${parentAttr} data-id="${node.id}">
+                          ${node.text}
+                        </div>`;
+                
+                // Si es el último nivel antes de los ejemplos, añadir contenedor para ejemplos
+                if (levelIndex === levels.length - 2) {
+                  // Obtener los ejemplos para este nodo
+                  const examples = levels[levelIndex + 1].filter(example => example.parent === node.id);
+                  
+                  if (examples.length > 0) {
+                    // Contenedor para ejemplos (inicialmente oculto)
+                    html += `<div class="children-container" id="children_${node.id}" data-total-children="${examples.length}" data-visible-start="0">`;
+                    
+                    // Mostrar todos los ejemplos, pero solo los primeros N visibles inicialmente
+                    examples.forEach((example, exIndex) => {
+                      const isVisible = exIndex < config.maxVisibleChildren;
+                      html += `<div class="pyramid-node ${example.type} ${isVisible ? '' : 'hidden'}" tabindex="0" 
+                                   data-row="${levelIndex + 1}" data-col="${exIndex}" 
+                                   data-parent="${node.id}" data-id="${example.id}" data-index="${exIndex}">
+                                ${example.text}
+                              </div>`;
+                    });
+                    
+                    // Añadir controles de navegación si hay más de maxVisibleChildren
+                    if (examples.length > config.maxVisibleChildren) {
+                      html += `<div class="children-navigation">
+                                <button class="nav-prev" disabled>▲</button>
+                                <span class="nav-indicator">1-${config.maxVisibleChildren} de ${examples.length}</span>
+                                <button class="nav-next">▼</button>
+                              </div>`;
+                    }
+                    
+                    html += '</div>'; // Cerrar contenedor de ejemplos
+                  }
+                }
+                
+                html += '</div>'; // Cerrar grupo de nodo
+              });
+            });
+            
+            html += '</div>'; // Cerrar nivel
+          }
+        }
+        
+        html += '</div>'; // Cerrar contenedor principal
+        nodeVisualization.innerHTML = html;
+        
+        console.log("HTML generado:", html);
+        
+        // Después de generar el HTML y antes de configurar eventos
+        // Ajustar el ancho del contenedor para usar todo el espacio disponible
+        const nodesContainer = document.getElementById('nodes-container');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (nodesContainer && mainContent) {
+          // Asegurar que el contenedor de nodos use todo el ancho disponible
+          nodesContainer.style.width = '100%';
+          
+          // Forzar un reflow para que los cambios surtan efecto
+          nodesContainer.offsetHeight;
+        }
+        
+        // Configurar eventos para los nodos
+        setupNodeEvents();
+        
+        // Configurar navegación con teclado
+        setupKeyboardNavigation();
+        
+        // Configurar controles de navegación para contenedores de hijos
+        setupChildrenNavigation();
+        
+        // Mostrar indicadores de navegación si es necesario
+        checkForOverflow();
+        
+      } catch (e) {
+        console.error("Error al actualizar la visualización:", e);
+        nodeVisualization.innerHTML = '<p>Error al generar la visualización. Verifica el formato de los datos.</p>';
+      }
+    }
+    
+    // Función para configurar los controles de navegación en contenedores de hijos
+    function setupChildrenNavigation() {
+      // Configurar botones de navegación
+      document.querySelectorAll('.nav-next').forEach(button => {
+        button.addEventListener('click', function() {
+          const container = this.closest('.children-container');
+          const totalChildren = parseInt(container.getAttribute('data-total-children'));
+          let visibleStart = parseInt(container.getAttribute('data-visible-start'));
+          
+          // Calcular el nuevo índice de inicio
+          if (visibleStart + config.maxVisibleChildren < totalChildren) {
+            visibleStart++;
+            container.setAttribute('data-visible-start', visibleStart);
+            
+            // Actualizar visibilidad de los nodos
+            updateVisibleChildren(container, visibleStart);
+            
+            // Actualizar estado de los botones
+            updateNavigationButtons(container, visibleStart, totalChildren);
+          }
+        });
+      });
+      
+      document.querySelectorAll('.nav-prev').forEach(button => {
+        button.addEventListener('click', function() {
+          const container = this.closest('.children-container');
+          let visibleStart = parseInt(container.getAttribute('data-visible-start'));
+          
+          // Calcular el nuevo índice de inicio
+          if (visibleStart > 0) {
+            visibleStart--;
+            container.setAttribute('data-visible-start', visibleStart);
+            
+            // Actualizar visibilidad de los nodos
+            updateVisibleChildren(container, visibleStart);
+            
+            // Actualizar estado de los botones
+            updateNavigationButtons(container, visibleStart, parseInt(container.getAttribute('data-total-children')));
+          }
+        });
+      });
+      
+      // Ajustar inicialmente la cantidad de nodos visibles según el espacio disponible
+      adjustVisibleNodesCount();
+      
+      // Configurar evento de redimensionamiento para ajustar dinámicamente
+      window.addEventListener('resize', adjustVisibleNodesCount);
+    }
+    
+    // Nueva función para ajustar dinámicamente la cantidad de nodos visibles
+    function adjustVisibleNodesCount() {
+      const pyramidLevels = document.querySelectorAll('.pyramid-level');
+      
+      pyramidLevels.forEach(level => {
+        const levelWidth = level.clientWidth;
+        const nodeGroups = level.querySelectorAll('.node-group');
+        
+        if (nodeGroups.length === 0) return;
+        
+        // Calcular el ancho promedio de un nodo
+        const sampleNode = nodeGroups[0].querySelector('.pyramid-node');
+        if (!sampleNode) return;
+        
+        // Usar un margen más razonable entre nodos
+        const nodeWidth = sampleNode.offsetWidth + 20;
+        
+        // Reducir el margen de seguridad para que se active la paginación cuando sea necesario
+        const safetyMargin = 10;
+        
+        // Calcular cuántos nodos caben en el nivel
+        const maxNodesInView = Math.floor((levelWidth - safetyMargin) / nodeWidth);
+        
+        // Asegurar que maxNodesInView sea al menos 1 menos que el total para mostrar la paginación
+        // cuando hay muchos nodos, incluso si técnicamente podrían caber
+        const adjustedMaxNodes = Math.min(maxNodesInView, nodeGroups.length > 5 ? nodeGroups.length - 1 : nodeGroups.length);
+        
+        // Si no caben todos los nodos o tenemos más de 5 nodos, mostrar controles de navegación
+        if (adjustedMaxNodes < nodeGroups.length || nodeGroups.length > 5) {
+          // Ocultar nodos que no caben
+          nodeGroups.forEach((node, index) => {
+            if (index < adjustedMaxNodes) {
+              node.style.display = 'block';
+            } else {
+              node.style.display = 'none';
+            }
+          });
+          
+          // Eliminar los controles de navegación anteriores si existen
+          const oldNavControls = level.querySelector('.level-navigation');
+          if (oldNavControls) {
+            oldNavControls.remove();
+          }
+          
+          // Crear nuevos controles de navegación y colocarlos debajo de los nodos
+          const navControls = document.createElement('div');
+          navControls.className = 'level-navigation';
+          
+          // Asegurar que el texto del indicador sea completo
+          const totalNodes = nodeGroups.length;
+          navControls.innerHTML = `
+            <button class="level-nav-prev" disabled>◀</button>
+            <span class="level-nav-indicator">${1}-${adjustedMaxNodes} de ${totalNodes}</span>
+            <button class="level-nav-next">▶</button>
+          `;
+          
+          // Insertar los controles después del último nodo visible
+          level.appendChild(navControls);
+          
+          // Configurar eventos para los botones de navegación
+          setupLevelNavigation(level, navControls, nodeGroups, adjustedMaxNodes);
+        } else {
+          // Si caben todos los nodos, mostrarlos todos y quitar controles de navegación
+          nodeGroups.forEach(node => {
+            node.style.display = 'block';
+          });
+          
+          const navControls = level.querySelector('.level-navigation');
+          if (navControls) {
+            navControls.remove();
+          }
+        }
+      });
+    }
+    
+    // Función para configurar la navegación en niveles
+    function setupLevelNavigation(level, navControls, nodeGroups, maxNodesInView) {
+      const prevButton = navControls.querySelector('.level-nav-prev');
+      const nextButton = navControls.querySelector('.level-nav-next');
+      const indicator = navControls.querySelector('.level-nav-indicator');
+      const totalNodes = nodeGroups.length;
+      
+      // Inicializar el atributo de datos
+      level.setAttribute('data-visible-start', '0');
+      
+      prevButton.addEventListener('click', function() {
+        let visibleStart = parseInt(level.getAttribute('data-visible-start'));
+        
+        if (visibleStart > 0) {
+          visibleStart--;
+          level.setAttribute('data-visible-start', visibleStart);
+          
+          // Actualizar visibilidad de los nodos
+          updateLevelVisibleNodes(nodeGroups, visibleStart, maxNodesInView);
+          
+          // Actualizar indicador y estado de botones
+          const endIndex = Math.min(visibleStart + maxNodesInView, totalNodes);
+          indicator.textContent = `${visibleStart + 1}-${endIndex} de ${totalNodes}`;
+          prevButton.disabled = visibleStart === 0;
+          nextButton.disabled = false;
+        }
+      });
+      
+      nextButton.addEventListener('click', function() {
+        let visibleStart = parseInt(level.getAttribute('data-visible-start'));
+        const maxStart = totalNodes - maxNodesInView;
+        
+        if (visibleStart < maxStart) {
+          visibleStart++;
+          level.setAttribute('data-visible-start', visibleStart);
+          
+          // Actualizar visibilidad de los nodos
+          updateLevelVisibleNodes(nodeGroups, visibleStart, maxNodesInView);
+          
+          // Actualizar indicador y estado de botones
+          const endIndex = Math.min(visibleStart + maxNodesInView, totalNodes);
+          indicator.textContent = `${visibleStart + 1}-${endIndex} de ${totalNodes}`;
+          prevButton.disabled = false;
+          nextButton.disabled = visibleStart >= maxStart;
+        }
+      });
+    }
+    
+    // Función para actualizar la visibilidad de los nodos en un nivel
+    function updateLevelVisibleNodes(nodeGroups, startIndex, maxVisible) {
+      nodeGroups.forEach((node, index) => {
+        if (index >= startIndex && index < startIndex + maxVisible) {
+          node.style.display = 'block';
+        } else {
+          node.style.display = 'none';
+        }
+      });
+    }
+    
+    // Función para actualizar la visibilidad de los nodos hijos
+    function updateVisibleChildren(container, startIndex) {
+      const children = container.querySelectorAll('.pyramid-node');
+      const totalChildren = children.length;
+      
+      // Ocultar todos los nodos
+      children.forEach(child => {
+        child.classList.add('hidden');
+      });
+      
+      // Mostrar solo los nodos en el rango visible
+      for (let i = startIndex; i < Math.min(startIndex + config.maxVisibleChildren, totalChildren); i++) {
+        children[i].classList.remove('hidden');
+      }
+      
+      // Actualizar el indicador de navegación
+      const endIndex = Math.min(startIndex + config.maxVisibleChildren, totalChildren);
+      const indicator = container.querySelector('.nav-indicator');
+      if (indicator) {
+        indicator.textContent = `${startIndex + 1}-${endIndex} de ${totalChildren}`;
+      }
+    }
+    
+    // Función para actualizar el estado de los botones de navegación
+    function updateNavigationButtons(container, startIndex, totalChildren) {
+      const prevButton = container.querySelector('.nav-prev');
+      const nextButton = container.querySelector('.nav-next');
+      
+      if (prevButton) {
+        prevButton.disabled = startIndex === 0;
+      }
+      
+      if (nextButton) {
+        nextButton.disabled = startIndex + config.maxVisibleChildren >= totalChildren;
+      }
+    }
+    
+    // Función para actualizar el estado visual de los nodos
+    function updateNodesVisualState(focusedNodeId = null) {
+      // Obtener todos los nodos
+      const allNodes = document.querySelectorAll('.pyramid-node');
+      
+      // Primero, restablecer todos los nodos a su estado minimizado
+      allNodes.forEach(node => {
+        node.classList.remove('focused', 'active-child');
+        node.classList.add('minimized');
+      });
+      
+      if (focusedNodeId) {
+        // Obtener el nodo enfocado
+        const focusedNode = document.querySelector(`.pyramid-node[data-id="${focusedNodeId}"]`);
+        
+        if (focusedNode) {
+          // Activar el nodo enfocado
+          focusedNode.classList.add('focused');
+          focusedNode.classList.remove('minimized');
+          
+          // Activar la cadena de padres hasta la raíz
+          let currentNode = focusedNode;
+          let parentNode = null;
+          
+          while (currentNode) {
+            const parentId = currentNode.getAttribute('data-parent');
+            if (parentId && parentId !== 'null') {
+              parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+              if (parentNode) {
+                parentNode.classList.remove('minimized');
+                currentNode = parentNode;
+              } else {
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+          
+          // Activar SOLO los hijos directos del nodo enfocado
+          const childrenNodes = document.querySelectorAll(`.pyramid-node[data-parent="${focusedNodeId}"]`);
+          childrenNodes.forEach(child => {
+            child.classList.remove('minimized');
+            child.classList.add('active-child');
+          });
+        }
+      } else {
+        // Si no hay nodo enfocado, mostrar solo el nodo raíz y sus hijos directos
+        const rootNode = document.querySelector('.pyramid-node[data-id="root"]');
+        if (rootNode) {
+          rootNode.classList.remove('minimized');
+          rootNode.classList.add('focused');
+          
+          // Mostrar solo los hijos directos del nodo raíz
+          const rootChildren = document.querySelectorAll('.pyramid-node[data-parent="root"]');
+          rootChildren.forEach(child => {
+            child.classList.remove('minimized');
+            child.classList.add('active-child');
+          });
+        }
+      }
+    }
+    
+    // Función para actualizar la información del nodo en el panel inferior
+    function updateNodeInfo(node) {
+      const infoPanel = document.getElementById('info-panel');
+      const metadataEditor = document.getElementById('metadata-editor');
+      const metadataCardsContainer = document.getElementById('metadata-cards-container');
+      
+      // Ya no necesitamos verificar si el panel está fijado
+      /* 
+      if (infoPanel.classList.contains('fixed')) {
+        return;
+      }
+      */
+      
+      if (!node) {
+        document.getElementById('node-name').textContent = 'Ninguno seleccionado';
+        document.getElementById('node-id').textContent = '-';
+        metadataEditor.classList.remove('visible');
+        infoPanel.classList.remove('expanded');
+        metadataCardsContainer.innerHTML = '';
+        return;
+      }
+      
+      const nodeName = node.textContent.trim();
+      const nodeId = node.getAttribute('data-id');
+      
+      document.getElementById('node-name').textContent = nodeName;
+      document.getElementById('node-id').textContent = nodeId;
+      
+      // Ocultar el editor de definiciones
+      metadataEditor.classList.remove('visible');
+      
+      // Mostrar las tarjetas de definiciones existentes
+      renderMetadataCards(nodeId);
+      
+      // Siempre expandir el panel cuando se selecciona un nodo
+      infoPanel.classList.add('expanded');
+      
+      const propertiesList = document.getElementById('properties-list');
+      propertiesList.innerHTML = ''; // Limpiar la lista actual
+      
+      // Agregar eventos de drop a la sección de propiedades
+      const propertiesSection = document.querySelector('.properties-section');
+      propertiesSection.addEventListener('dragover', handlePropertiesDragOver);
+      propertiesSection.addEventListener('dragenter', handlePropertiesDragEnter);
+      propertiesSection.addEventListener('dragleave', handlePropertiesDragLeave);
+      propertiesSection.addEventListener('drop', handlePropertiesDrop);
+      
+      // Mostrar las propiedades existentes del nodo
+      if (nodeId && nodeProperties[nodeId]) {
+        nodeProperties[nodeId].forEach(prop => {
+          addPropertyToList(prop.key, prop.id, nodeId);
+        });
+      }
+    }
+    
+    // Función para renderizar las tarjetas de definiciones
+    function renderMetadataCards(nodeId) {
+      const container = document.getElementById('metadata-cards-container');
+      container.innerHTML = '';
+      
+      // Si no hay definiciones para este nodo, mostrar solo el botón de añadir
+      if (!nodeMetadata[nodeId] || Object.keys(nodeMetadata[nodeId]).length === 0) {
+        container.innerHTML = '<div class="add-metadata-card" id="add-metadata-card" tabindex="0">+ Añadir definición</div>';
+        
+        // Añadir evento al botón de añadir
+        setTimeout(() => {
+          const addButton = document.getElementById('add-metadata-card');
+          if (addButton) {
+            addButton.addEventListener('click', function() {
+              document.getElementById('toggle-metadata').click();
+            });
+            
+            // Añadir navegación con teclado
+            addButton.addEventListener('keydown', function(e) {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('toggle-metadata').click();
+              }
+            });
+          }
+        }, 0);
+        
+        return;
+      }
+      
+      // Crear tarjetas para cada definición
+      let index = 0;
+      for (const [key, value] of Object.entries(nodeMetadata[nodeId])) {
+        const card = document.createElement('div');
+        card.className = 'metadata-card';
+        card.setAttribute('tabindex', '0'); // Hacer la tarjeta enfocable
+        card.setAttribute('data-key', key);
+        card.setAttribute('data-index', index++);
+        card.innerHTML = `
+          <div class="metadata-card-title">${key}</div>
+          <div class="metadata-card-content">${value}</div>
+        `;
+        
+        // Añadir evento para editar al hacer clic en la tarjeta
+        card.addEventListener('click', function() {
+          editMetadataCard(this, key, value);
+        });
+        
+        // Añadir navegación con teclado
+        card.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            editMetadataCard(this, key, value);
+          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextCard = this.nextElementSibling;
+            if (nextCard && nextCard.classList.contains('metadata-card')) {
+              nextCard.focus();
+            } else if (document.getElementById('add-metadata-card')) {
+              document.getElementById('add-metadata-card').focus();
+            }
+          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevCard = this.previousElementSibling;
+            if (prevCard && prevCard.classList.contains('metadata-card')) {
+              prevCard.focus();
+            }
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            // Volver al nodo
+            const focusedNode = document.querySelector('.pyramid-node.focused');
+            if (focusedNode) {
+              focusedNode.focus();
+            }
+          }
+        });
+        
+        container.appendChild(card);
+      }
+      
+      // Añadir el botón para agregar nueva definición
+      const addButton = document.createElement('div');
+      addButton.className = 'add-metadata-card';
+      addButton.setAttribute('tabindex', '0');
+      addButton.textContent = '+ Añadir definición';
+      
+      addButton.addEventListener('click', function() {
+        document.getElementById('toggle-metadata').click();
+      });
+      
+      // Añadir navegación con teclado
+      addButton.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('toggle-metadata').click();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const cards = document.querySelectorAll('.metadata-card');
+          if (cards.length > 0) {
+            cards[cards.length - 1].focus();
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          // Volver al nodo
+          const focusedNode = document.querySelector('.pyramid-node.focused');
+          if (focusedNode) {
+            focusedNode.focus();
+          }
+        }
+      });
+      
+      container.appendChild(addButton);
+    }
+    
+    // Función auxiliar para editar una tarjeta de definición
+    function editMetadataCard(card, key, value) {
+      // Abrir el editor con los valores de esta tarjeta
+      document.getElementById('metadata-key').value = key;
+      document.getElementById('metadata-value').value = value;
+      document.getElementById('metadata-editor').classList.add('visible');
+      document.getElementById('info-panel').classList.add('expanded');
+      
+      // Guardar la clave original para poder actualizarla
+      document.getElementById('metadata-key').setAttribute('data-original-key', key);
+      
+      // Enfocar el campo de título
+      setTimeout(() => {
+        document.getElementById('metadata-key').focus();
+      }, 100);
+    }
+    
+    // Configurar eventos para los nodos
+    function setupNodeEvents() {
+      let currentFocusedNode = null;
+      
+      const nodes = document.querySelectorAll('.pyramid-node');
+      
+      nodes.forEach(node => {
+        // Marcar nodos que tienen hijos
+        const nodeId = node.getAttribute('data-id');
+        const hasChildren = document.querySelector(`.pyramid-node[data-parent="${nodeId}"]`) !== null;
+        const childrenContainer = document.getElementById(`children_${nodeId}`);
+        
+        if (hasChildren) {
+          node.classList.add('collapsed');
+        }
+        
+        // Evento de clic simple
+        node.addEventListener('click', function() {
+          if (currentFocusedNode) {
+            currentFocusedNode.classList.remove('focused');
+          }
+          
+          this.classList.add('focused');
+          currentFocusedNode = this;
+          
+          updateNodesVisualState(this.getAttribute('data-id'));
+          updateNodeInfo(this);
+          
+          this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+        });
+
+        // Añadir evento de doble clic
+        node.addEventListener('dblclick', function(e) {
+          e.preventDefault();
+          
+          const nodeId = this.getAttribute('data-id');
+          const childrenContainer = document.getElementById(`children_${nodeId}`);
+          
+          if (childrenContainer) {
+            // Alternar visibilidad del contenedor de hijos
+            childrenContainer.classList.toggle('visible');
+            
+            // Actualizar clase del nodo
+            if (childrenContainer.classList.contains('visible')) {
+              this.classList.remove('collapsed');
+              this.classList.add('expanded');
+              
+              // Si se expande, hacer visibles los nodos hijos para la navegación
+              const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+              childNodes.forEach(child => {
+                child.classList.remove('minimized');
+                child.classList.add('active-child');
+              });
+
+              // Seleccionar el primer ejemplo visible
+              const firstExample = childrenContainer.querySelector('.pyramid-node:not(.hidden)');
+              if (firstExample) {
+                firstExample.click();
+              }
+            } else {
+              this.classList.remove('expanded');
+              this.classList.add('collapsed');
+              
+              // Si estamos cerrando un contenedor y el nodo enfocado está dentro de él,
+              // devolver el foco al nodo padre
+              const focusedNodeContainer = document.querySelector('.pyramid-node.focused').closest('.children-container');
+              if (focusedNodeContainer && focusedNodeContainer.id === `children_${nodeId}`) {
+                this.click(); // Seleccionar el nodo padre
+              }
+            }
+          }
+        });
+        
+        // Añadir evento de teclado para expandir/colapsar con la barra espaciadora
+        // Ya no usamos Enter para fijar la información
+        node.addEventListener('keydown', function(e) {
+          if (e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault(); // Prevenir el desplazamiento de la página
+            
+            const nodeId = this.getAttribute('data-id');
+            const childrenContainer = document.getElementById(`children_${nodeId}`);
+            
+            if (childrenContainer) {
+              // Alternar visibilidad del contenedor de hijos
+              childrenContainer.classList.toggle('visible');
+              
+              // Actualizar clase del nodo
+              if (childrenContainer.classList.contains('visible')) {
+                this.classList.remove('collapsed');
+                this.classList.add('expanded');
+                
+                // Si se expande, hacer visibles los nodos hijos para la navegación
+                const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+                childNodes.forEach(child => {
+                  child.classList.remove('minimized');
+                  child.classList.add('active-child');
+                });
+              } else {
+                this.classList.remove('expanded');
+                this.classList.add('collapsed');
+              }
+            } else {
+              // Verificar si este nodo es hijo de otro nodo
+              const parentId = this.getAttribute('data-parent');
+              if (parentId && parentId !== 'null') {
+                // Buscar el contenedor de hijos del padre
+                const parentContainer = document.getElementById(`children_${parentId}`);
+                if (parentContainer && parentContainer.classList.contains('visible')) {
+                  // Colapsar el contenedor del padre
+                  parentContainer.classList.remove('visible');
+                  
+                  // Actualizar la clase del nodo padre
+                  const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+                  if (parentNode) {
+                    parentNode.classList.remove('expanded');
+                    parentNode.classList.add('collapsed');
+                    
+                    // Enfocar el nodo padre
+                    parentNode.click();
+                  }
+                }
+              }
+            }
+          }
+          // Eliminar el bloque de código para Enter que fijaba el nodo
+        });
+
+        // Añadir evento de teclado para Enter
+        node.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Enfocar el editor de definiciones
+            document.getElementById('toggle-metadata').click();
+            
+            // Enfocar el campo de título después de un breve retraso
+            setTimeout(() => {
+              const metadataKey = document.getElementById('metadata-key');
+              if (metadataKey) {
+                metadataKey.focus();
+              }
+            }, 100);
+          } else if (e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            
+            const nodeId = this.getAttribute('data-id');
+            const childrenContainer = document.getElementById(`children_${nodeId}`);
+            
+            if (childrenContainer) {
+              // Alternar visibilidad del contenedor de hijos
+              childrenContainer.classList.toggle('visible');
+              
+              // Actualizar clase del nodo
+              if (childrenContainer.classList.contains('visible')) {
+                this.classList.remove('collapsed');
+                this.classList.add('expanded');
+                
+                // Si se expande, hacer visibles los nodos hijos para la navegación
+                const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+                childNodes.forEach(child => {
+                  child.classList.remove('minimized');
+                  child.classList.add('active-child');
+                });
+              } else {
+                this.classList.remove('expanded');
+                this.classList.add('collapsed');
+                
+                // Si estamos cerrando un contenedor y el nodo enfocado está dentro de él,
+                // devolver el foco al nodo padre
+                const focusedNodeContainer = document.querySelector('.pyramid-node.focused').closest('.children-container');
+                if (focusedNodeContainer && focusedNodeContainer.id === `children_${nodeId}`) {
+                  this.click(); // Seleccionar el nodo padre
+                }
+              }
+            }
+          }
+        });
+      });
+    }
+    
+    // Configurar navegación con teclado
+    function setupKeyboardNavigation() {
+      let currentFocusedNode = null;
+      const nodes = document.querySelectorAll('.pyramid-node');
+      
+      document.addEventListener('keydown', function(e) {
+        if (document.activeElement === document.getElementById('data-display')) {
+          return;
+        }
+
+        currentFocusedNode = document.querySelector('.pyramid-node.focused');
+        
+        if (!currentFocusedNode) {
+          if (nodes.length > 0 && (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowLeft')) {
+            nodes[0].click();
+            e.preventDefault();
+          }
+          return;
+        }
+
+        const isInChildrenContainer = currentFocusedNode.closest('.children-container') !== null;
+        const nodeId = currentFocusedNode.getAttribute('data-id');
+        const parentId = currentFocusedNode.getAttribute('data-parent');
+        const childrenContainer = document.getElementById(`children_${nodeId}`);
+        const hasChildren = childrenContainer !== null;
+        
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (isInChildrenContainer) {
+              // Navegación dentro del contenedor de ejemplos
+              const container = currentFocusedNode.closest('.children-container');
+              const examples = Array.from(container.querySelectorAll('.pyramid-node:not(.hidden)'));
+              const currentIndex = examples.indexOf(currentFocusedNode);
+              
+              if (currentIndex < examples.length - 1) {
+                examples[currentIndex + 1].click();
+              }
+            } else if (hasChildren && !childrenContainer.classList.contains('visible')) {
+              // Si tiene hijos y están ocultos, mostrarlos y seleccionar el primero
+              childrenContainer.classList.add('visible');
+              currentFocusedNode.classList.remove('collapsed');
+              currentFocusedNode.classList.add('expanded');
+              
+              const firstExample = childrenContainer.querySelector('.pyramid-node:not(.hidden)');
+              if (firstExample) {
+                firstExample.click();
+              }
+            } else {
+              // Buscar hijos directos del nodo actual
+              const children = Array.from(nodes).filter(node => 
+                node.getAttribute('data-parent') === nodeId &&
+                !node.classList.contains('hidden')
+              );
+              
+              if (children.length > 0) {
+                children[0].click();
+              }
+            }
+            break;
+
+          case 'ArrowUp':
+            e.preventDefault();
+            if (isInChildrenContainer) {
+              const container = currentFocusedNode.closest('.children-container');
+              const examples = Array.from(container.querySelectorAll('.pyramid-node:not(.hidden)'));
+              const currentIndex = examples.indexOf(currentFocusedNode);
+              
+              if (currentIndex > 0) {
+                examples[currentIndex - 1].click();
+              } else {
+                // Volver al nodo padre
+                const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+                if (parentNode) {
+                  parentNode.click();
+                }
+              }
+            } else {
+              // Ir al padre del nodo actual
+              if (parentId && parentId !== 'null') {
+                const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+                if (parentNode) {
+                  parentNode.click();
+                }
+              }
+            }
+            break;
+
+          case 'ArrowRight':
+            e.preventDefault();
+            if (isInChildrenContainer) {
+              return; // No hacer nada si estamos en ejemplos
+            }
+            
+            // Buscar hermanos del nodo actual
+            const siblings = Array.from(nodes).filter(node => 
+              node.getAttribute('data-parent') === parentId &&
+              !node.classList.contains('hidden') &&
+              !node.closest('.children-container')
+            );
+            
+            const currentIndex = siblings.indexOf(currentFocusedNode);
+            if (currentIndex < siblings.length - 1) {
+              siblings[currentIndex + 1].click();
+            }
+            break;
+
+          case 'ArrowLeft':
+            e.preventDefault();
+            if (isInChildrenContainer) {
+              // Volver al nodo padre desde los ejemplos
+              const parentNode = document.querySelector(`.pyramid-node[data-id="${parentId}"]`);
+              if (parentNode) {
+                parentNode.click();
+              }
+            } else {
+              // Buscar hermanos del nodo actual
+              const siblings = Array.from(nodes).filter(node => 
+                node.getAttribute('data-parent') === parentId &&
+                !node.classList.contains('hidden') &&
+                !node.closest('.children-container')
+              );
+              
+              const currentIndex = siblings.indexOf(currentFocusedNode);
+              if (currentIndex > 0) {
+                siblings[currentIndex - 1].click();
+              }
+            }
+            break;
+
+          case ' ':
+          case 'Spacebar':
+            e.preventDefault();
+            if (hasChildren) {
+              childrenContainer.classList.toggle('visible');
+              if (childrenContainer.classList.contains('visible')) {
+                currentFocusedNode.classList.remove('collapsed');
+                currentFocusedNode.classList.add('expanded');
+              } else {
+                currentFocusedNode.classList.remove('expanded');
+                currentFocusedNode.classList.add('collapsed');
+                
+                // Si estamos cerrando un contenedor y el nodo enfocado está dentro de él,
+                // devolver el foco al nodo padre
+                const focusedNodeContainer = document.querySelector('.pyramid-node.focused').closest('.children-container');
+                if (focusedNodeContainer && focusedNodeContainer.id === `children_${nodeId}`) {
+                  currentFocusedNode.click(); // Seleccionar el nodo padre
+                }
+              }
+            }
+            break;
+        }
+      });
+    }
+    
+    // Función para alternar la visibilidad del panel YAML-JSON
+    document.getElementById('toggle-panel').addEventListener('click', function() {
+      const panel = document.getElementById('yaml-json-panel');
+      const mainContent = document.querySelector('.main-content');
+      const nodesContainer = document.getElementById('nodes-container');
+      
+      panel.classList.toggle('visible');
+      mainContent.classList.toggle('panel-visible');
+      
+      // Si el panel está visible, desplazar el contenedor de nodos a la derecha
+      if (panel.classList.contains('visible')) {
+        this.textContent = '×'; // Cambiar el ícono del botón a una X
+      } else {
+        this.textContent = '≡'; // Cambiar el ícono del botón a barras
+      }
+      
+      // Actualizar los indicadores de navegación después de un breve retraso
+      // para permitir que la animación de desplazamiento termine
+      setTimeout(checkForOverflow, 300);
+      
+      // Forzar un reflow para que el contenedor de nodos se ajuste correctamente
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 350);
+    });
+    
+    // Evento para cambiar entre formatos
+    document.getElementById('format-selector').addEventListener('change', function() {
+      const format = this.value;
+      document.getElementById('current-format').textContent = format.toUpperCase();
+      
+      if (format === 'json') {
+        // Convertir YAML a JSON
+        try {
+          const jsonData = yamlToJson(document.getElementById('data-display').value);
+          document.getElementById('data-display').value = JSON.stringify(jsonData, null, 2);
+        } catch (e) {
+          console.error("Error al convertir a JSON:", e);
+          document.getElementById('data-display').value = "Error al convertir a JSON. Verifica el formato YAML.";
+        }
+      } else {
+        // Convertir JSON a YAML
+        try {
+          const jsonText = document.getElementById('data-display').value;
+          const jsonObj = JSON.parse(jsonText);
+          const yamlData = jsonToYaml(jsonObj);
+          document.getElementById('data-display').value = yamlData;
+        } catch (e) {
+          console.error("Error al convertir a YAML:", e);
+          document.getElementById('data-display').value = "# Error al convertir a YAML. Verifica el formato JSON.";
+        }
+      }
+    });
+    
+    // Evento para actualizar la visualización
+    document.getElementById('update-visualization').addEventListener('click', function() {
+      const format = document.getElementById('format-selector').value;
+      const dataText = document.getElementById('data-display').value;
+      
+      if (format === 'json') {
+        try {
+          const jsonObj = JSON.parse(dataText);
+          updateNodeVisualization(jsonObj);
+        } catch (e) {
+          console.error("Error al parsear JSON:", e);
+          alert("Error al parsear JSON. Verifica el formato.");
+        }
+      } else {
+        updateNodeVisualization(dataText);
+      }
+    });
+    
+    // Función para verificar si hay desbordamiento y mostrar indicadores
+    function checkForOverflow() {
+      const container = document.querySelector('.nodes-container');
+      const content = document.querySelector('.pyramid-container');
+      
+      if (!container || !content) return;
+      
+      // Eliminar indicadores existentes
+      document.querySelectorAll('.navigation-indicator').forEach(el => el.remove());
+      
+      // Verificar desbordamiento horizontal
+      if (content.scrollWidth > container.clientWidth) {
+        // Hay contenido fuera de la vista a la derecha
+        const rightIndicator = document.createElement('div');
+        rightIndicator.className = 'navigation-indicator indicator-right';
+        rightIndicator.textContent = '→';
+        container.appendChild(rightIndicator);
+        
+        // Hay contenido fuera de la vista a la izquierda
+        const leftIndicator = document.createElement('div');
+        leftIndicator.className = 'navigation-indicator indicator-left';
+        leftIndicator.textContent = '←';
+        container.appendChild(leftIndicator);
+      }
+      
+      // Verificar desbordamiento vertical
+      if (content.scrollHeight > container.clientHeight) {
+        // Hay contenido fuera de la vista abajo
+        const downIndicator = document.createElement('div');
+        downIndicator.className = 'navigation-indicator indicator-down';
+        downIndicator.textContent = '↓';
+        container.appendChild(downIndicator);
+        
+        // Hay contenido fuera de la vista arriba
+        const upIndicator = document.createElement('div');
+        upIndicator.className = 'navigation-indicator indicator-up';
+        upIndicator.textContent = '↑';
+        container.appendChild(upIndicator);
+      }
+    }
+    
+    // Función para alternar la visibilidad del panel de propiedades
+    document.getElementById('toggle-props-panel').addEventListener('click', function() {
+      const panel = document.getElementById('props-panel');
+      const mainContent = document.querySelector('.main-content');
+      
+      panel.classList.toggle('visible');
+      mainContent.classList.toggle('props-panel-visible');
+      
+      // Si el panel está visible, cambiar el ícono del botón
+      if (panel.classList.contains('visible')) {
+        this.textContent = '×'; // Cambiar el ícono del botón a una X
+      } else {
+        this.textContent = '⚙'; // Cambiar el ícono del botón a engranaje
+      }
+      
+      // Actualizar los indicadores de navegación después de un breve retraso
+      setTimeout(checkForOverflow, 300);
+      
+      // Forzar un reflow para que el contenedor de nodos se ajuste correctamente
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 350);
+    });
+    
+    // Función para cargar y mostrar la jerarquía de propiedades
+    async function loadPropertiesHierarchy() {
+      try {
+        // Usar los datos cargados desde el archivo externo
+        // En lugar de usar datos hardcodeados
+        console.log("Cargando propiedades desde archivo externo");
+        
+        // Si ya tenemos las propiedades cargadas, usarlas
+        if (window.emotionalProperties) {
+          console.log("Usando propiedades previamente cargadas:", window.emotionalProperties);
+          renderPropertiesTree(window.emotionalProperties);
+          return;
+        }
+        
+        // Si no, cargarlas ahora
+        const propsData = await loadPropertiesFile();
+        console.log("Propiedades cargadas dinámicamente:", propsData);
+        
+        // Guardar para uso futuro
+        window.emotionalProperties = propsData;
+        
+        // Renderizar el árbol con los datos cargados
+        renderPropertiesTree(propsData);
+      } catch (error) {
+        console.error('Error loading properties hierarchy:', error);
+        document.getElementById('props-tree').innerHTML = '<p>Error al cargar la jerarquía de propiedades.</p>';
+      }
+    }
+    
+    // Eliminar completamente los datos hardcodeados de propiedades
+    // No debe haber ninguna definición de propsData aquí
+    
+    // Modificar la función renderPropertiesTree para depurar mejor
+    function renderPropertiesTree(data, parentElement = null, parentPath = '') {
+      console.log("Renderizando árbol de propiedades con datos:", data);
+      
+      const container = parentElement || document.getElementById('props-tree');
+      
+      if (!parentElement) {
+        container.innerHTML = '';
+      }
+      
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === 'id' || key === 'value') return;
+        
+        const currentPath = parentPath ? `${parentPath} > ${key}` : key;
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'prop-item';
+        
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'prop-item-header';
+        headerDiv.draggable = true; // Hacer draggable el header en lugar del contenedor
+        
+        // Agregar los datos al header en lugar del contenedor
+        headerDiv.dataset.key = key;
+        headerDiv.dataset.fullPath = currentPath;
+        if (value && value.id) {
+          headerDiv.dataset.id = value.id;
+        }
+        
+        const hasChildren = typeof value === 'object' && value !== null && 
+                            Object.keys(value).some(k => k !== 'id' && k !== 'value');
+        
+        let headerContent = '';
+        if (hasChildren) {
+          headerContent += '<span class="prop-toggle">▶</span>';
+        } else {
+          headerContent += '<span class="prop-toggle" style="visibility:hidden">▶</span>';
+        }
+        
+        headerContent += `<span class="prop-label">${key}</span>`;
+        
+        if (value && value.id) {
+          headerContent += `<span class="prop-id">(ID: ${value.id})</span>`;
+        }
+        
+        headerDiv.innerHTML = headerContent;
+        itemDiv.appendChild(headerDiv);
+        
+        // Agregar eventos de arrastre al header
+        headerDiv.addEventListener('dragstart', handleDragStart);
+        headerDiv.addEventListener('dragend', handleDragEnd);
+        
+        if (hasChildren) {
+          const childrenDiv = document.createElement('div');
+          childrenDiv.className = 'prop-children';
+          itemDiv.appendChild(childrenDiv);
+          
+          // Mover el evento de clic al toggle
+          headerDiv.querySelector('.prop-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            childrenDiv.classList.toggle('visible');
+            this.textContent = childrenDiv.classList.contains('visible') ? '▼' : '▶';
+            
+            if (childrenDiv.classList.contains('visible') && childrenDiv.children.length === 0) {
+              renderPropertiesTree(value, childrenDiv, currentPath);
+            }
+          });
+        }
+        
+        container.appendChild(itemDiv);
+      });
+    }
+    
+    // Asegurarse de que loadPropertiesFile se llame primero y solo una vez
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log("DOM cargado, iniciando carga de archivos");
+      
+      try {
+        // Cargar primero el archivo de propiedades
+        console.log("Cargando archivo de propiedades...");
+        const properties = await loadPropertiesFile();
+        console.log("Propiedades cargadas exitosamente:", properties);
+        
+        // Guardar para uso global
+        window.emotionalProperties = properties;
+        
+        // Ahora cargar el YAML
+        console.log("Cargando archivo YAML...");
+        await loadYamlFile();
+        
+        // Cargar la jerarquía de propiedades con los datos ya cargados
+        console.log("Inicializando jerarquía de propiedades...");
+        await loadPropertiesHierarchy();
+        
+        console.log("Inicialización completa");
+      } catch (error) {
+        console.error("Error durante la inicialización:", error);
+      }
+    });
+    
+    // Funciones para manejar el arrastre
+    let draggedItem = null;
+    let dragIndicator = null;
+    
+    // Modificar handleDragStart para asegurar que captura el elemento correcto
+    function handleDragStart(e) {
+      e.stopPropagation(); // Evitar que el evento se propague al padre
+      draggedItem = this;
+      this.classList.add('dragging');
+      
+      console.log('Elemento arrastrado:', {
+        key: this.dataset.key,
+        fullPath: this.dataset.fullPath,
+        id: this.dataset.id
+      });
+      
+      const dragData = {
+        key: this.dataset.key,
+        fullPath: this.dataset.fullPath,
+        id: this.dataset.id,
+        type: 'property'
+      };
+      
+      e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+      e.dataTransfer.effectAllowed = 'copy';
+    }
+    
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+      if (dragIndicator) {
+        dragIndicator.remove();
+        dragIndicator = null;
+      }
+      
+      // Limpiar clases de destino en todos los elementos
+      document.querySelectorAll('.prop-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+    }
+    
+    function handleDragOver(e) {
+      e.preventDefault();
+      
+      if (draggedItem === this) return;
+      
+      // Actualizar posición del indicador
+      const rect = this.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const height = rect.height;
+      
+      if (dragIndicator) {
+        dragIndicator.style.position = 'absolute';
+        dragIndicator.style.width = `${rect.width}px`;
+        dragIndicator.style.left = `${rect.left}px`;
+        dragIndicator.style.display = 'block';
+        
+        if (y < height / 2) {
+          dragIndicator.style.top = `${rect.top}px`;
+        } else {
+          dragIndicator.style.top = `${rect.bottom}px`;
+        }
+      }
+    }
+    
+    function handleDragEnter(e) {
+      e.preventDefault();
+      if (draggedItem !== this) {
+        this.classList.add('drag-over');
+      }
+    }
+    
+    function handleDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+    
+    // Modificar handlePropertiesDrop para verificar los datos recibidos
+    function handlePropertiesDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      try {
+        const rawData = e.dataTransfer.getData('text/plain');
+        console.log('Datos recibidos en drop (raw):', rawData);
+        
+        const data = JSON.parse(rawData);
+        console.log('Datos procesados en drop:', data);
+        
+        const nodeId = document.getElementById('node-id').textContent;
+        console.log('ID del nodo destino:', nodeId);
+        
+        if (nodeId && nodeId !== '-') {
+          if (!nodeProperties[nodeId]) {
+            nodeProperties[nodeId] = [];
+          }
+          
+          const propertyExists = nodeProperties[nodeId].some(prop => prop.id === data.id);
+          console.log('¿La propiedad ya existe?:', propertyExists);
+          
+          if (!propertyExists) {
+            const newProperty = {
+              key: data.key,
+              fullPath: data.fullPath,
+              id: data.id
+            };
+            
+            console.log('Añadiendo nueva propiedad:', newProperty);
+            nodeProperties[nodeId].push(newProperty);
+            
+            addPropertyToList(data.fullPath || data.key, data.id, nodeId);
+            console.log('Estado actual de nodeProperties:', nodeProperties);
+          }
+        }
+      } catch (error) {
+        console.error('Error al procesar el drop:', error);
+      }
+    }
+    
+    // Función para actualizar el modelo de datos después del arrastre
+    function updateDataModel(draggedElement, targetElement, insertBefore) {
+      // Aquí implementarías la lógica para actualizar el modelo de datos
+      // según tus necesidades específicas
+      console.log('Actualizando modelo de datos:', {
+        dragged: draggedElement.dataset.key,
+        target: targetElement.dataset.key,
+        insertBefore: insertBefore
+      });
+    }
+    
+    // Modificar la sección de datos YAML
+    // En lugar de tener los datos hardcodeados, los cargaremos desde un archivo externo
+    // Usar la variable yamlData existente en lugar de declararla nuevamente
+    
+    // Función para cargar el archivo YAML
+    async function loadYamlFile() {
+      try {
+        const response = await fetch('/SEMINARIO/V5/templates/pasiones.yml');
+        if (!response.ok) {
+          throw new Error(`Error al cargar el archivo: ${response.status}`);
+        }
+        const loadedYamlData = await response.text();
+        console.log("Datos YAML cargados correctamente");
+        
+        // Una vez cargados los datos, actualizar la visualización
+        document.getElementById('data-display').value = loadedYamlData;
+        updateNodeVisualization(loadedYamlData);
+      } catch (error) {
+        console.error("Error al cargar el archivo YAML:", error);
+        // Usar datos de respaldo en caso de error
+        const fallbackData = "Las pasiones del alma:\n  - Error al cargar datos";
+        document.getElementById('data-display').value = fallbackData;
+        updateNodeVisualization(fallbackData);
+      }
+    }
+    
+    // Función para cargar el archivo JSON de propiedades
+    async function loadPropertiesFile() {
+      try {
+        const response = await fetch('/SEMINARIO/V5/templates/propiedades.json');
+        if (!response.ok) {
+          throw new Error(`Error al cargar el archivo de propiedades: ${response.status}`);
+        }
+        const propertiesData = await response.json();
+        console.log("Datos JSON de propiedades cargados correctamente");
+        
+        // Actualizar la visualización o almacenar los datos para su uso posterior
+        // Dependiendo de cómo se utilicen las propiedades en tu aplicación
+        return propertiesData;
+      } catch (error) {
+        console.error("Error al cargar el archivo JSON de propiedades:", error);
+        // Proporcionar datos de respaldo en caso de error
+        return {
+          "id": "root-props-fallback",
+          "PropiedadesEmocionales": {
+            "id": "emotional-props-fallback",
+            "Mensaje": "Error al cargar las propiedades"
+          }
+        };
+      }
+    }
+    
+    // Inicializar la carga de datos al cargar la página
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Verificar que las bibliotecas necesarias estén cargadas
+      if (typeof jsyaml === 'undefined') {
+        console.error("Error: jsyaml no está cargado");
+        document.getElementById('node-visualization').innerHTML = 
+          '<p>Error: No se pudo cargar la biblioteca js-yaml. Verifica las dependencias.</p>';
+        return;
+      }
+      
+      // Cargar datos desde los archivos externos
+      loadYamlFile(); // Cargar pasiones.yml
+      
+      // Cargar propiedades.json y almacenar el resultado
+      const properties = await loadPropertiesFile();
+      
+      // Hacer disponible las propiedades para su uso en la aplicación
+      window.emotionalProperties = properties;
+      
+      // Cargar la jerarquía de propiedades con los datos cargados
+      loadPropertiesHierarchy();
+      
+      // Si hay alguna función que necesite usar las propiedades, llámala aquí
+      // Por ejemplo: initializePropertiesPanel(properties);
+      
+      // ... existing code ...
+    });
+    
+    // Inicializar la visualización al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      // Verificar que jsyaml esté cargado
+      if (typeof jsyaml === 'undefined') {
+        console.error("Error: jsyaml no está cargado");
+        document.getElementById('node-visualization').innerHTML = 
+          '<p>Error: No se pudo cargar la biblioteca js-yaml. Verifica las dependencias.</p>';
+        return;
+      }
+      
+      // Cargar datos desde el archivo YAML
+      loadYamlFile();
+      
+      // Generar visualización inicial
+      updateNodeVisualization(yamlData);
+      
+      // Añadir evento de redimensionamiento para actualizar indicadores
+      window.addEventListener('resize', checkForOverflow);
+      
+      // Añadir eventos de desplazamiento para actualizar indicadores
+      document.querySelector('.nodes-container').addEventListener('scroll', function() {
+        // Actualizar visibilidad de indicadores según la posición de desplazamiento
+        const indicators = document.querySelectorAll('.navigation-indicator');
+        indicators.forEach(indicator => {
+          indicator.style.opacity = '0.7';
+          setTimeout(() => {
+            indicator.style.opacity = '0';
+          }, 1500);
+        });
+      });
+      
+      // Inicializar el estado visual de los nodos
+      setTimeout(() => {
+        updateNodesVisualState();
+        
+        // Seleccionar el nodo raíz por defecto
+        const rootNode = document.querySelector('.pyramid-node[data-id="root"]');
+        if (rootNode) {
+          rootNode.click();
+        }
+      }, config.autoScrollDelay);
+      
+      // Añadir estilos CSS para el desplazamiento del contenedor de nodos
+      const style = document.createElement('style');
+      style.textContent = `
+        /* Estilos existentes para nodos fijados... */
+        
+        /* Ajustar el diseño para evitar superposiciones */
+        .main-content {
+          display: flex;
+          flex-direction: row;
+          align-items: stretch;
+          overflow: hidden;
+        }
+        
+        .YAML-JSON {
+          width: 0;
+          overflow: hidden;
+          transition: width 0.3s ease;
+          flex-shrink: 0;
+        }
+        
+        .YAML-JSON.visible {
+          width: 40%; /* Ancho del panel cuando está visible */
+          min-width: 300px;
+          max-width: 500px;
+        }
+        
+        .nodes-container {
+          flex-grow: 1;
+          overflow: auto;
+          transition: margin-left 0.3s ease, width 0.3s ease;
+          width: 100%;
+        }
+        
+        .main-content.panel-visible .nodes-container {
+          margin-left: 40%; /* Debe coincidir con el ancho del panel */
+          width: 60%; /* El ancho restante */
+        }
+        
+        @media (max-width: 1200px) {
+          .YAML-JSON.visible {
+            width: 350px;
+            min-width: 300px;
+          }
+          
+          .main-content.panel-visible .nodes-container {
+            margin-left: 350px;
+            width: calc(100% - 350px);
+          }
+        }
+        
+        /* Asegurar que el botón de alternar siempre esté visible */
+        .toggle-panel {
+          position: fixed;
+          left: 10px;
+          top: 10px;
+          z-index: 1001;
+          background-color: #333;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 18px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .toggle-panel:hover {
+          background-color: #555;
+        }
+        
+        /* Asegurar que el contenido de la visualización se ajuste correctamente */
+        .pyramid-container {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.3s ease;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Asegurarse de que el contenedor de nodos se ajuste cuando cambia el tamaño de la ventana
+      window.addEventListener('resize', function() {
+        checkForOverflow();
+        
+        // Ajustar el tamaño del contenedor de nodos si el panel está visible
+        const panel = document.getElementById('yaml-json-panel');
+        const nodesContainer = document.getElementById('nodes-container');
+        
+        if (panel && panel.classList.contains('visible') && nodesContainer) {
+          // Forzar un reflow para que el contenedor se ajuste correctamente
+          nodesContainer.style.display = 'none';
+          setTimeout(() => {
+            nodesContainer.style.display = '';
+          }, 10);
+        }
+      });
+      
+      // Cargar la jerarquía de propiedades
+      loadPropertiesHierarchy();
+      
+      // Añadir estilos CSS adicionales para manejar ambos paneles
+      const additionalStyle = document.createElement('style');
+      additionalStyle.textContent = `
+        /* Ajustes para cuando ambos paneles están visibles */
+        .main-content.panel-visible.props-panel-visible .nodes-container {
+          margin-left: 40%;
+          margin-right: 40%;
+          width: 20%;
+        }
+        
+        @media (max-width: 1200px) {
+          .main-content.panel-visible.props-panel-visible .nodes-container {
+            margin-left: 350px;
+            margin-right: 350px;
+            width: calc(100% - 700px);
+          }
+        }
+      `;
+      document.head.appendChild(additionalStyle);
+      
+      // Configurar el botón de edición de definiciones
+      document.getElementById('toggle-metadata').addEventListener('click', function() {
+        const metadataEditor = document.getElementById('metadata-editor');
+        const infoPanel = document.getElementById('info-panel');
+        
+        // Limpiar los campos del formulario
+        document.getElementById('metadata-key').value = '';
+        document.getElementById('metadata-value').value = '';
+        document.getElementById('metadata-key').removeAttribute('data-original-key');
+        
+        metadataEditor.classList.add('visible');
+        infoPanel.classList.add('expanded');
+        
+        // Enfocar el campo de título
+        document.getElementById('metadata-key').focus();
+      });
+      
+      // Configurar el botón de guardar definiciones
+      document.getElementById('save-metadata').addEventListener('click', function() {
+        const nodeId = document.getElementById('node-id').textContent;
+        if (nodeId && nodeId !== '-') {
+          const key = document.getElementById('metadata-key').value.trim();
+          const value = document.getElementById('metadata-value').value.trim();
+          const originalKey = document.getElementById('metadata-key').getAttribute('data-original-key');
+          
+          if (key && value) {
+            // Inicializar el objeto de definiciones para este nodo si no existe
+            if (!nodeMetadata[nodeId]) {
+              nodeMetadata[nodeId] = {};
+            }
+            
+            // Si estamos editando una definición existente, eliminar la clave anterior
+            if (originalKey && originalKey !== key) {
+              delete nodeMetadata[nodeId][originalKey];
+            }
+            
+            // Guardar el nuevo valor
+            nodeMetadata[nodeId][key] = value;
+            
+            // Actualizar la visualización
+            renderMetadataCards(nodeId);
+            
+            // Ocultar el editor
+            document.getElementById('metadata-editor').classList.remove('visible');
+          }
+        }
+      });
+      
+      // Configurar el botón de cancelar
+      document.getElementById('cancel-metadata').addEventListener('click', function() {
+        document.getElementById('metadata-editor').classList.remove('visible');
+      });
+    });
+    
+    // En la sección donde se configura el editor de definiciones
+    function setupMetadataEditor() {
+      const metadataKeyInput = document.getElementById('metadata-key');
+      const metadataValueInput = document.getElementById('metadata-value');
+      const saveButton = document.getElementById('save-metadata');
+      const cancelButton = document.getElementById('cancel-metadata');
+      const metadataEditor = document.getElementById('metadata-editor');
+      
+      // Añadir el event listener para atrapar el foco a nivel del documento
+      document.addEventListener('keydown', trapFocusInMetadataEditor, true);
+      
+      // Cuando se abre el editor, enfocar el primer campo
+      document.getElementById('toggle-metadata').addEventListener('click', function() {
+        metadataEditor.classList.add('visible');
+        setTimeout(() => {
+          metadataKeyInput.focus();
+        }, 0);
+      });
+      
+      // Resto del código de configuración del editor...
+      metadataKeyInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          metadataValueInput.focus();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelMetadataEdit();
+        }
+      });
+      
+      metadataValueInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveButton.click();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelMetadataEdit();
+        }
+      });
+      
+      saveButton.addEventListener('click', function() {
+        saveMetadata();
+      });
+      
+      cancelButton.addEventListener('click', function() {
+        cancelMetadataEdit();
+      });
+    }
+    
+    // Función para editar una tarjeta de definición
+    function editMetadataCard(card, key, value) {
+      const metadataEditor = document.getElementById('metadata-editor');
+      const metadataKeyInput = document.getElementById('metadata-key');
+      const metadataValueInput = document.getElementById('metadata-value');
+      
+      metadataKeyInput.value = key;
+      metadataValueInput.value = value;
+      metadataEditor.classList.add('visible');
+      document.getElementById('info-panel').classList.add('expanded');
+      
+      metadataKeyInput.setAttribute('data-original-key', key);
+      
+      // Asegurar que el foco se establezca en el campo de título
+      setTimeout(() => {
+        metadataKeyInput.focus();
+      }, 100);
+    }
+    
+    // Función para cancelar la edición
+    function cancelMetadataEdit() {
+      const metadataEditor = document.getElementById('metadata-editor');
+      const metadataKeyInput = document.getElementById('metadata-key');
+      const metadataValueInput = document.getElementById('metadata-value');
+      
+      metadataEditor.classList.remove('visible');
+      metadataKeyInput.value = '';
+      metadataValueInput.value = '';
+      metadataKeyInput.removeAttribute('data-original-key');
+      
+      // Volver a enfocar el nodo activo
+      const focusedNode = document.querySelector('.pyramid-node.focused');
+      if (focusedNode) {
+        focusedNode.focus();
+      }
+    }
+    
+    // Función para atrapar el foco dentro del editor de definiciones
+    function trapFocusInMetadataEditor(e) {
+      const metadataEditor = document.getElementById('metadata-editor');
+      
+      // Solo proceder si el editor está visible
+      if (!metadataEditor.classList.contains('visible')) {
+        return;
+      }
+      
+      // Si la tecla presionada es Tab
+      if (e.key === 'Tab') {
+        // Obtener todos los elementos focusables dentro del editor
+        const focusableElements = Array.from(metadataEditor.querySelectorAll(
+          'input, button, [href], select, textarea, [tabindex]:not([tabindex="-1"])'
+        )).filter(el => !el.disabled && el.offsetParent !== null);
+        
+        const firstFocusableElement = focusableElements[0];
+        const lastFocusableElement = focusableElements[focusableElements.length - 1];
+        
+        // Si no hay elementos focusables, no hacer nada
+        if (!firstFocusableElement) return;
+        
+        // Verificar si el elemento activo está dentro del editor
+        const isInEditor = metadataEditor.contains(document.activeElement);
+        
+        if (!isInEditor) {
+          // Si el foco está fuera del editor, forzar el foco al primer elemento
+          e.preventDefault();
+          firstFocusableElement.focus();
+          return;
+        }
+        
+        // Si se presiona Shift + Tab
+        if (e.shiftKey) {
+          // Si el foco está en el primer elemento, ir al último
+          if (document.activeElement === firstFocusableElement) {
+            e.preventDefault();
+            lastFocusableElement.focus();
+          }
+        } 
+        // Si solo se presiona Tab
+        else {
+          // Si el foco está en el último elemento, ir al primero
+          if (document.activeElement === lastFocusableElement) {
+            e.preventDefault();
+            firstFocusableElement.focus();
+          }
+        }
+      }
+    }
+    
+    // En el evento DOMContentLoaded, asegurarse de configurar el editor
+    document.addEventListener('DOMContentLoaded', function() {
+      // ... código existente ...
+      
+      // Configurar el editor de definiciones
+      setupMetadataEditor();
+      
+      // ... código existente ...
+    });
+    
+    // Configurar el manejo de teclas en el área de texto
+    document.getElementById('data-display').addEventListener('keydown', function(e) {
+      // Si estamos en el editor YAML, detener la propagación de teclas especiales
+      if (e.key === 'Tab' || e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.stopPropagation(); // Detener la propagación del evento
+      }
+
+      // Manejar la tecla Tab
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        
+        // Insertar dos espacios en la posición del cursor
+        this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+        
+        // Mover el cursor después de los espacios insertados
+        this.selectionStart = this.selectionEnd = start + 2;
+      }
+      
+      // Manejar la tecla Enter
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        const value = this.value;
+        
+        // Obtener la línea actual
+        const currentLine = value.substring(0, start).split('\n').pop();
+        
+        // Contar los espacios iniciales de la línea actual
+        const indentation = currentLine.match(/^\s*/)[0];
+        
+        // Insertar nueva línea con la misma indentación
+        this.value = value.substring(0, start) + '\n' + indentation + value.substring(end);
+        
+        // Mover el cursor después de la indentación
+        const newPosition = start + 1 + indentation.length;
+        this.selectionStart = this.selectionEnd = newPosition;
+      }
+
+      // Para la barra espaciadora, no necesitamos hacer nada especial
+      // Solo detenemos su propagación y dejamos que funcione normalmente
+      
+    }, { capture: true }); // Capturar el evento en la fase de captura
+
+    // Función para guardar definiciones
+    function saveMetadata() {
+      const key = document.getElementById('metadata-key').value.trim();
+      const value = document.getElementById('metadata-value').value.trim();
+      const originalKey = document.getElementById('metadata-key').getAttribute('data-original-key');
+      
+      // Obtener el nodo actualmente seleccionado
+      const focusedNode = document.querySelector('.pyramid-node.focused');
+      if (!focusedNode) return;
+      
+      const nodeId = focusedNode.getAttribute('data-id');
+      
+      // Inicializar el objeto de definiciones para este nodo si no existe
+      if (!nodeMetadata[nodeId]) {
+        nodeMetadata[nodeId] = {};
+      }
+      
+      // Si hay una clave original y es diferente a la nueva, eliminar la antigua
+      if (originalKey && originalKey !== key) {
+        delete nodeMetadata[nodeId][originalKey];
+      }
+      
+      // Guardar la nueva definición
+      if (key && value) {
+        nodeMetadata[nodeId][key] = value;
+      }
+      
+      // Limpiar el formulario
+      document.getElementById('metadata-key').value = '';
+      document.getElementById('metadata-value').value = '';
+      document.getElementById('metadata-key').removeAttribute('data-original-key');
+      
+      // Ocultar el editor
+      document.getElementById('metadata-editor').classList.remove('visible');
+      
+      // Actualizar la visualización de las tarjetas de definiciones
+      renderMetadataCards(nodeId);
+      
+      // Devolver el foco al nodo
+      if (focusedNode) {
+        focusedNode.focus();
+      }
+    }
+
+    // Añadir el evento al botón de guardar
+    document.getElementById('save-metadata').addEventListener('click', saveMetadata);
+
+    // Añadir eventos de teclado para el formulario de definiciones
+    document.getElementById('metadata-key').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('metadata-value').focus();
+      }
+    });
+
+    document.getElementById('metadata-value').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveMetadata();
+      }
+    });
+
+    // Funciones para manejar el drag and drop en la sección de propiedades
+    function handlePropertiesDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy'; // Indicar que se está copiando el elemento
+    }
+
+    function handlePropertiesDragEnter(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    }
+
+    function handlePropertiesDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+
+    // Modificar addPropertyToList para verificar los datos
+    function addPropertyToList(fullPath, id, nodeId) {
+      console.log('Añadiendo a la lista visual:', { fullPath, id, nodeId });
+      
+      const propertiesList = document.getElementById('properties-list');
+      if (!propertiesList) {
+        console.error('No se encontró el elemento properties-list');
+        return;
+      }
+      
+      const propertyItem = document.createElement('div');
+      propertyItem.className = 'property-item';
+      propertyItem.innerHTML = `
+        <span class="property-key">${fullPath}</span>
+        <span class="remove-property" title="Eliminar propiedad">×</span>
+      `;
+      
+      propertyItem.querySelector('.remove-property').addEventListener('click', () => {
+        console.log('Eliminando propiedad:', { id, nodeId });
+        nodeProperties[nodeId] = nodeProperties[nodeId].filter(prop => prop.id !== id);
+        propertyItem.remove();
+      });
+      
+      propertiesList.appendChild(propertyItem);
+    }
+
+    // Función para manejar el drop dentro de la jerarquía de propiedades
+    function handleDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      if (draggedItem === this) return;
+      
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        const rect = this.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        
+        // Solo permitir reordenamiento si es un elemento de propiedad
+        if (data.type === 'property') {
+          // Determinar si insertar antes o después del elemento destino
+          if (y < rect.height / 2) {
+            this.parentNode.insertBefore(draggedItem, this);
+          } else {
+            this.parentNode.insertBefore(draggedItem, this.nextSibling);
+          }
+          
+          // Actualizar el modelo de datos
+          updateDataModel(draggedItem, this, y < rect.height / 2);
+        }
+      } catch (error) {
+        console.error('Error al procesar el drop:', error);
+      }
+    }
+
+    // Añadir un evento de redimensionamiento para ajustar el layout cuando cambia el tamaño de la ventana
+    window.addEventListener('resize', function() {
+      // Ajustar el ancho del contenedor de nodos
+      const nodesContainer = document.getElementById('nodes-container');
+      if (nodesContainer) {
+        nodesContainer.style.width = '100%';
+      }
+      
+      // Ajustar la cantidad de nodos visibles
+      adjustVisibleNodesCount();
+    });
+  </script>
+
+  <script>
+    // Este script se ejecutará cuando la página se haya cargado completamente
+    document.addEventListener('DOMContentLoaded', function() {
+      const asciiArt = `
+                                                                  ###
+                                                                  ###    
+                                                                   
+#############               #####       ##########  ########  ########  ########                 ######  ######    ########       #####  #  
+    #####                 #########        #####      ##          ###       #####               ####       ####       ####      ##########  
+    #####               ###     #####        ####   ##            ###       ######             #####       ####       ####     ###      ##  
+    #####              #####     ###          #####               ###       #######           ######       ####       ####     ########    
+    #####              ###########             #####              ###       ## #####         ## ####       ####       ####       ##########  
+    #####              ##### ###              ########            ###       ##  #####       ##  ####       ####       ####    ##   #########   
+    #####              #####       ##        ##    #####          ###       ##   #####     ##   ####       ####      #####    ###        ##   
+    #####               #####     ###      ###       #####        ###       ##    #####   ##    ####        ###############   #####     ###    
+    #####                 #########    ########   ########## ##########     ##     ##### ##     ####         #######  ######  ## #########  
+    #####            ##      ###                                            ##      ######      #### 
+    #####            ##                                                     ##       ####       ####  
+    #####           ###                                                     ##        ##        #### 
+    #####          ####                                                     ##                  #### 
+######################                                                  ##########           ###########
+ 
+`;
+
+      const container = document.getElementById('ascii-container');
+      const customCursor = document.getElementById('custom-cursor');
+      
+      // Actualizar el contenido del cursor personalizado con espacios adecuados
+      customCursor.innerHTML = `
+              @@@@@@@      
+                 @         
+                 @         
+                 @         
+               @@@@@       
+                 @         
+                 @         
+                 @                 
+              @@@@@@@`;
+    
+      // Procesar cada carácter del logo ASCII
+      let htmlContent = '';
+      for (let i = 0; i < asciiArt.length; i++) {
+        const char = asciiArt[i];
+        if (char === '\n') {
+          htmlContent += '<br>';
+        } else {
+          htmlContent += `<span class="ascii-char" data-original="${char}">${char}</span>`;
+        }
+      }
+      
+      container.innerHTML = htmlContent;
+      
+      // Obtener todos los caracteres
+      const chars = document.querySelectorAll('.ascii-char');
+      const charPositions = []; // Pre-calcular las posiciones iniciales
+      const containerRect = container.getBoundingClientRect();
+      
+      // Almacenar las posiciones iniciales para mejorar el rendimiento
+      chars.forEach(char => {
+        const rect = char.getBoundingClientRect();
+        charPositions.push({
+          x: rect.left + rect.width/2 - containerRect.left,
+          y: rect.top + rect.height/2 - containerRect.top,
+          elem: char
+        });
+      });
+      
+      // Configuración
+      // const effectRadius = 40;   // Radio de influencia del cursor - ELIMINADO
+      let ticking = false;       // Para limitar las actualizaciones de renderizado
+      let lastMoveEvent = null;  // Almacenar el último evento de movimiento
+      
+      // Configuración del cursor parpadeante
+      let cursorVisible = true;
+      setInterval(() => {
+        if (lastMoveEvent) { // Solo parpadea cuando el mouse está dentro
+          cursorVisible = !cursorVisible;
+          customCursor.style.opacity = cursorVisible ? 1 : 0.6;
+        }
+      }, 700); // Intervalo de parpadeo (700ms)
+      
+      // Función para actualizar el efecto visual (sin movimiento de imán)
+      function updateVisualEffect() {
+        if (!lastMoveEvent) return;
+        
+        // Calcular la posición relativa del cursor dentro del contenedor
+        const containerRect = container.getBoundingClientRect();
+        const mouseX = lastMoveEvent.clientX - containerRect.left;
+        const mouseY = lastMoveEvent.clientY - containerRect.top;
+        
+        // Mostrar y posicionar el cursor personalizado
+        customCursor.style.display = 'block';
+        customCursor.style.left = `${mouseX}px`;
+        customCursor.style.top = `${mouseY}px`;
+        
+        // Actualizar solo el color y el contenido de los caracteres cercanos
+        charPositions.forEach(charPos => {
+          const char = charPos.elem;
+          
+          // Calcular distancia entre el carácter y el cursor
+          const distX = mouseX - charPos.x;
+          const distY = mouseY - charPos.y;
+          
+          // Quitar la lógica basada en el radio de efecto
+          // Cambiar el carácter a @ o % aleatoriamente (sin condición de distancia)
+          char.textContent = Math.random() > 0.5 ? '@' : '%';
+          
+          // Aplicar un color fijo sin depender de la distancia
+          char.style.color = '#65b8c4';
+        });
+        
+        ticking = false;
+      }
+      
+      // Manejar el movimiento del mouse de manera eficiente
+      container.addEventListener('mousemove', function(e) {
+        lastMoveEvent = e;
+        
+        if (!ticking) {
+          window.requestAnimationFrame(updateVisualEffect);
+          ticking = true;
+        }
+      });
+      
+      // Restaurar cuando el cursor sale del contenedor
+      container.addEventListener('mouseleave', function() {
+        lastMoveEvent = null;
+        customCursor.style.display = 'none';
+        
+        chars.forEach(char => {
+          // Restaurar el carácter original
+          const originalChar = char.getAttribute('data-original');
+          char.textContent = originalChar;
+          char.style.color = '#65b8c4';
+        });
+      });
+
+      // Variables para el contador de clics y el estado del color
+      let clickCount = 0;
+      let isComplementaryColor = false;
+      const originalColor = '#65b8c4';
+      const complementaryColor = '#c4715b'; // Color complementario del azul original
+
+      // Función para cambiar el color de todo el ASCII art
+      function toggleComplementaryColor() {
+        const chars = document.querySelectorAll('.ascii-char');
+        chars.forEach(char => {
+          char.style.color = isComplementaryColor ? originalColor : complementaryColor;
+        });
+        isComplementaryColor = !isComplementaryColor;
+      }
+
+      // Agregar el evento de clic al contenedor
+      container.addEventListener('click', function() {
+        clickCount++;
+        
+        // Si alcanzamos 4 clics
+        if (clickCount === 4) {
+          toggleComplementaryColor();
+          clickCount = 0; // Reiniciar el contador
+        }
+
+        // Agregar un pequeño efecto visual para feedback
+        container.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          container.style.transform = 'scale(1)';
+        }, 100);
+      });
+
+      // Modificar la función updateVisualEffect para mantener el color complementario
+      function updateVisualEffect() {
+        if (!lastMoveEvent) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        const mouseX = lastMoveEvent.clientX - containerRect.left;
+        const mouseY = lastMoveEvent.clientY - containerRect.top;
+        
+        customCursor.style.display = 'block';
+        customCursor.style.left = `${mouseX}px`;
+        customCursor.style.top = `${mouseY}px`;
+        
+        charPositions.forEach(charPos => {
+          const char = charPos.elem;
+          char.textContent = Math.random() > 0.5 ? '@' : '%';
+          
+          // Usar el color actual según el estado
+          char.style.color = isComplementaryColor ? complementaryColor : originalColor;
+        });
+        
+        ticking = false;
+      }
+
+      // Modificar el evento mouseleave para respetar el color actual
+      container.addEventListener('mouseleave', function() {
+        lastMoveEvent = null;
+        customCursor.style.display = 'none';
+        
+        chars.forEach(char => {
+          const originalChar = char.getAttribute('data-original');
+          char.textContent = originalChar;
+          // Mantener el color según el estado actual
+          char.style.color = isComplementaryColor ? complementaryColor : originalColor;
+        });
+      });
+    });
+  </script>
+
+  <style>
+    /* Estilos adicionales para el logo ASCII */
+    .ascii-logo pre {
+      margin: 0;
+      font-family: monospace;
+      font-size: 5px;  /* Cambiado de 10px a 8px */
+      color: #008a9b;
+      line-height: 0.8;  /* Ajustado para mejor espaciado vertical */
+      white-space: pre;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+
+    .ascii-logo pre:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+
+    @keyframes rainbow { 
+      0% { background-position: 0% 50%; } 
+      100% { background-position: 100% 50%; }
+    }
+  </style>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Cambiar logoElement por container
+    const container = document.getElementById('ascii-container');
+    
+    if (container) { // Verificar que el elemento existe
+        container.addEventListener('mouseenter', function() {
+            console.log('Mouse entered the logo');
+        });
+    } else {
+        console.error('ASCII container not found');
+    }
+  });
+  </script>
+</body>
+</html>

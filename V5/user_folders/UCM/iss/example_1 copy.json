@@ -4,36 +4,42 @@
       "Sistemas de Control": {
         "Movimiento": {
           "value": null,
-          "id": "93aa7be9-c9c3-40a6-8b82-0193d032e342"
+          "id": "3461f442-1a20-42ec-85c2-30c7b2d59b7c"
         },
         "Interacción": {
           "value": null,
-          "id": "ddd92eab-557a-406c-b99d-a3501dea9587"
+          "id": "aacb9c65-80f8-4c67-91a8-8e97165d0692"
         },
-        "id": "356f4dbc-226c-4020-8e71-d9b683b12c80"
+        "id": "f65940e5-c44c-487d-b7a0-da9be25bd974"
       },
       "Objetivos": {
         "Principales": {
           "value": null,
-          "id": "79ac2575-ce76-4d20-b821-da0024c56954"
+          "id": "04587fb0-db33-485d-be36-a2b2bcb3f3b6"
         },
         "Secundarios": {
           "value": null,
-          "id": "cf36133c-b72c-4dfd-8f9b-a44f292fff5d"
+          "id": "971d9707-62e9-40b1-932d-e53421870a22"
         },
-        "id": "1ea0ce00-3746-4523-a851-94a3d2ddc2f2"
+        "id": "f625fc7d-b00b-4f68-affe-b222167c60f8"
       },
-      "id": "0c6e50e5-1abd-4bc7-9965-927ffbde9a98"
+      "id": "074b26af-a092-4ed2-a920-a7d0e3baf81b"
     },
-    "id": "c03b6a4c-c0c2-4a0f-a2be-37a07d225ce8"
+    "id": "5763a427-f22e-45ed-9036-f96e1344ba3e"
   },
   "relationships": [
     {
       "type": "Inversamente Funcional",
       "from": "Sistemas de Control",
       "to": "Objetivos",
-      "id": "6e1cf8a3-bea7-4b00-b7e7-0112352dae6e"
+      "id": "27f4c742-ae98-4f69-916e-0bf11e297b1c"
+    },
+    {
+      "type": "Transitiva",
+      "from": "Taxonomía de Videojuegos",
+      "to": "Mecánicas de Juego",
+      "id": "f95543ba-f52e-4473-98fe-7eb5df66dfb8"
     }
   ],
-  "id": "5843842f-9304-46d1-ab52-e3bf64a6b579"
+  "id": "4a222a12-7c11-42cb-a18f-802479fdd75e"
 }
