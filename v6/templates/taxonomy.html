@@ -3673,5 +3673,73 @@
 
   // ... existing code ...
   </script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Mover el contenedor de la lista después del contenedor ASCII
+    const asciiContainer = document.getElementById('ascii-container');
+    const droppedNodesList = document.createElement('div');
+    droppedNodesList.className = 'dropped-nodes-list';
+    asciiContainer.after(droppedNodesList);
+
+    // Configurar eventos de drag and drop para el logo
+    asciiContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      asciiContainer.style.backgroundColor = 'rgba(0, 138, 155, 0.2)';
+    });
+
+    asciiContainer.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      asciiContainer.style.backgroundColor = '';
+    });
+
+    asciiContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const draggedNode = document.querySelector(`[data-id="${draggedId}"]`);
+      
+      if (draggedNode) {
+        // Evitar duplicados
+        const existingNode = Array.from(droppedNodesList.children).find(
+          item => item.querySelector('.dropped-node-text').textContent === draggedNode.textContent.trim()
+        );
+        
+        if (!existingNode) {
+          // Mostrar la lista si está oculta
+          droppedNodesList.classList.add('visible');
+          
+          // Crear el elemento de la lista
+          const nodeItem = document.createElement('div');
+          nodeItem.className = 'dropped-node-item';
+          nodeItem.innerHTML = `
+            <div class="dropped-node-text">${draggedNode.textContent.trim()}</div>
+            <div class="remove-node">×</div>
+          `;
+          
+          // Añadir evento para remover el nodo de la lista
+          nodeItem.querySelector('.remove-node').addEventListener('click', () => {
+            nodeItem.style.opacity = '0';
+            nodeItem.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+              nodeItem.remove();
+              // Ocultar la lista si está vacía
+              if (droppedNodesList.children.length === 0) {
+                droppedNodesList.classList.remove('visible');
+              }
+            }, 200);
+          });
+          
+          droppedNodesList.appendChild(nodeItem);
+        }
+      }
+      
+      asciiContainer.style.backgroundColor = '';
+    });
+  });
+  </script>
 </body>
 </html>
