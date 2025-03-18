@@ -268,7 +268,7 @@
       max-width: 150px;
       border-radius: 8px;
       text-align: center;
-      cursor: pointer;
+      cursor: grab; /* Cambiar el cursor para indicar que se puede arrastrar */
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px var(--shadow);
       word-wrap: break-word;
@@ -278,6 +278,19 @@
       outline: none;
       background: var(--surface);
       border: 1px solid var(--border);
+    }
+    
+    .pyramid-node.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+      transform: scale(1.05);
+      z-index: 1000;
+    }
+    
+    /* Estilo para indicar dónde se puede soltar */
+    .pyramid-node.drop-target {
+      border: 2px dashed var(--primary);
+      background-color: rgba(0, 138, 155, 0.1);
     }
     
     /* Nodos minimizados (subnodos cuando su padre no está activo) */
@@ -1318,7 +1331,6 @@
 
     // Variables globales
     let currentFocusedNode = null;
-    // let pinnedNode = null; // Eliminar esta variable
     
     // Objeto para almacenar definiciones de nodos
     const nodeMetadata = {};
@@ -1421,7 +1433,7 @@
                 // El nodo principal
                 html += `<div class="pyramid-node ${nodeType} ${collapseClass}" tabindex="0" 
                              data-row="${levelIndex}" data-col="${nodeIndex}" 
-                             ${parentAttr} data-id="${node.id}">
+                             ${parentAttr} data-id="${node.id}" draggable="true">
                           ${node.text}
                         </div>`;
                 
@@ -2147,6 +2159,61 @@
               }
             }
           }
+        });
+
+        // Configurar eventos de arrastre
+        node.setAttribute('draggable', 'true');
+        
+        node.addEventListener('dragstart', (e) => {
+          e.stopPropagation();
+          node.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', node.getAttribute('data-id'));
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        node.addEventListener('dragend', () => {
+          node.classList.remove('dragging');
+          // Remover la clase drop-target de todos los nodos
+          document.querySelectorAll('.drop-target').forEach(n => {
+            n.classList.remove('drop-target');
+          });
+        });
+
+        node.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!node.classList.contains('dragging')) {
+            node.classList.add('drop-target');
+          }
+        });
+
+        node.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          node.classList.remove('drop-target');
+        });
+
+        node.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const draggedId = e.dataTransfer.getData('text/plain');
+          const targetId = node.getAttribute('data-id');
+          
+          if (draggedId !== targetId) {
+            const draggedNode = document.querySelector(`[data-id="${draggedId}"]`);
+            
+            // Verificar que no se esté intentando mover un nodo a uno de sus descendientes
+            if (!isDescendant(draggedNode, node)) {
+              // Actualizar el padre del nodo arrastrado
+              draggedNode.setAttribute('data-parent', targetId);
+              
+              // Actualizar la visualización
+              updateNodeVisualization(getCurrentData());
+            }
+          }
+          
+          node.classList.remove('drop-target');
         });
       });
     }
@@ -3357,7 +3424,7 @@
     #####              #####     ###          #####               ###       #######           ######       ####       ####     ########    
     #####              ###########             #####              ###       ## #####         ## ####       ####       ####       ##########  
     #####              ##### ###              ########            ###       ##  #####       ##  ####       ####       ####    ##   #########   
-    #####              #####       ##        ##    #####          ###       ##   #####     ##   ####       ####      #####    ###        ##   
+    #####              #####       ##        ##    #####          ###       ##   #####     ##   ####       ####       ####    ###        ##   
     #####               #####     ###      ###       #####        ###       ##    #####   ##    ####        ###############   #####     ###    
     #####                 #########    ########   ########## ##########     ##     ##### ##     ####         #######  ######  ## #########  
     #####            ##      ###                                            ##      ######      #### 
