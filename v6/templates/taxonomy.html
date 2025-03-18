@@ -39,14 +39,18 @@
     
     /* Estilos para el logo ASCII con scroll */
     .ascii-logo {
-      display: flex;
-      flex-direction: column; /* Organizar contenido verticalmente */
+      position: fixed; /* Cambiar de relative a fixed */
+      top: 20px;
+      left: 20px;
+      z-index: 1000; /* Añadir z-index */
+      background-color: var(--surface); /* Añadir fondo */
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 10px;
       max-height: 100px;
       overflow-y: auto;
       overflow-x: hidden;
-      position: relative;
-      padding: 5px;
-      margin-right: 20px; /* Añadir margen derecho */
+      transition: left 0.3s ease; /* Añadir transición suave */
     }
     
     #ascii-container {
@@ -83,10 +87,11 @@
     /* Ajustar el layout de la barra superior */
     .top-bar {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start; /* Cambiar de center a flex-start */
-      padding: 20px 20px; /* Aumentar el padding */
-      min-height: 120px; /* Asegurar un espacio mínimo */
+      justify-content: flex-end; /* Cambiar de space-between a flex-end */
+      align-items: flex-start;
+      padding: 20px 20px;
+      min-height: 120px;
+      margin-left: 200px; /* Añadir margen para el logo */
     }
     
     .top-bar h1 {
@@ -129,11 +134,12 @@
       margin-top: 20px; /* Añadir espacio después de la barra superior */
     }
     
+    /* Ajustar el panel YAML para que comience debajo del logo */
     .YAML-JSON {
       position: absolute;
       left: 0;
-      top: 0;
-      height: 100%;
+      top: 120px; /* Altura suficiente para el logo */
+      height: calc(100% - 120px); /* Ajustar la altura restando el espacio del logo */
       width: 0;
       overflow: hidden;
       transition: width 0.3s ease;
@@ -1254,6 +1260,34 @@
     .ascii-logo::-webkit-scrollbar-thumb {
       background: var(--primary);
       border-radius: 3px;
+    }
+
+    /* Ajustar la posición del logo cuando el panel YAML está visible */
+    .main-content.panel-visible .ascii-logo {
+      left: 20px; /* Mantener la posición original */
+    }
+
+    /* Mantener la posición original cuando el panel está cerrado */
+    .ascii-logo {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background-color: var(--surface);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 10px;
+      max-height: 100px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      transition: left 0.3s ease; /* Añadir transición suave */
+    }
+
+    /* Ajustar para pantallas más pequeñas */
+    @media (max-width: 1200px) {
+      .main-content.panel-visible .ascii-logo {
+        left: calc(350px + 30px); /* 350px es el ancho mínimo del panel YAML + margen */
+      }
     }
   </style>
 </head>
