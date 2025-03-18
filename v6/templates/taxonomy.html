@@ -37,19 +37,23 @@
       flex-direction: column;
     }
     
-    /* Estilos para el logo ASCII con caracteres individuales reactivos */
+    /* Estilos para el logo ASCII con scroll */
     .ascii-logo {
       display: flex;
-      align-items: center;
-      overflow-x: auto; /* Permitir desplazamiento horizontal si es necesario */
-      max-width: 100%;
+      flex-direction: column; /* Organizar contenido verticalmente */
+      max-height: 100px;
+      overflow-y: auto;
+      overflow-x: hidden;
       position: relative;
+      padding: 5px;
+      margin-right: 20px; /* Añadir margen derecho */
     }
     
     #ascii-container {
       margin: 0;
+      padding-top: 5px;
       font-family: monospace;
-      font-size: 4px;  /* Tamaño más pequeño */
+      font-size: 4px;
       line-height: 0.8;
       white-space: pre;
       letter-spacing: 0;
@@ -80,8 +84,9 @@
     .top-bar {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
+      align-items: flex-start; /* Cambiar de center a flex-start */
+      padding: 20px 20px; /* Aumentar el padding */
+      min-height: 120px; /* Asegurar un espacio mínimo */
     }
     
     .top-bar h1 {
@@ -92,6 +97,8 @@
     .controls {
       display: flex;
       gap: 10px;
+      align-self: flex-start; /* Alinear controles en la parte superior */
+      padding-top: 10px; /* Añadir algo de espacio superior */
     }
     
     .controls button, .controls select,
@@ -119,6 +126,7 @@
       align-items: stretch;
       overflow: hidden;
       height: 100vh; /* Asegurar que ocupe toda la altura de la ventana */
+      margin-top: 20px; /* Añadir espacio después de la barra superior */
     }
     
     .YAML-JSON {
@@ -1231,6 +1239,21 @@
       -webkit-background-clip: text;
       background-clip: text;
       animation: rainbow 3s linear infinite;
+    }
+
+    /* Estilizar la barra de scroll para mejor apariencia */
+    .ascii-logo::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .ascii-logo::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 3px;
+    }
+
+    .ascii-logo::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 3px;
     }
   </style>
 </head>
