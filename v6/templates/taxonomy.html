@@ -1306,6 +1306,47 @@
       left: -20px;
       color: #4CAF50;
     }
+
+    /* Estilos adicionales para el logo ASCII */
+    .ascii-logo pre {
+      margin: 0;
+      font-family: monospace;
+      font-size: 5px;  /* Tamaño de fuente unificado */
+      color: #008a9b;
+      line-height: 0.8;
+      white-space: pre;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+
+    /* Asegurar que los caracteres ASCII también usen el mismo tamaño */
+    .ascii-char {
+      font-size: 5px;  /* Mismo tamaño que el pre */
+      font-family: monospace;
+      transition: color 0.3s ease;
+    }
+
+    /* Mantener el mismo tamaño para el cursor personalizado */
+    #custom-cursor {
+      font-size: 5px;  /* Mismo tamaño que los otros elementos */
+      font-family: monospace;
+    }
+
+    .ascii-logo pre:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+
+    @keyframes rainbow { 
+      0% { background-position: 0% 50%; } 
+      100% { background-position: 100% 50%; }
+    }
   </style>
 </head>
 <body>
@@ -3491,7 +3532,7 @@
                                                                   ###
                                                                   ###    
                                                                    
-#############               #####       ##########  ########  ########  ########                 ######  ######    ########       #####  #  
+#############               #####       ##########  ########   ########  #######                 ######  ######    ########       #####  #  
     #####                 #########        #####      ##          ###       #####               ####       ####       ####      ##########  
     #####               ###     #####        ####   ##            ###       ######             #####       ####       ####     ###      ##  
     #####              #####     ###          #####               ###       #######           ######       ####       ####     ########    
@@ -3499,12 +3540,12 @@
     #####              ##### ###              ########            ###       ##  #####       ##  ####       ####       ####    ##   #########   
     #####              #####       ##        ##    #####          ###       ##   #####     ##   ####       ####       ####    ###        ##   
     #####               #####     ###      ###       #####        ###       ##    #####   ##    ####        ###############   #####     ###    
-    #####                 #########    ########   ########## ##########     ##     ##### ##     ####         #######  ######  ## #########  
+    #####                 #########    ########   ##########   ########     ##     ##### ##     ####         #######  ######  ## #########  
     #####            ##      ###                                            ##      ######      #### 
     #####            ##                                                     ##       ####       ####  
     #####           ###                                                     ##        ##        #### 
     #####          ####                                                     ##                  #### 
-######################                                                  ##########           ###########
+######################                                                   #########           ##########
  
 `;
 

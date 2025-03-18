@@ -46,5 +46,97 @@
     <h1>Ontología</h1>
     <textarea placeholder="Ingrese texto aquí..."></textarea>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const textarea = document.querySelector('textarea');
+      
+      // Función para cargar y procesar los datos de la taxonomía
+      function loadTaxonomyData() {
+        // Recuperar todos los datos del localStorage
+        const nodeMetadata = JSON.parse(localStorage.getItem('nodeMetadata') || '{}');
+        const nodeProperties = JSON.parse(localStorage.getItem('nodeProperties') || '{}');
+        const taxonomyData = JSON.parse(localStorage.getItem('taxonomyData') || '{}');
+
+        // Función recursiva para construir la estructura completa
+        function buildNodeStructure(node, nodeId) {
+          // Asegurar que tenemos un objeto de nodo válido
+          const nodeData = typeof node === 'string' ? { text: node } : node;
+          
+          // Construir la estructura base del nodo
+          const structure = {
+            id: nodeId,
+            text: nodeData.text || nodeData,
+          };
+
+          // Añadir metadatos si existen
+          if (nodeMetadata[nodeId] && Object.keys(nodeMetadata[nodeId]).length > 0) {
+            structure.definitions = nodeMetadata[nodeId];
+          }
+
+          // Añadir propiedades si existen
+          if (nodeProperties[nodeId] && nodeProperties[nodeId].length > 0) {
+            structure.properties = nodeProperties[nodeId].map(prop => {
+              // Si la propiedad tiene una estructura compleja, la preservamos
+              if (typeof prop === 'object') {
+                return {
+                  id: prop.id,
+                  path: prop.path,
+                  value: prop.value
+                };
+              }
+              return prop;
+            });
+          }
+
+          // Procesar nodos hijos recursivamente
+          if (nodeData.children && nodeData.children.length > 0) {
+            structure.children = nodeData.children.map((child, index) => 
+              buildNodeStructure(child, `${nodeId}_${index}`)
+            );
+          }
+
+          return structure;
+        }
+
+        // Construir la estructura completa
+        const completeStructure = {
+          ontology: {
+            version: "1.0",
+            timestamp: new Date().toISOString(),
+            root: buildNodeStructure(taxonomyData, 'root')
+          }
+        };
+
+        // Convertir a YAML con opciones específicas para mejor legibilidad
+        const yamlOutput = jsyaml.dump(completeStructure, {
+          indent: 2,
+          lineWidth: -1,
+          noRefs: true,
+          sortKeys: false,
+          flowLevel: -1
+        });
+
+        // Mostrar en el textarea
+        textarea.value = yamlOutput;
+      }
+
+      // Cargar los datos inicialmente
+      loadTaxonomyData();
+
+      // Actualizar cuando haya cambios en taxonomy.html
+      window.addEventListener('storage', function(e) {
+        if (['nodeMetadata', 'nodeProperties', 'taxonomyData'].includes(e.key)) {
+          loadTaxonomyData();
+        }
+      });
+
+      // Opcional: Añadir un botón para actualizar manualmente
+      const updateButton = document.createElement('button');
+      updateButton.textContent = 'Actualizar Ontología';
+      updateButton.onclick = loadTaxonomyData;
+      document.querySelector('.text-container').appendChild(updateButton);
+    });
+  </script>
 </body>
 </html>
