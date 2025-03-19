@@ -1375,6 +1375,31 @@
       0% { background-position: 0% 50%; } 
       100% { background-position: 100% 50%; }
     }
+
+    /* Estilos para el ASCII art */
+    .ascii-art {
+      font-family: monospace;
+      white-space: pre;
+      line-height: 1;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 3rem;  /* Añadido espacio inferior */
+      padding-bottom: 2rem; /* Padding adicional */
+      border-bottom: 1px solid rgba(101, 184, 196, 0.2); /* Línea separadora sutil */
+    }
+
+    .ascii-line {
+      display: inline-block;
+    }
+
+    /* Paleta de colores basada en el tema principal */
+    .color-1 { color: #65b8c4; }         /* Color principal */
+    .color-2 { color: #4a9ba7; }         /* Variación más oscura */
+    .color-3 { color: #80c5cf; }         /* Variación más clara */
+    .color-4 { color: #3d8591; }         /* Variación aún más oscura */
+    .color-5 { color: #9ad2da; }         /* Variación aún más clara */
   </style>
 </head>
 <body>
@@ -4316,183 +4341,6 @@
   });
   </script>
 
-  // Función para mostrar información dividida de dos nodos
-  function showSplitNodeInfo(sourceNode, targetNode) {
-    const infoPanel = document.getElementById('info-panel');
-    const metadataCardsContainer = document.getElementById('metadata-cards-container');
-    
-    // Crear contenedor dividido
-    infoPanel.innerHTML = `
-      <div class="split-info-container">
-        <div class="split-info left">
-          <h3>Nodo Origen</h3>
-          <div class="node-info">
-            <div class="node-name-container">
-              <span class="label">Nombre:</span>
-              <span id="source-node-name" class="value"></span>
-            </div>
-            <div class="node-id-container">
-              <span class="label">ID:</span>
-              <span id="source-node-id" class="value"></span>
-            </div>
-          </div>
-          <div id="source-metadata-cards" class="metadata-cards"></div>
-        </div>
-        <div class="split-info-divider"></div>
-        <div class="split-info right">
-          <h3>Nodo Destino</h3>
-          <div class="node-info">
-            <div class="node-name-container">
-              <span class="label">Nombre:</span>
-              <span id="target-node-name" class="value"></span>
-            </div>
-            <div class="node-id-container">
-              <span class="label">ID:</span>
-              <span id="target-node-id" class="value"></span>
-            </div>
-          </div>
-          <div id="target-metadata-cards" class="metadata-cards"></div>
-        </div>
-      </div>
-      <div class="split-info-actions">
-        <button id="edit-source-metadata" class="metadata-button">Editar definiciones origen</button>
-        <button id="edit-target-metadata" class="metadata-button">Editar definiciones destino</button>
-        <button id="close-split-view" class="metadata-button">Cerrar vista dividida</button>
-      </div>
-    `;
-
-    // Actualizar información de los nodos
-    document.getElementById('source-node-name').textContent = sourceNode.textContent.trim();
-    document.getElementById('source-node-id').textContent = sourceNode.getAttribute('data-id');
-    document.getElementById('target-node-name').textContent = targetNode.textContent.trim();
-    document.getElementById('target-node-id').textContent = targetNode.getAttribute('data-id');
-
-    // Renderizar tarjetas de metadata para ambos nodos
-    renderMetadataCards(sourceNode.getAttribute('data-id'), 'source-metadata-cards');
-    renderMetadataCards(targetNode.getAttribute('data-id'), 'target-metadata-cards');
-
-    // Mostrar el panel
-    infoPanel.classList.add('expanded', 'split-view');
-
-    // Configurar eventos de los botones
-    document.getElementById('edit-source-metadata').addEventListener('click', () => {
-      editNodeMetadata(sourceNode);
-    });
-
-    document.getElementById('edit-target-metadata').addEventListener('click', () => {
-      editNodeMetadata(targetNode);
-    });
-
-    document.getElementById('close-split-view').addEventListener('click', () => {
-      infoPanel.classList.remove('split-view');
-      updateNodeInfo(targetNode); // Volver a la vista normal con el nodo destino
-    });
-  }
-
-  // Modificar la función renderMetadataCards para aceptar un contenedor específico
-  function renderMetadataCards(nodeId, containerId = 'metadata-cards-container') {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-
-    if (!nodeMetadata[nodeId] || Object.keys(nodeMetadata[nodeId]).length === 0) {
-      container.innerHTML = '<div class="add-metadata-card" tabindex="0">+ Añadir definición</div>';
-      return;
-    }
-
-    // Crear tarjetas para cada definición
-    for (const [key, value] of Object.entries(nodeMetadata[nodeId])) {
-      const card = document.createElement('div');
-      card.className = 'metadata-card';
-      card.setAttribute('tabindex', '0');
-      card.innerHTML = `
-        <div class="metadata-card-title">${key}</div>
-        <div class="metadata-card-content">${value}</div>
-      `;
-      container.appendChild(card);
-    }
-
-    // Añadir botón para agregar nueva definición
-    const addButton = document.createElement('div');
-    addButton.className = 'add-metadata-card';
-    addButton.setAttribute('tabindex', '0');
-    addButton.textContent = '+ Añadir definición';
-    container.appendChild(addButton);
-  }
-
-  // Agregar estilos CSS para la vista dividida
-  const style = document.createElement('style');
-  style.textContent += `
-    .split-info-container {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 15px;
-    }
-
-    .split-info {
-      flex: 1;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-    }
-
-    .split-info h3 {
-      margin-top: 0;
-      color: #65b8c4;
-      border-bottom: 1px solid rgba(101, 184, 196, 0.3);
-      padding-bottom: 8px;
-    }
-
-    .split-info-divider {
-      width: 1px;
-      background: rgba(101, 184, 196, 0.3);
-    }
-
-    .split-info .node-info {
-      margin-bottom: 15px;
-    }
-
-    .split-info .label {
-      color: #888;
-      margin-right: 8px;
-    }
-
-    .split-info .value {
-      color: #fff;
-    }
-
-    .split-info-actions {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      padding: 15px;
-      border-top: 1px solid rgba(101, 184, 196, 0.3);
-    }
-
-    .metadata-button {
-      background: rgba(101, 184, 196, 0.1);
-      border: 1px solid rgba(101, 184, 196, 0.3);
-      color: #65b8c4;
-      padding: 8px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .metadata-button:hover {
-      background: rgba(101, 184, 196, 0.2);
-    }
-
-    #info-panel.split-view {
-      height: 400px;
-    }
-
-    .metadata-cards {
-      max-height: 200px;
-      overflow-y: auto;
-    }
-  `;
-  document.head.appendChild(style);
   </script>
 
   <script>
@@ -4511,6 +4359,75 @@
   }
 
   // ... existing code ...
+  </script>
+
+  <style>
+  /* Estilos para el ASCII art */
+  .ascii-art {
+    font-family: monospace;
+    white-space: pre;
+    line-height: 1;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15rem;  /* Añadido espacio inferior */
+    padding-bottom: 2rem; /* Padding adicional */
+    border-bottom: 1px solid rgba(101, 184, 196, 0.2); /* Línea separadora sutil */
+  }
+
+  .ascii-line {
+    display: inline-block;
+  }
+
+  /* Paleta de colores basada en el tema principal */
+  .color-1 { color: #65b8c4; }         /* Color principal */
+  .color-2 { color: #4a9ba7; }         /* Variación más oscura */
+  .color-3 { color: #80c5cf; }         /* Variación más clara */
+  .color-4 { color: #3d8591; }         /* Variación aún más oscura */
+  .color-5 { color: #9ad2da; }         /* Variación aún más clara */
+  </style>
+
+  <div class="ascii-art">
+
+    <p>
+      <span class="color-4">#############              #####       ##########  ########   ########  #######                 ######  ######    ########       #####  #</span>
+      <span class="color-1">   #####                 #########        #####      ##          ###       #####               ####       ####       ####      ##########</span>
+      <span class="color-2">   #####               ###     #####        ####   ##            ###       ######             #####       ####       ####     ###      ##</span>
+      <span class="color-3">   #####              #####     ###          #####               ###       #######           ######       ####       ####     ########</span>
+      <span class="color-4">   #####              ###########             #####              ###       ## #####         ## ####       ####       ####       ##########</span>
+      <span class="color-5">   #####              ##### ###              ########            ###       ##  #####       ##  ####       ####       ####    ##   #########</span>
+      <span class="color-1">   #####              #####       ##        ##    #####          ###       ##   #####     ##   ####       ####       ####    ###        ##</span>
+      <span class="color-2">   #####               #####     ###      ###       #####        ###       ##    #####   ##    ####        ###############   #####     ###</span>
+      <span class="color-3">   #####                 #########    ########   ##########   ########     ##     ##### ##     ####         #######  ######  ## #########</span>
+      <span class="color-4">   #####                    ###                                            ##      ######      ####</span>
+      <span class="color-5">   #####             ##                                                    ##       ####       ####</span>
+      <span class="color-1">   #####             ##                                                    ##        ##        ####</span>
+      <span class="color-2">   #####           ####                                                    ##                  ####</span>
+      <span class="color-2">   #####          #####                                                  ######               ######</span>
+      <span class="color-3">######################</span>
+    </p>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Función para asignar colores aleatorios a las líneas del ASCII art
+    function randomizeColors() {
+      const colors = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5'];
+      const lines = document.querySelectorAll('.ascii-art span');
+      
+      lines.forEach(line => {
+        // Remover clases de color existentes
+        colors.forEach(color => line.classList.remove(color));
+        // Asignar color aleatorio
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        line.classList.add(randomColor);
+      });
+    }
+
+    // Cambiar colores cada 3 segundos
+    setInterval(randomizeColors, 3000);
+  });
   </script>
 </body>
 </html>
