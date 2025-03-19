@@ -1528,15 +1528,19 @@
         
         console.log("Datos procesados:", data);
         
-        // Estructura para organizar los nodos por niveles
+        // Obtener dinámicamente la clave principal (primer nivel)
+        const rootKey = Object.keys(data)[0];
+        console.log("Clave raíz detectada:", rootKey);
+        
+        // Estructura para organizar los nodos por niveles - ahora dinámica
         const levels = [
-          [{ text: 'Las pasiones del alma', type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz
+          [{ text: rootKey, type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz dinámica
           [], // Nivel 1: Categorías
           []  // Nivel 2: Ejemplos
         ];
         
-        // Procesar categorías (nivel 1)
-        const categories = data['Las pasiones del alma'];
+        // Procesar categorías (nivel 1) - ahora usando la clave raíz dinámica
+        const categories = data[rootKey];
         if (Array.isArray(categories)) {
           categories.forEach((categoryObj, catIndex) => {
             const categoryName = Object.keys(categoryObj)[0];
@@ -2948,22 +2952,48 @@
     // Función para cargar el archivo YAML
     async function loadYamlFile() {
       try {
-        const response = await fetch('/SEMINARIO/V6/data/pasiones.yml');
+        console.log("Intentando cargar clases.yml...");
+        const response = await fetch('/SEMINARIO/V6/data/clases.yml');
+        
         if (!response.ok) {
           throw new Error(`Error al cargar el archivo: ${response.status}`);
         }
-        const loadedYamlData = await response.text();
-        console.log("Datos YAML cargados correctamente");
         
-        // Una vez cargados los datos, actualizar la visualización
+        const loadedYamlData = await response.text();
+        console.log("Datos YAML cargados:", loadedYamlData.substring(0, 100) + "..."); // Mostrar primeros 100 caracteres
+        
+        // Actualizar la visualización
         document.getElementById('data-display').value = loadedYamlData;
+        
+        // Forzar la actualización de la visualización
+        console.log("Actualizando visualización con datos cargados");
         updateNodeVisualization(loadedYamlData);
+        
+        // Guardar en variable global para referencia
+        window.yamlData = loadedYamlData;
+        
+        // Forzar actualización después de un breve retraso
+        setTimeout(() => {
+          console.log("Actualizando visualización después de retraso");
+          updateNodeVisualization(window.yamlData);
+          
+          // Seleccionar el nodo raíz por defecto
+          setTimeout(() => {
+            const rootNode = document.querySelector('.pyramid-node[data-id="root"]');
+            if (rootNode) {
+              rootNode.click();
+            }
+          }, 500);
+        }, 1000);
+        
+        return loadedYamlData;
       } catch (error) {
         console.error("Error al cargar el archivo YAML:", error);
-        // Usar datos de respaldo en caso de error
-        const fallbackData = "Las pasiones del alma:\n  - Error al cargar datos";
+        // Usar datos de respaldo específicos para clases.yml
+        const fallbackData = "Los nombres de la música:\n  - Error al cargar datos";
         document.getElementById('data-display').value = fallbackData;
         updateNodeVisualization(fallbackData);
+        return fallbackData;
       }
     }
     
