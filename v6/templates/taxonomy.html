@@ -1347,6 +1347,34 @@
       0% { background-position: 0% 50%; } 
       100% { background-position: 100% 50%; }
     }
+
+    /* Estilos adicionales para el logo ASCII */
+    .ascii-logo pre {
+      margin: 0;
+      font-family: monospace;
+      font-size: 5px;  /* Cambiado de 10px a 8px */
+      color: #008a9b;
+      line-height: 0.8;  /* Ajustado para mejor espaciado vertical */
+      white-space: pre;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+
+    .ascii-logo pre:hover {
+      background-image: linear-gradient(to right, 
+        #008a9b, #3a7b8c, #5f8a93, #009b8a, #008a9b, 
+        #3a7b8c, #5f8a93, #009b8a);
+      background-size: 800% 100%;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 3s linear infinite;
+    }
+
+    @keyframes rainbow { 
+      0% { background-position: 0% 50%; } 
+      100% { background-position: 100% 50%; }
+    }
   </style>
 </head>
 <body>
@@ -3523,6 +3551,339 @@
       // Ajustar la cantidad de nodos visibles
       adjustVisibleNodesCount();
     });
+
+    // Función para añadir una propiedad a la lista
+    function addPropertyToList(propertyKey, propertyId, nodeId) {
+      const propertiesList = document.getElementById('properties-list');
+      
+      // Obtener la ruta jerárquica completa de la propiedad
+      const hierarchy = getPropertyHierarchy(propertyId);
+      
+      // Crear el elemento de la propiedad con la ruta jerárquica
+      const propertyElement = document.createElement('div');
+      propertyElement.className = 'property-item';
+      propertyElement.setAttribute('data-property-id', propertyId);
+      
+      // Construir la ruta jerárquica como texto
+      let hierarchyPath = propertyKey;
+      if (hierarchy.length > 0) {
+        hierarchyPath = hierarchy.join(' > ') + ' > ' + propertyKey;
+      }
+      
+      propertyElement.innerHTML = `
+        <div class="property-hierarchy">${hierarchyPath}</div>
+        <div class="property-content">
+          <span class="property-key">${propertyKey}</span>
+          <button class="remove-property">×</button>
+        </div>
+      `;
+      
+      // Añadir evento para eliminar la propiedad
+      const removeButton = propertyElement.querySelector('.remove-property');
+      removeButton.addEventListener('click', () => {
+        removePropertyFromNode(nodeId, propertyId);
+        propertyElement.remove();
+      });
+      
+      propertiesList.appendChild(propertyElement);
+    }
+
+    // Función para obtener la jerarquía completa de una propiedad
+    function getPropertyHierarchy(propertyId) {
+      const hierarchy = [];
+      
+      // Buscar el elemento de propiedad en el DOM
+      const propItem = document.querySelector(`.prop-item[data-id="${propertyId}"]`);
+      if (!propItem) return hierarchy;
+      
+      // Obtener todos los elementos padres
+      let parent = propItem.parentElement;
+      while (parent && parent.classList.contains('prop-children')) {
+        const parentPropItem = parent.closest('.prop-item');
+        if (parentPropItem) {
+          const parentLabel = parentPropItem.querySelector('.prop-label');
+          if (parentLabel) {
+            hierarchy.unshift(parentLabel.textContent.trim());
+          }
+          parent = parentPropItem.parentElement;
+        } else {
+          break;
+        }
+      }
+      
+      return hierarchy;
+    }
+
+    // Función para eliminar una propiedad de un nodo
+    function removePropertyFromNode(nodeId, propertyId) {
+      if (nodeProperties[nodeId]) {
+        nodeProperties[nodeId] = nodeProperties[nodeId].filter(prop => prop.id !== propertyId);
+        
+        // Si no quedan propiedades, eliminar la entrada
+        if (nodeProperties[nodeId].length === 0) {
+          delete nodeProperties[nodeId];
+        }
+      }
+    }
+
+    // ... existing code ...
+
+    // Función para manejar el drop de propiedades
+    function handlePropertiesDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      try {
+        const propData = e.dataTransfer.getData('text/plain');
+        const nodeId = document.getElementById('node-id').textContent;
+        
+        if (!nodeId || nodeId === '-') return;
+        
+        // Parsear los datos de la propiedad
+        let propInfo;
+        try {
+          propInfo = JSON.parse(propData);
+        } catch (err) {
+          console.error('Error al parsear los datos de la propiedad:', err);
+          return;
+        }
+        
+        if (!propInfo || !propInfo.key) {
+          console.error('Datos de propiedad inválidos');
+          return;
+        }
+        
+        // Verificar si la propiedad ya está asignada al nodo
+        if (!nodeProperties[nodeId]) {
+          nodeProperties[nodeId] = [];
+        } else if (nodeProperties[nodeId].some(prop => prop.id === propInfo.id)) {
+          console.log('Esta propiedad ya está asignada a este nodo');
+          return;
+        }
+        
+        // Añadir la propiedad al nodo
+        nodeProperties[nodeId].push(propInfo);
+        
+        // Añadir la propiedad a la lista visual
+        addPropertyToList(propInfo.key, propInfo, nodeId);
+        
+        this.classList.remove('drop-target');
+      } catch (error) {
+        console.error('Error al procesar el drop:', error);
+      }
+    }
+
+    // Función para añadir una propiedad a la lista
+    function addPropertyToList(propertyKey, propInfo, nodeId) {
+      const propertiesList = document.getElementById('properties-list');
+      
+      // Crear el elemento de la propiedad con la ruta jerárquica
+      const propertyElement = document.createElement('div');
+      propertyElement.className = 'property-item';
+      propertyElement.setAttribute('data-property-id', JSON.stringify(propInfo.id));
+      
+      // Asegurar que siempre tengamos una ruta jerárquica
+      let hierarchyPath = propInfo.fullPath || propertyKey;
+      
+      // Estructura HTML con la ruta jerárquica completa
+      propertyElement.innerHTML = `
+        <div class="property-hierarchy">${hierarchyPath}</div>
+        <div class="property-content">
+          <span class="property-key">${propertyKey}</span>
+          <button class="remove-property">×</button>
+        </div>
+      `;
+      
+      // Añadir evento para eliminar la propiedad
+      const removeButton = propertyElement.querySelector('.remove-property');
+      removeButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evitar que el clic se propague al elemento padre
+        removePropertyFromNode(nodeId, propInfo.id);
+        propertyElement.remove();
+      });
+      
+      // Añadir evento de clic para resaltar la propiedad en el árbol
+      propertyElement.addEventListener('click', () => {
+        highlightPropertyInTree(propInfo.id);
+      });
+      
+      propertiesList.appendChild(propertyElement);
+      
+      // Guardar la ruta completa en los datos de la propiedad para futuras referencias
+      if (!propInfo.fullPath) {
+        propInfo.fullPath = propertyKey;
+      }
+    }
+
+    // Función para eliminar una propiedad de un nodo
+    function removePropertyFromNode(nodeId, propertyId) {
+      if (nodeProperties[nodeId]) {
+        nodeProperties[nodeId] = nodeProperties[nodeId].filter(prop => {
+          // Comparar como strings para manejar objetos
+          return JSON.stringify(prop.id) !== JSON.stringify(propertyId);
+        });
+        
+        // Si no quedan propiedades, eliminar la entrada
+        if (nodeProperties[nodeId].length === 0) {
+          delete nodeProperties[nodeId];
+        }
+      }
+    }
+
+    // ... existing code ...
+
+    // Actualizar los estilos CSS para las propiedades
+    const propertyStyles = `
+      .property-item {
+        margin-bottom: 8px;
+        padding: 8px;
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+      }
+      
+      .property-hierarchy {
+        font-size: 0.8em;
+        color: var(--text-light);
+        margin-bottom: 4px;
+      }
+      
+      .property-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .property-key {
+        font-weight: bold;
+        color: var(--primary);
+      }
+      
+      .remove-property {
+        background: none;
+        border: none;
+        color: var(--text-light);
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 50%;
+      }
+      
+      .remove-property:hover {
+        background-color: var(--error);
+        color: white;
+      }
+    `;
+
+    // Aplicar los estilos
+    function applyPropertyStyles() {
+      let styleElement = document.getElementById('property-styles');
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'property-styles';
+        styleElement.textContent = propertyStyles;
+        document.head.appendChild(styleElement);
+      }
+    }
+
+    // Llamar a esta función al inicio
+    document.addEventListener('DOMContentLoaded', function() {
+      applyPropertyStyles();
+    });
+
+    // ... existing code ...
+
+    // Función para resaltar una propiedad en el árbol de jerarquía
+    function highlightPropertyInTree(propertyId) {
+      // Primero, eliminar cualquier resaltado previo
+      document.querySelectorAll('.prop-item-header.highlighted').forEach(item => {
+        item.classList.remove('highlighted');
+      });
+      
+      // Buscar el elemento de la propiedad en el árbol
+      let propHeader;
+      
+      // Si el propertyId es un objeto, convertirlo a string para comparar
+      const propIdStr = typeof propertyId === 'object' ? JSON.stringify(propertyId) : propertyId;
+      
+      // Buscar por el atributo data-id
+      document.querySelectorAll('.prop-item-header').forEach(header => {
+        const headerId = header.dataset.id;
+        if (headerId === propIdStr || JSON.stringify(headerId) === propIdStr) {
+          propHeader = header;
+        }
+      });
+      
+      if (propHeader) {
+        // Resaltar la propiedad
+        propHeader.classList.add('highlighted');
+        
+        // Expandir los padres si están colapsados
+        let parent = propHeader.closest('.prop-children');
+        while (parent) {
+          if (!parent.classList.contains('visible')) {
+            // Encontrar el toggle del padre y hacer clic en él
+            const parentItem = parent.closest('.prop-item');
+            if (parentItem) {
+              const toggle = parentItem.querySelector('.prop-toggle');
+              if (toggle && toggle.textContent === '▶') {
+                toggle.click();
+              }
+            }
+          }
+          parent = parent.parentElement ? parent.parentElement.closest('.prop-children') : null;
+        }
+        
+        // Desplazarse hasta la propiedad
+        propHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Añadir un efecto de parpadeo para llamar la atención
+        propHeader.style.animation = 'highlight-pulse 1.5s ease-in-out';
+        setTimeout(() => {
+          propHeader.style.animation = '';
+        }, 1500);
+      }
+    }
+
+    // Añadir estilos CSS para el resaltado
+    const highlightStyles = `
+      .prop-item-header.highlighted {
+        background-color: rgba(101, 184, 196, 0.3);
+        border-left: 3px solid var(--primary);
+      }
+      
+      @keyframes highlight-pulse {
+        0% { background-color: rgba(101, 184, 196, 0.3); }
+        50% { background-color: rgba(101, 184, 196, 0.6); }
+        100% { background-color: rgba(101, 184, 196, 0.3); }
+      }
+      
+      .property-item {
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+      
+      .property-item:hover {
+        transform: translateX(3px);
+        background-color: var(--surface-hover);
+      }
+      
+      .property-item:active {
+        transform: translateX(1px);
+      }
+    `;
+
+    // Aplicar los estilos
+    function applyPropertyStyles() {
+      let styleElement = document.getElementById('property-styles');
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'property-styles';
+        styleElement.textContent = propertyStyles + highlightStyles;
+        document.head.appendChild(styleElement);
+      }
+    }
+
+    // ... existing code ...
   </script>
 
   <script>
