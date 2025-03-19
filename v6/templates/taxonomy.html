@@ -1988,8 +1988,12 @@
       
       // Mostrar las propiedades existentes del nodo
       if (nodeId && nodeProperties[nodeId]) {
+        // Limpiar la lista antes de añadir propiedades
+        propertiesList.innerHTML = '';
+        
         nodeProperties[nodeId].forEach(prop => {
-          addPropertyToList(prop.key, prop.id, nodeId);
+          // Usar la versión mejorada de addPropertyToList que maneja propInfo correctamente
+          addPropertyToList(prop.key || prop.fullPath, prop, nodeId);
         });
       }
     }
@@ -3653,6 +3657,9 @@
           return;
         }
         
+        // Añadir campo de valor por defecto
+        propInfo.value = '';
+        
         // Verificar si la propiedad ya está asignada al nodo
         if (!nodeProperties[nodeId]) {
           nodeProperties[nodeId] = [];
@@ -3677,6 +3684,21 @@
     function addPropertyToList(propertyKey, propInfo, nodeId) {
       const propertiesList = document.getElementById('properties-list');
       
+      // Normalizar propInfo para manejar tanto objetos como IDs simples
+      if (typeof propInfo !== 'object') {
+        propInfo = {
+          id: propInfo,
+          key: propertyKey,
+          fullPath: propertyKey,
+          value: '' // Valor por defecto vacío
+        };
+      }
+      
+      // Asegurar que siempre tengamos una propiedad value
+      if (!propInfo.hasOwnProperty('value')) {
+        propInfo.value = '';
+      }
+      
       // Crear el elemento de la propiedad con la ruta jerárquica
       const propertyElement = document.createElement('div');
       propertyElement.className = 'property-item';
@@ -3685,14 +3707,38 @@
       // Asegurar que siempre tengamos una ruta jerárquica
       let hierarchyPath = propInfo.fullPath || propertyKey;
       
-      // Estructura HTML con la ruta jerárquica completa
+      // Estructura HTML con la ruta jerárquica completa y el campo de valor
       propertyElement.innerHTML = `
         <div class="property-hierarchy">${hierarchyPath}</div>
         <div class="property-content">
           <span class="property-key">${propertyKey}</span>
-          <button class="remove-property">×</button>
+          <div class="property-value-container">
+            <input type="text" class="property-value-input" placeholder="Valor" value="${propInfo.value || ''}" 
+                   aria-label="Valor de la propiedad ${propertyKey}">
+          </div>
+          <button class="remove-property" aria-label="Eliminar propiedad">×</button>
         </div>
       `;
+      
+      // Añadir evento para guardar el valor cuando cambia
+      const valueInput = propertyElement.querySelector('.property-value-input');
+      valueInput.addEventListener('change', (e) => {
+        // Actualizar el valor en el objeto de propiedades
+        const propId = propInfo.id;
+        const newValue = e.target.value;
+        
+        // Encontrar y actualizar la propiedad en nodeProperties
+        if (nodeProperties[nodeId]) {
+          const propIndex = nodeProperties[nodeId].findIndex(p => 
+            JSON.stringify(p.id) === JSON.stringify(propId)
+          );
+          
+          if (propIndex !== -1) {
+            nodeProperties[nodeId][propIndex].value = newValue;
+            console.log(`Valor actualizado para propiedad ${propertyKey}: ${newValue}`);
+          }
+        }
+      });
       
       // Añadir evento para eliminar la propiedad
       const removeButton = propertyElement.querySelector('.remove-property');
@@ -3703,8 +3749,12 @@
       });
       
       // Añadir evento de clic para resaltar la propiedad en el árbol
-      propertyElement.addEventListener('click', () => {
-        highlightPropertyInTree(propInfo.id);
+      propertyElement.addEventListener('click', (e) => {
+        // No activar al hacer clic en el input o en el botón de eliminar
+        if (e.target !== valueInput && e.target !== removeButton) {
+          // Usar la nueva función que abre el panel si está cerrado
+          highlightPropertyInTree(propInfo.id);
+        }
       });
       
       propertiesList.appendChild(propertyElement);
@@ -3752,11 +3802,36 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
       }
       
       .property-key {
         font-weight: bold;
         color: var(--primary);
+        margin-right: 8px;
+        flex: 0 0 auto;
+      }
+      
+      .property-value-container {
+        flex: 1;
+        min-width: 80px;
+        margin-right: 8px;
+      }
+      
+      .property-value-input {
+        width: 100%;
+        padding: 4px 8px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        font-size: 0.9em;
+      }
+      
+      .property-value-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(101, 184, 196, 0.2);
       }
       
       .remove-property {
@@ -3766,6 +3841,7 @@
         cursor: pointer;
         padding: 2px 6px;
         border-radius: 50%;
+        flex: 0 0 auto;
       }
       
       .remove-property:hover {
@@ -3792,8 +3868,29 @@
 
     // ... existing code ...
 
-    // Función para resaltar una propiedad en el árbol de jerarquía
+    // Modificar la función highlightPropertyInTree para abrir el panel de propiedades si está cerrado
     function highlightPropertyInTree(propertyId) {
+      // Primero, verificar si el panel de propiedades está visible
+      const propsPanel = document.getElementById('props-panel');
+      const isVisible = propsPanel.classList.contains('visible');
+      
+      // Si el panel no está visible, abrirlo primero
+      if (!isVisible) {
+        document.getElementById('toggle-props-panel').click();
+        
+        // Pequeña pausa para permitir que la animación de apertura comience
+        setTimeout(() => {
+          // Continuar con el resaltado después de abrir el panel
+          performPropertyHighlight(propertyId);
+        }, 300); // Tiempo suficiente para que comience la animación de apertura
+      } else {
+        // Si ya está visible, resaltar inmediatamente
+        performPropertyHighlight(propertyId);
+      }
+    }
+
+    // Función auxiliar que realiza el resaltado real
+    function performPropertyHighlight(propertyId) {
       // Primero, eliminar cualquier resaltado previo
       document.querySelectorAll('.prop-item-header.highlighted').forEach(item => {
         item.classList.remove('highlighted');
@@ -3843,6 +3940,8 @@
         }, 1500);
       }
     }
+
+    // ... existing code ...
 
     // Añadir estilos CSS para el resaltado
     const highlightStyles = `
