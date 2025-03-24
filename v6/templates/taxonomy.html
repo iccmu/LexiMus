@@ -1657,7 +1657,7 @@
       return jsyaml.dump(jsonObj);
     }
     
-    // Función simplificada para generar la visualización de nodos en árbol vertical
+    // Función mejorada para generar la visualización de nodos en árbol vertical
     function updateNodeVisualization(data) {
       const nodeVisualization = document.getElementById('node-visualization');
       
@@ -1673,59 +1673,26 @@
         const rootKey = Object.keys(data)[0];
         console.log("Clave raíz detectada:", rootKey);
         
-        // Estructura para organizar los nodos por niveles
-        const levels = [
-          [{ text: rootKey, type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz
-        ];
-        
-        // Procesar categorías (nivel 1)
-        const categories = data[rootKey];
-        if (Array.isArray(categories)) {
-          const level1 = [];
-          categories.forEach((categoryObj, catIndex) => {
-            const categoryName = Object.keys(categoryObj)[0];
-            level1.push({
-              text: categoryName,
-              type: 'category',
-              parent: 'root',
-              id: `cat_${catIndex}`
-            });
-          });
-          levels.push(level1);
-        }
-        
         // Generar HTML para la visualización vertical
         let html = '<div class="pyramid-container">';
         
         // El nodo raíz
         html += `
           <div class="pyramid-level level-0">
-            <div class="pyramid-node main" tabindex="0" data-id="root">
-              ${rootKey}
+            <div class="node-group">
+              <div class="pyramid-node main" tabindex="0" data-id="root">
+                ${rootKey}
+              </div>
             </div>
-            <div class="children-container" id="children_root">`;
+          </div>`;
         
-        // Primera línea vertical desde la raíz
-        html += `<div class="connection-line vertical-line" 
-                      style="left: 50%; top: -30px; height: 30px;"></div>`;
+        // Crear el contenedor para los hijos del nodo raíz
+        html += `<div class="children-container" id="children_root">`;
         
-        // Si hay categorías, mostrarlas
-        if (levels[1] && levels[1].length) {
-          levels[1].forEach((node, index) => {
-            // Detectar si es "[object Object]" para darle estilo diferente
-            const isObjectNotation = node.text === "[object Object]";
-            const nodeClass = isObjectNotation ? "object-notation" : "category";
-            
-            html += `
-              <div class="pyramid-node ${nodeClass}" tabindex="0" 
-                   data-parent="root" data-id="${node.id}">
-                ${node.text}
-              </div>`;
-          });
-        }
+        // Procesar hijos del nodo raíz usando la función recursiva
+        html = renderNodesRecursively(data[rootKey], "root", html, 1);
         
-        html += `</div>`; // Cerrar children-container
-        html += `</div>`; // Cerrar pyramid-level
+        html += `</div>`; // Cerrar contenedor de hijos de raíz
         html += '</div>'; // Cerrar pyramid-container
         
         nodeVisualization.innerHTML = html;
@@ -1734,7 +1701,7 @@
         document.getElementById('children_root').classList.add('visible');
         
         // Configurar eventos para los nodos
-        setupNodeEvents(levels, data);
+        setupNodeEvents();
         
       } catch (e) {
         console.error("Error al actualizar la visualización:", e);
@@ -1742,76 +1709,159 @@
       }
     }
     
-    // Función para configurar eventos de nodos
-    function setupNodeEvents(levels, data) {
-      document.querySelectorAll('.pyramid-node').forEach(node => {
-        node.addEventListener('click', function() {
-          const nodeId = this.getAttribute('data-id');
+    // Función recursiva unificada que maneja cualquier nivel de la jerarquía
+    function renderNodesRecursively(items, parentId, html, level) {
+      if (!Array.isArray(items)) return html;
+      
+      // Clases de nodos basadas en el nivel (cíclico)
+      const nodeClasses = ['main', 'category', 'subcategory', 'example'];
+      const nodeClass = nodeClasses[level % nodeClasses.length];
+      
+      items.forEach((item, index) => {
+        const nodeId = `node_${level}_${parentId}_${index}`;
+        
+        if (typeof item === 'object') {
+          // El item es un objeto con clave y posibles hijos
+          const itemName = Object.keys(item)[0];
+          const children = item[itemName];
           
-          // Si es el nodo raíz, ya tiene los hijos mostrados
-          if (nodeId === 'root') return;
+          // Renderizar este nodo
+          html += `
+            <div class="node-group">
+              <div class="pyramid-node ${nodeClass}" tabindex="0" data-parent="${parentId}" data-id="${nodeId}">
+                ${itemName}
+              </div>
+            </div>`;
           
-          // Encontrar los datos de este nodo
-          let nodeData = null;
-          let nodeIndex = -1;
-          
-          // Buscar el nodo en level 1 (categorías)
-          if (levels[1]) {
-            nodeIndex = levels[1].findIndex(n => n.id === nodeId);
-            if (nodeIndex >= 0) {
-              nodeData = levels[1][nodeIndex];
-            }
+          // Si tiene hijos, crear el contenedor y procesarlos recursivamente
+          if (children && (Array.isArray(children) || typeof children === 'object')) {
+            html += `<div class="children-container" id="children_${nodeId}">`;
+            html = renderNodesRecursively(
+              Array.isArray(children) ? children : [children], 
+              nodeId, 
+              html, 
+              level + 1
+            );
+            html += `</div>`;
           }
+        } else {
+          // El item es un valor simple (string, número, etc.)
+          html += `
+            <div class="node-group">
+              <div class="pyramid-node ${nodeClass}" tabindex="0" data-parent="${parentId}" data-id="${nodeId}">
+                ${item}
+              </div>
+            </div>`;
+        }
+      });
+      
+      return html;
+    }
+    
+    // Función para procesar recursivamente niveles más profundos
+    function processDeepLevels(items, parentId, htmlString, level, indexPrefix) {
+      if (!Array.isArray(items)) return htmlString;
+      
+      // Determinar la clase según el nivel
+      let nodeClass;
+      switch (level % 4) {
+        case 0: nodeClass = 'main'; break;
+        case 1: nodeClass = 'category'; break;
+        case 2: nodeClass = 'subcategory'; break;
+        case 3: nodeClass = 'example'; break;
+      }
+      
+      items.forEach((item, index) => {
+        const itemId = `level${level}_${indexPrefix}_${index}`;
+        
+        if (typeof item === 'object') {
+          const itemName = Object.keys(item)[0];
+          const subItems = item[itemName];
           
-          if (!nodeData) return;
+          htmlString += `
+            <div class="node-group">
+              <div class="pyramid-node ${nodeClass}" tabindex="0" data-parent="${parentId}" data-id="${itemId}">
+                ${itemName}
+              </div>
+            </div>`;
           
-          // Obtener los hijos de este nodo desde los datos
-          const rootKey = Object.keys(data)[0];
-          const categories = data[rootKey];
+          // Añadir contenedor para el siguiente nivel
+          htmlString += `<div class="children-container" id="children_${itemId}">`;
           
-          if (Array.isArray(categories) && nodeIndex >= 0) {
-            const categoryObj = categories[nodeIndex];
-            const categoryName = Object.keys(categoryObj)[0];
-            const examples = categoryObj[categoryName];
-            
-            // Ver si ya existe un contenedor de hijos
-            let childrenContainer = document.getElementById(`children_${nodeId}`);
-            
-            // Si no existe, crearlo
-            if (!childrenContainer) {
-              childrenContainer = document.createElement('div');
-              childrenContainer.id = `children_${nodeId}`;
-              childrenContainer.className = 'children-container';
-              
-              // Añadir línea de conexión
-              childrenContainer.innerHTML = `
-                <div class="connection-line vertical-line" 
-                    style="left: 50%; top: -20px; height: 20px;"></div>`;
-              
-              // Añadir los nodos hijos
-              if (Array.isArray(examples)) {
-                examples.forEach((example, index) => {
-                  // Detectar si es "[object Object]" para darle estilo diferente
-                  const isObjectNotation = example === "[object Object]";
-                  const nodeClass = isObjectNotation ? "object-notation" : "example";
-                  
-                  childrenContainer.innerHTML += `
-                    <div class="pyramid-node ${nodeClass}" tabindex="0" 
-                         data-parent="${nodeId}" data-id="example_${nodeIndex}_${index}">
-                      ${example}
-                    </div>`;
-                });
-              }
-              
-              // Añadir el contenedor después del nodo actual
-              this.parentNode.insertBefore(childrenContainer, this.nextSibling);
-            }
-            
-            // Mostrar/ocultar el contenedor de hijos
+          // Procesar recursivamente el siguiente nivel
+          processDeepLevels(subItems, itemId, htmlString, level + 1, `${indexPrefix}_${index}`);
+          
+          htmlString += `</div>`; // Cerrar contenedor de nivel
+        } else {
+          // Item es un string simple
+          htmlString += `
+            <div class="node-group">
+              <div class="pyramid-node ${nodeClass}" tabindex="0" data-parent="${parentId}" data-id="${itemId}">
+                ${item}
+              </div>
+            </div>`;
+        }
+      });
+      
+      return htmlString;
+    }
+    
+    // Función mejorada para configurar eventos de nodos
+    function setupNodeEvents() {
+      document.querySelectorAll('.pyramid-node').forEach(node => {
+        const nodeId = node.getAttribute('data-id');
+        const childrenContainer = document.getElementById(`children_${nodeId}`);
+        
+        // Marcar nodos que tienen hijos
+        if (childrenContainer) {
+          node.classList.add('has-children');
+          node.classList.add('collapsed');
+        }
+        
+        // Evento de clic
+        node.addEventListener('click', function(e) {
+          e.stopPropagation();
+          
+          // Remover la clase 'focused' de todos los nodos
+          document.querySelectorAll('.pyramid-node.focused').forEach(n => {
+            n.classList.remove('focused');
+          });
+          
+          // Añadir la clase 'focused' a este nodo
+          this.classList.add('focused');
+          currentFocusedNode = this;
+          
+          // Actualizar visualización de nodos y panel de información
+          updateNodesVisualState(this.getAttribute('data-id'));
+          updateNodeInfo(this);
+        });
+        
+        // Evento de doble clic para expandir/colapsar
+        node.addEventListener('dblclick', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (childrenContainer) {
+            // Alternar visibilidad del contenedor de hijos
             childrenContainer.classList.toggle('visible');
+            
+            // Actualizar clase del nodo
+            if (childrenContainer.classList.contains('visible')) {
+              this.classList.remove('collapsed');
+              this.classList.add('expanded');
+            } else {
+              this.classList.remove('expanded');
+              this.classList.add('collapsed');
+            }
           }
         });
+        
+        // Configurar eventos de arrastre y otros eventos
+        // ... (mantener los eventos de teclado y arrastre existentes)
       });
+      
+      // Configurar navegación con teclado
+      setupKeyboardNavigation();
     }
     
     // Función para dibujar líneas de conexión entre nodos
