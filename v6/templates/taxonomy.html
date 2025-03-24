@@ -1541,6 +1541,60 @@
     .color-3 { color: #80c5cf; }         /* Variación más clara */
     .color-4 { color: #3d8591; }         /* Variación aún más oscura */
     .color-5 { color: #9ad2da; }         /* Variación aún más clara */
+
+    /* Nuevos estilos para el scroll infinito */
+    .pyramid-container {
+      min-height: 100%;
+      height: auto;
+      padding-bottom: 100px; /* Espacio adicional al final */
+      overflow-y: visible;
+    }
+    
+    .nodes-container {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      padding-bottom: 250px; /* Espacio adicional para scroll */
+    }
+    
+    /* Mejorar la visibilidad de los nodos expandidos */
+    .children-container.visible {
+      opacity: 1;
+      max-height: none; /* Eliminar límite de altura para permitir expansión completa */
+      height: auto;
+      overflow: visible;
+      transition: opacity 0.3s ease;
+    }
+    
+    /* Asegurar que los niveles se expandan correctamente */
+    .pyramid-level {
+      width: 100%;
+      height: auto;
+      margin-bottom: 40px; /* Aumentar espacio entre niveles */
+      overflow: visible;
+    }
+    
+    /* Indicador de scroll */
+    .scroll-indicator {
+      position: fixed;
+      bottom: 50px;
+      right: 20px;
+      background-color: var(--primary);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    
+    .scroll-indicator.visible {
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -4637,7 +4691,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 15rem;  /* Añadido espacio inferior */
+    margin-bottom: 3rem;  /* Añadido espacio inferior */
     padding-bottom: 2rem; /* Padding adicional */
     border-bottom: 1px solid rgba(101, 184, 196, 0.2); /* Línea separadora sutil */
   }
