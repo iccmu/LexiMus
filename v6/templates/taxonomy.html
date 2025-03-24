@@ -370,30 +370,31 @@
     
     /* Contenedor para los hijos de un nodo */
     .children-container {
-      display: none;
-      margin-top: 15px;
-      padding: 10px;
-      background-color: rgba(0,0,0,0.05);
-      border-radius: 8px;
-      max-width: 300px;
-      overflow-y: auto;
+      display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 10px;
+      gap: 15px;
+      padding-left: 50px; /* Aumentar el espacio a la izquierda para que los hijos aparezcan más a la derecha */
+      margin-top: 15px;
+      position: relative;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
     }
     
     .children-container.visible {
-      display: flex;
-      animation: fadeIn 0.3s ease;
+      opacity: 1;
+      max-height: 1000px; /* Valor alto para permitir animación */
+      margin-top: 0;
     }
     
     /* Estilos para nodos colapsados/expandidos */
     .pyramid-node.collapsed::after {
       content: "▶";
       position: absolute;
-      bottom: 2px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 50%;
+      right: 5px;
+      transform: translateY(-50%);
       font-size: 10px;
       opacity: 0.7;
     }
@@ -401,9 +402,9 @@
     .pyramid-node.expanded::after {
       content: "▼";
       position: absolute;
-      bottom: 2px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 50%;
+      right: 5px;
+      transform: translateY(-50%);
       font-size: 10px;
       opacity: 0.7;
     }
@@ -424,6 +425,11 @@
       outline: none;
       background: var(--surface);
       border: 1px solid var(--border);
+      
+      /* Añadir estas propiedades para centrar el texto vertical y horizontalmente */
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     
     .pyramid-node.dragging {
@@ -1651,7 +1657,7 @@
       return jsyaml.dump(jsonObj);
     }
     
-    // Función para generar la visualización de nodos
+    // Función simplificada para generar la visualización de nodos en árbol vertical
     function updateNodeVisualization(data) {
       const nodeVisualization = document.getElementById('node-visualization');
       
@@ -1667,158 +1673,203 @@
         const rootKey = Object.keys(data)[0];
         console.log("Clave raíz detectada:", rootKey);
         
-        // Estructura para organizar los nodos por niveles - ahora dinámica
+        // Estructura para organizar los nodos por niveles
         const levels = [
-          [{ text: rootKey, type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz dinámica
-          [], // Nivel 1: Categorías
-          []  // Nivel 2: Ejemplos
+          [{ text: rootKey, type: 'main', parent: null, id: 'root' }], // Nivel 0: Raíz
         ];
         
-        // Procesar categorías (nivel 1) - ahora usando la clave raíz dinámica
+        // Procesar categorías (nivel 1)
         const categories = data[rootKey];
         if (Array.isArray(categories)) {
+          const level1 = [];
           categories.forEach((categoryObj, catIndex) => {
             const categoryName = Object.keys(categoryObj)[0];
-            levels[1].push({
+            level1.push({
               text: categoryName,
               type: 'category',
               parent: 'root',
               id: `cat_${catIndex}`
             });
+          });
+          levels.push(level1);
+        }
+        
+        // Generar HTML para la visualización vertical
+        let html = '<div class="pyramid-container">';
+        
+        // El nodo raíz
+        html += `
+          <div class="pyramid-level level-0">
+            <div class="pyramid-node main" tabindex="0" data-id="root">
+              ${rootKey}
+            </div>
+            <div class="children-container" id="children_root">`;
+        
+        // Primera línea vertical desde la raíz
+        html += `<div class="connection-line vertical-line" 
+                      style="left: 50%; top: -30px; height: 30px;"></div>`;
+        
+        // Si hay categorías, mostrarlas
+        if (levels[1] && levels[1].length) {
+          levels[1].forEach((node, index) => {
+            // Detectar si es "[object Object]" para darle estilo diferente
+            const isObjectNotation = node.text === "[object Object]";
+            const nodeClass = isObjectNotation ? "object-notation" : "category";
             
-            // Procesar ejemplos (nivel 2)
-            const examples = categoryObj[categoryName];
-            if (Array.isArray(examples)) {
-              examples.forEach((example, ejIndex) => {
-                levels[2].push({
-                  text: example,
-                  type: 'example',
-                  parent: `cat_${catIndex}`,
-                  id: `example_${catIndex}_${ejIndex}`
-                });
-              });
-            }
+            html += `
+              <div class="pyramid-node ${nodeClass}" tabindex="0" 
+                   data-parent="root" data-id="${node.id}">
+                ${node.text}
+              </div>`;
           });
         }
         
-        console.log("Niveles generados:", levels);
+        html += `</div>`; // Cerrar children-container
+        html += `</div>`; // Cerrar pyramid-level
+        html += '</div>'; // Cerrar pyramid-container
         
-        // Generar HTML para la visualización
-        let html = '<div class="pyramid-container">';
-        
-        // Para cada nivel (excepto el último que se manejará de forma especial)
-        for (let levelIndex = 0; levelIndex < levels.length - 1; levelIndex++) {
-          const level = levels[levelIndex];
-          
-          if (level.length > 0) {
-            html += `<div class="pyramid-level" data-level="${levelIndex}">`;
-            
-            // Agrupar nodos por padre
-            const nodesByParent = {};
-            level.forEach(node => {
-              const parentId = node.parent || 'null';
-              if (!nodesByParent[parentId]) {
-                nodesByParent[parentId] = [];
-              }
-              nodesByParent[parentId].push(node);
-            });
-            
-            // Para cada grupo de nodos con el mismo padre
-            const possibleParents = Object.keys(nodesByParent);
-            possibleParents.forEach(parentId => {
-              const children = nodesByParent[parentId] || [];
-              
-              children.forEach((node, nodeIndex) => {
-                const nodeType = node.type;
-                const parentAttr = node.parent ? `data-parent="${node.parent}"` : 'data-parent="null"';
-                const hasChildren = levels[levelIndex + 1].some(child => child.parent === node.id);
-                const collapseClass = hasChildren ? 'collapsed' : '';
-                
-                // Crear un grupo para el nodo y sus posibles hijos
-                html += `<div class="node-group" data-node-id="${node.id}">`;
-                
-                // El nodo principal
-                html += `<div class="pyramid-node ${nodeType} ${collapseClass}" tabindex="0" 
-                             data-row="${levelIndex}" data-col="${nodeIndex}" 
-                             ${parentAttr} data-id="${node.id}" draggable="true">
-                          ${node.text}
-                        </div>`;
-                
-                // Si es el último nivel antes de los ejemplos, añadir contenedor para ejemplos
-                if (levelIndex === levels.length - 2) {
-                  // Obtener los ejemplos para este nodo
-                  const examples = levels[levelIndex + 1].filter(example => example.parent === node.id);
-                  
-                  if (examples.length > 0) {
-                    // Contenedor para ejemplos (inicialmente oculto)
-                    html += `<div class="children-container" id="children_${node.id}" data-total-children="${examples.length}" data-visible-start="0">`;
-                    
-                    // Mostrar todos los ejemplos, pero solo los primeros N visibles inicialmente
-                    examples.forEach((example, exIndex) => {
-                      const isVisible = exIndex < config.maxVisibleChildren;
-                      html += `<div class="pyramid-node ${example.type} ${isVisible ? '' : 'hidden'}" tabindex="0" 
-                                   data-row="${levelIndex + 1}" data-col="${exIndex}" 
-                                   data-parent="${node.id}" data-id="${example.id}" data-index="${exIndex}">
-                                ${example.text}
-                              </div>`;
-                    });
-                    
-                    // Añadir controles de navegación si hay más de maxVisibleChildren
-                    if (examples.length > config.maxVisibleChildren) {
-                      html += `<div class="children-navigation">
-                                <button class="nav-prev" disabled>▲</button>
-                                <span class="nav-indicator">1-${config.maxVisibleChildren} de ${examples.length}</span>
-                                <button class="nav-next">▼</button>
-                              </div>`;
-                    }
-                    
-                    html += '</div>'; // Cerrar contenedor de ejemplos
-                  }
-                }
-                
-                html += '</div>'; // Cerrar grupo de nodo
-              });
-            });
-            
-            html += '</div>'; // Cerrar nivel
-          }
-        }
-        
-        html += '</div>'; // Cerrar contenedor principal
         nodeVisualization.innerHTML = html;
         
-        console.log("HTML generado:", html);
-        
-        // Después de generar el HTML y antes de configurar eventos
-        // Ajustar el ancho del contenedor para usar todo el espacio disponible
-        const nodesContainer = document.getElementById('nodes-container');
-        const mainContent = document.querySelector('.main-content');
-        
-        if (nodesContainer && mainContent) {
-          // Asegurar que el contenedor de nodos use todo el ancho disponible
-          nodesContainer.style.width = '100%';
-          
-          // Forzar un reflow para que los cambios surtan efecto
-          nodesContainer.offsetHeight;
-        }
+        // Mostrar automáticamente los hijos del nodo raíz
+        document.getElementById('children_root').classList.add('visible');
         
         // Configurar eventos para los nodos
-        setupNodeEvents();
-        
-        // Configurar navegación con teclado
-        setupKeyboardNavigation();
-        
-        // Configurar controles de navegación para contenedores de hijos
-        setupChildrenNavigation();
-        
-        // Mostrar indicadores de navegación si es necesario
-        checkForOverflow();
+        setupNodeEvents(levels, data);
         
       } catch (e) {
         console.error("Error al actualizar la visualización:", e);
         nodeVisualization.innerHTML = '<p>Error al generar la visualización. Verifica el formato de los datos.</p>';
       }
     }
+    
+    // Función para configurar eventos de nodos
+    function setupNodeEvents(levels, data) {
+      document.querySelectorAll('.pyramid-node').forEach(node => {
+        node.addEventListener('click', function() {
+          const nodeId = this.getAttribute('data-id');
+          
+          // Si es el nodo raíz, ya tiene los hijos mostrados
+          if (nodeId === 'root') return;
+          
+          // Encontrar los datos de este nodo
+          let nodeData = null;
+          let nodeIndex = -1;
+          
+          // Buscar el nodo en level 1 (categorías)
+          if (levels[1]) {
+            nodeIndex = levels[1].findIndex(n => n.id === nodeId);
+            if (nodeIndex >= 0) {
+              nodeData = levels[1][nodeIndex];
+            }
+          }
+          
+          if (!nodeData) return;
+          
+          // Obtener los hijos de este nodo desde los datos
+          const rootKey = Object.keys(data)[0];
+          const categories = data[rootKey];
+          
+          if (Array.isArray(categories) && nodeIndex >= 0) {
+            const categoryObj = categories[nodeIndex];
+            const categoryName = Object.keys(categoryObj)[0];
+            const examples = categoryObj[categoryName];
+            
+            // Ver si ya existe un contenedor de hijos
+            let childrenContainer = document.getElementById(`children_${nodeId}`);
+            
+            // Si no existe, crearlo
+            if (!childrenContainer) {
+              childrenContainer = document.createElement('div');
+              childrenContainer.id = `children_${nodeId}`;
+              childrenContainer.className = 'children-container';
+              
+              // Añadir línea de conexión
+              childrenContainer.innerHTML = `
+                <div class="connection-line vertical-line" 
+                    style="left: 50%; top: -20px; height: 20px;"></div>`;
+              
+              // Añadir los nodos hijos
+              if (Array.isArray(examples)) {
+                examples.forEach((example, index) => {
+                  // Detectar si es "[object Object]" para darle estilo diferente
+                  const isObjectNotation = example === "[object Object]";
+                  const nodeClass = isObjectNotation ? "object-notation" : "example";
+                  
+                  childrenContainer.innerHTML += `
+                    <div class="pyramid-node ${nodeClass}" tabindex="0" 
+                         data-parent="${nodeId}" data-id="example_${nodeIndex}_${index}">
+                      ${example}
+                    </div>`;
+                });
+              }
+              
+              // Añadir el contenedor después del nodo actual
+              this.parentNode.insertBefore(childrenContainer, this.nextSibling);
+            }
+            
+            // Mostrar/ocultar el contenedor de hijos
+            childrenContainer.classList.toggle('visible');
+          }
+        });
+      });
+    }
+    
+    // Función para dibujar líneas de conexión entre nodos
+    function drawConnectionLines() {
+      const svg = document.querySelector('.connection-lines');
+      if (!svg) return;
+      
+      // Limpiar líneas existentes
+      svg.innerHTML = '';
+      
+      // Obtener todos los nodos expandidos
+      const expandedNodes = document.querySelectorAll('.pyramid-node.expanded');
+      
+      expandedNodes.forEach(node => {
+        const nodeId = node.getAttribute('data-id');
+        const childrenContainer = document.getElementById(`children_${nodeId}`);
+        
+        if (childrenContainer && childrenContainer.classList.contains('visible')) {
+          const childNodes = childrenContainer.querySelectorAll('.pyramid-node');
+          
+          // Calcular posiciones
+          const parentRect = node.getBoundingClientRect();
+          const containerRect = document.querySelector('.pyramid-container').getBoundingClientRect();
+          
+          // Punto de inicio (desde el lado derecho del nodo padre)
+          const startX = parentRect.right - containerRect.left;
+          const startY = parentRect.top + parentRect.height/2 - containerRect.top;
+          
+          childNodes.forEach(childNode => {
+            const childRect = childNode.getBoundingClientRect();
+            
+            // Punto final (en el lado izquierdo del nodo hijo)
+            const endX = childRect.left - containerRect.left;
+            const endY = childRect.top + childRect.height/2 - containerRect.top;
+            
+            // Crear la curva Bezier
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            // Calcular puntos de control para una curva suave
+            const controlX = startX + (endX - startX) / 2;
+            
+            // Definir la ruta de la curva
+            const d = `M ${startX} ${startY} 
+                       C ${controlX} ${startY}, ${controlX} ${endY}, ${endX} ${endY}`;
+            
+            path.setAttribute('d', d);
+            path.setAttribute('class', 'connection-line');
+            
+            svg.appendChild(path);
+          });
+        }
+      });
+    }
+    
+    // Ajustar evento de redimensionamiento para redibujar las líneas
+    window.addEventListener('resize', function() {
+      setTimeout(drawConnectionLines, 100);
+    });
     
     // Función para configurar los controles de navegación en contenedores de hijos
     function setupChildrenNavigation() {
