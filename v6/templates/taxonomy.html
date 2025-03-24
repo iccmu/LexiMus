@@ -1556,7 +1556,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       scroll-behavior: smooth;
-      padding-bottom: 250px; /* Espacio adicional para scroll */
+      padding-bottom: 50px; /* Espacio adicional para scroll */
     }
     
     /* Mejorar la visibilidad de los nodos expandidos */
@@ -1594,6 +1594,27 @@
     
     .scroll-indicator.visible {
       opacity: 0.8;
+    }
+
+    /* Añadir margen inferior adicional para el último nodo */
+    .nodes-container {
+      padding-bottom: 10px; /* Reducido de 200px a 100px */
+    }
+
+    .pyramid-container {
+      margin-bottom: auto; /* Mantener margen automático */
+      min-height: calc(100vh - 300px); /* Garantizar altura mínima para todo el contenido */
+    }
+
+    /* Asegurar que el último nodo siempre tenga espacio suficiente */
+    .pyramid-node:last-child {
+      margin-bottom: 10px; /* Reducido de 150px a 50px */
+    }
+
+    /* También ajustar el contenedor de la visualización completa */
+    #node-visualization {
+      padding-bottom: 80px; /* Reducido de 200px a 80px */
+      min-height: 100%;
     }
   </style>
 </head>
@@ -1862,10 +1883,11 @@
     
     // Función mejorada para configurar eventos de nodos
     function setupNodeEvents() {
-      document.querySelectorAll('.pyramid-node').forEach(node => {
-        const nodeId = node.getAttribute('data-id');
-        const childrenContainer = document.getElementById(`children_${nodeId}`);
-        
+      let currentFocusedNode = null;
+      
+      const nodes = document.querySelectorAll('.pyramid-node');
+      
+      nodes.forEach(node => {
         // Marcar nodos que tienen hijos
         if (childrenContainer) {
           node.classList.add('has-children');
@@ -1888,6 +1910,16 @@
           // Actualizar visualización de nodos y panel de información
           updateNodesVisualState(this.getAttribute('data-id'));
           updateNodeInfo(this);
+          
+          // Modificar el comportamiento de scrollIntoView para que sea menos restrictivo
+          this.scrollIntoView({ 
+            block: 'nearest', // Cambiar de 'center' a 'nearest'
+            inline: 'nearest', 
+            behavior: 'smooth' 
+          });
+          
+          // Mostrar brevemente un indicador de que se puede hacer scroll libremente
+          showScrollFreedomIndicator();
         });
         
         // Evento de doble clic para expandir/colapsar
@@ -2476,7 +2508,15 @@
           updateNodesVisualState(this.getAttribute('data-id'));
           updateNodeInfo(this);
           
-          this.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+          // Modificar el comportamiento de scrollIntoView para que sea menos restrictivo
+          this.scrollIntoView({ 
+            block: 'nearest', // Cambiar de 'center' a 'nearest'
+            inline: 'nearest', 
+            behavior: 'smooth' 
+          });
+          
+          // Mostrar brevemente un indicador de que se puede hacer scroll libremente
+          showScrollFreedomIndicator();
         });
 
         // Añadir evento de doble clic
@@ -4747,6 +4787,43 @@
 
     // Cambiar colores cada 3 segundos
     setInterval(randomizeColors, 3000);
+  });
+  </script>
+
+  <script>
+  // ... existing code ...
+
+  // Nueva función para mostrar un indicador breve de libertad de scroll
+  function showScrollFreedomIndicator() {
+    // Crear el indicador si no existe
+    let indicator = document.querySelector('.scroll-indicator');
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.className = 'scroll-indicator';
+      indicator.textContent = 'Puedes desplazarte libremente con la rueda';
+      document.body.appendChild(indicator);
+    }
+    
+    // Mostrar el indicador
+    indicator.classList.add('visible');
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+      indicator.classList.remove('visible');
+    }, 3000);
+  }
+
+  // Asegurar que no haya eventos que bloqueen el scroll natural
+  document.addEventListener('DOMContentLoaded', function() {
+    // Remover cualquier evento de rueda que pudiera interferir
+    const nodesContainer = document.getElementById('nodes-container');
+    if (nodesContainer) {
+      // Garantizar que el scroll de la rueda no sea cancelado
+      nodesContainer.addEventListener('wheel', function(e) {
+        // Permitir que el evento de la rueda se propague naturalmente
+        e.stopPropagation();
+      }, { passive: true });
+    }
   });
   </script>
 </body>
