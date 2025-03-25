@@ -60,39 +60,35 @@
       overflow: hidden;
       transition: width 0.3s ease;
       flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+      position: fixed;
+      top: 150px; /* Aumentar para dejar espacio al logo */
+      left: 0;
+      bottom: 40px;
+      background-color: var(--surface);
+      border-right: 1px solid var(--border);
+      z-index: 10;
       padding: 0;
     }
     
-    .YAML-JSON.visible {
-      width: 40%;
-      min-width: 300px;
-      max-width: 500px;
-      padding: 0 15px;
-      border-right: 1px solid var(--border);
-    }
-    
     .YAML-JSON h2 {
-      margin-top: 10px;
-      margin-bottom: 10px;
+      margin: 10px;
+      padding: 0;
+      font-size: 1.2em;
     }
     
     /* Textarea de datos */
     #data-display {
       width: 100%;
-      flex: 1;
-      min-height: 200px;
-      font-family: monospace;
+      height: calc(100% - 80px); /* Ajustar altura considerando el header y el botón */
+      border: none;
       padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
+      margin: 0;
+      font-family: monospace;
+      font-size: 14px;
+      background-color: var(--surface);
+      color: var(--text);
       resize: none;
-      white-space: pre;
-      overflow-x: auto;
-      overflow-wrap: normal;
-      margin-bottom: 10px;
+      box-sizing: border-box;
     }
     
     /* Contenedor de nodos */
@@ -156,8 +152,8 @@
     }
     
     #update-visualization {
-      margin-top: 5px;
-      margin-bottom: 15px;
+      margin: 10px;
+      width: calc(100% - 20px); /* Ajustar ancho considerando los márgenes */
     }
     
     /* Prevenir superposición de elementos */
@@ -263,20 +259,6 @@
       overflow: hidden;
       height: 100vh; /* Asegurar que ocupe toda la altura de la ventana */
       margin-top: 20px; /* Añadir espacio después de la barra superior */
-    }
-    
-    /* Ajustar el panel YAML para que comience debajo del logo */
-    .YAML-JSON {
-      position: absolute;
-      left: 0;
-      top: 120px; /* Altura suficiente para el logo */
-      height: calc(100% - 120px); /* Ajustar la altura restando el espacio del logo */
-      width: 0;
-      overflow: hidden;
-      transition: width 0.3s ease;
-      flex-shrink: 0;
-      background-color: white;
-      z-index: 10;
     }
     
     .YAML-JSON.visible {
