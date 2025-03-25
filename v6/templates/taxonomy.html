@@ -907,16 +907,15 @@
       overflow: hidden;
       transition: width 0.3s ease;
       flex-shrink: 0;
-      position: absolute;
+      position: fixed;
+      top: 120px; /* Alinear con el panel YAML */
       right: 0;
-      top: 0;
-      bottom: 0;
+      bottom: 40px;
       background-color: var(--surface);
       z-index: 100;
       box-shadow: -2px 0 10px var(--shadow);
-      padding: 0;
-      box-sizing: border-box;
       border-left: 1px solid var(--border);
+      overflow-y: auto;
     }
     
     .props-panel.visible {
@@ -950,6 +949,7 @@
       color: white;
     }
     
+    /* Ajustar el contenedor principal cuando el panel está visible */
     .main-content.props-panel-visible .nodes-container {
       margin-right: 40%;
       width: 60%;
@@ -964,8 +964,9 @@
     
     /* Estilos para la visualización del árbol de propiedades */
     #props-tree {
-      overflow: auto;
-      max-height: calc(100% - 50px);
+      height: 100%;
+      overflow-y: auto;
+      padding-bottom: 20px; /* Espacio extra al final */
     }
     
     .prop-item {
