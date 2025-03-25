@@ -2675,8 +2675,9 @@
         node.addEventListener('dragstart', (e) => {
           e.stopPropagation();
           node.classList.add('dragging');
+          console.log('Iniciando arrastre del nodo:', node.getAttribute('data-id')); // Debug
           e.dataTransfer.setData('text/plain', node.getAttribute('data-id'));
-          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.effectAllowed = 'copy';
         });
 
         node.addEventListener('dragend', () => {
@@ -4399,6 +4400,37 @@
       const container = document.getElementById('ascii-container');
       const customCursor = document.getElementById('custom-cursor');
       
+      // Asegurarnos de que el contenedor puede recibir drops
+      container.setAttribute('droppable', 'true');
+      
+      // Eventos de arrastre mejorados
+      container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        container.classList.add('drop-target');
+      });
+
+      container.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        container.classList.remove('drop-target');
+      });
+
+      container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        container.classList.remove('drop-target');
+        
+        console.log('Drop detectado en el logo'); // Debug
+        
+        const nodeId = e.dataTransfer.getData('text/plain');
+        console.log('Node ID recibido:', nodeId); // Debug
+        
+        if (nodeId) {
+          showTaxonomyButton(nodeId);
+        }
+      });
+      
       // Actualizar el contenido del cursor personalizado con espacios adecuados
       customCursor.innerHTML = `
               @@@@@@@      
@@ -4827,6 +4859,203 @@
       }, { passive: true });
     }
   });
+  </script>
+
+  <script>
+  // ... existing code ...
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Añadir evento de drop al contenedor del logo
+    const logoContainer = document.getElementById('ascii-container');
+    
+    logoContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      logoContainer.classList.add('drop-target');
+    });
+
+    logoContainer.addEventListener('dragleave', () => {
+      logoContainer.classList.remove('drop-target');
+    });
+
+    logoContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      logoContainer.classList.remove('drop-target');
+      
+      const nodeId = e.dataTransfer.getData('text/plain');
+      if (nodeId) {
+        showTaxonomyButton(nodeId);
+      }
+    });
+  });
+
+  // Función para mostrar el botón de visualización
+  function showTaxonomyButton(nodeId) {
+    console.log('Mostrando botón para nodo:', nodeId); // Debug
+    
+    // Eliminar botón existente si hay uno
+    const existingButton = document.getElementById('view-taxonomy-btn');
+    if (existingButton) {
+      existingButton.remove();
+    }
+
+    // Crear y mostrar el botón
+    const button = document.createElement('button');
+    button.id = 'view-taxonomy-btn';
+    button.textContent = 'Visualizar taxonomía';
+    button.className = 'taxonomy-button';
+    
+    // Posicionar el botón cerca del logo
+    const logoContainer = document.getElementById('ascii-container');
+    logoContainer.appendChild(button);
+
+    // Añadir evento de clic
+    button.addEventListener('click', () => {
+      console.log('Botón clickeado para nodo:', nodeId); // Debug
+      generateAndShowTaxonomy(nodeId);
+    });
+
+    // Animar entrada del botón
+    requestAnimationFrame(() => {
+      button.classList.add('visible');
+    });
+  }
+
+  // Función para generar y mostrar el YAML
+  function generateAndShowTaxonomy(nodeId) {
+    console.log('Generando taxonomía para nodo:', nodeId); // Debug
+    
+    const node = document.querySelector(`.pyramid-node[data-id="${nodeId}"]`);
+    if (!node) {
+      console.error('No se encontró el nodo:', nodeId);
+      return;
+    }
+
+    // Generar el YAML desde el nodo
+    const yamlData = generateYamlFromNode(node);
+    console.log('YAML generado:', yamlData); // Debug
+
+    // Actualizar el panel YAML
+    const dataDisplay = document.getElementById('data-display');
+    const formatSelector = document.getElementById('format-selector');
+    
+    // Asegurar que estamos en formato YAML
+    formatSelector.value = 'yaml';
+    dataDisplay.value = yamlData;
+
+    // Mostrar el panel si está oculto
+    const panel = document.getElementById('yaml-json-panel');
+    if (!panel.classList.contains('visible')) {
+      document.getElementById('toggle-panel').click();
+    }
+  }
+
+  // Función mejorada para generar YAML desde un nodo
+  function generateYamlFromNode(node, level = 0) {
+    const indent = '  '.repeat(level);
+    const nodeName = node.textContent.trim();
+    const nodeId = node.getAttribute('data-id');
+    let yaml = '';
+
+    // Si es el primer nivel, añadir el título principal
+    if (level === 0) {
+      yaml += `${nodeName}:\n`;
+    } else {
+      // Para los demás niveles, usar formato de lista
+      yaml += `${indent}- ${nodeName}`;
+    }
+
+    // Verificar si tiene hijos
+    const children = document.querySelectorAll(`.pyramid-node[data-parent="${nodeId}"]`);
+    
+    // Si tiene metadatos, propiedades o hijos, añadir dos puntos y nueva línea
+    const hasMetadata = nodeMetadata[nodeId] && Object.keys(nodeMetadata[nodeId]).length > 0;
+    const hasProperties = nodeProperties[nodeId] && nodeProperties[nodeId].length > 0;
+    
+    if ((hasMetadata || hasProperties || children.length > 0) && level > 0) {
+      yaml += ':\n';
+    } else if (level > 0) {
+      yaml += '\n';
+    }
+
+    // Añadir metadatos si existen
+    if (hasMetadata) {
+      yaml += `${indent}  metadata:\n`;
+      for (const [key, value] of Object.entries(nodeMetadata[nodeId])) {
+        yaml += `${indent}    ${key}: ${value}\n`;
+      }
+    }
+
+    // Añadir propiedades si existen
+    if (hasProperties) {
+      yaml += `${indent}  properties:\n`;
+      nodeProperties[nodeId].forEach(prop => {
+        yaml += `${indent}    - ${prop.fullPath}: ${prop.value || ''}\n`;
+      });
+    }
+
+    // Procesar nodos hijos
+    if (children.length > 0) {
+      // No añadir "children:" explícitamente, los hijos van directamente como lista
+      children.forEach(child => {
+        yaml += generateYamlFromNode(child, level + 1);
+      });
+    }
+
+    return yaml;
+  }
+
+  // Estilos CSS mejorados
+  const taxonomyStyles = `
+    .taxonomy-button {
+      position: absolute;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      padding: 10px 20px;
+      background-color: #65b8c4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .taxonomy-button.visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .taxonomy-button:hover {
+      background-color: #4a8f99;
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    #ascii-container {
+      position: relative;
+      min-height: 100px;
+    }
+
+    #ascii-container.drop-target {
+      outline: 2px dashed #65b8c4;
+      outline-offset: 4px;
+      background-color: rgba(101, 184, 196, 0.1);
+    }
+  `;
+
+  // Asegurarnos de que los estilos se aplican
+  if (!document.getElementById('taxonomy-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'taxonomy-styles';
+    styleElement.textContent = taxonomyStyles;
+    document.head.appendChild(styleElement);
+  }
+
+  // ... existing code ...
   </script>
 </body>
 </html>
