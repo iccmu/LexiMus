@@ -1911,15 +1911,17 @@
           updateNodesVisualState(this.getAttribute('data-id'));
           updateNodeInfo(this);
           
-          // Modificar el comportamiento de scrollIntoView para que sea menos restrictivo
-          this.scrollIntoView({ 
-            block: 'nearest', // Cambiar de 'center' a 'nearest'
-            inline: 'nearest', 
-            behavior: 'smooth' 
-          });
-          
-          // Mostrar brevemente un indicador de que se puede hacer scroll libremente
-          showScrollFreedomIndicator();
+          // Si no es el nodo raíz, hacer scroll con offset
+          if (!this.closest('.level-0')) {
+            const offset = 170; // Ajustar según necesidad (altura de la barra superior + espacio extra)
+            const elementPosition = this.getBoundingClientRect().top;
+            const offsetPosition = elementPosition - offset;
+            
+            window.scrollBy({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
         });
         
         // Evento de doble clic para expandir/colapsar
