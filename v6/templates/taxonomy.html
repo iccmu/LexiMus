@@ -97,11 +97,10 @@
     
     /* Contenedor de nodos */
     .nodes-container {
-      flex: 1;
+      padding-left: 20px; /* Añadir un pequeño padding a la izquierda */
+      flex-grow: 1;
       overflow: auto;
       transition: margin-left 0.3s ease;
-      padding: 15px;
-      width: 100%; /* Asegurar que use todo el ancho disponible */
     }
     
     /* Panel de información inferior */
@@ -350,6 +349,8 @@
       padding-bottom: 50px; /* Espacio extra al final para mejor scroll */
       box-sizing: border-box;
       max-width: 100%; /* Asegurar que use todo el ancho disponible */
+      align-items: flex-start; /* Asegurar que los elementos internos se alineen a la izquierda */
+      margin-left: 0; /* Eliminar cualquier margen izquierdo */
     }
     
     .pyramid-level {
@@ -1615,6 +1616,22 @@
     #node-visualization {
       padding-bottom: 80px; /* Reducido de 200px a 80px */
       min-height: 100%;
+    }
+
+    .pyramid-level.level-0 {
+      justify-content: flex-start; /* Alinear el nodo raíz a la izquierda */
+      padding-left: 20px; /* Añadir el mismo padding que los otros niveles */
+    }
+
+    .pyramid-container {
+      align-items: flex-start;
+      margin-left: 0;
+      width: 100%;
+    }
+
+    /* Asegurar que el primer nivel también se alinee a la izquierda */
+    .pyramid-level:first-child {
+      justify-content: flex-start;
     }
   </style>
 </head>
