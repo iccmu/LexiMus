@@ -5476,7 +5476,7 @@
       newContainer.className = 'json-example-container';
       newContainer.innerHTML = `
         <div class="json-example-header">
-          <h3>Datos en formato JSON</h3>
+          <h3>Exportar a OWL (formato JSON)</h3>
           <button class="close-json-btn" onclick="closeJsonExample()">×</button>
         </div>
         <pre class="json-content">${escapeHtml(jsonContent)}</pre>
@@ -5501,7 +5501,7 @@
       // Actualizar el título
       const headerElement = jsonContainer.querySelector('.json-example-header h3');
       if (headerElement) {
-        headerElement.textContent = 'Datos en formato JSON';
+        headerElement.textContent = 'Exportar a OWL (formato JSON)';
       }
     }
 
@@ -5608,11 +5608,14 @@
       cargarDatosBtn.parentNode.replaceChild(newBtn, cargarDatosBtn);
       cargarDatosBtn = newBtn;
       
+      // Cambiar el texto del botón
+      cargarDatosBtn.textContent = 'Exportar a OWL';
+      
       // Añadir el nuevo evento
       cargarDatosBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Botón "Cargar Datos" clickeado');
+        console.log('Botón "Exportar a OWL" clickeado');
         showJsonExample();
       });
     } else {
@@ -5620,7 +5623,7 @@
       
       // Crear un botón nuevo si no se encuentra
       const newButton = document.createElement('button');
-      newButton.textContent = 'Cargar Datos';
+      newButton.textContent = 'Exportar a OWL';
       newButton.className = 'button-primary load-data-btn';
       newButton.style.margin = '10px';
       newButton.addEventListener('click', showJsonExample);
@@ -5637,7 +5640,7 @@
       for (const container of possibleContainers) {
         if (container) {
           container.appendChild(newButton);
-          console.log('Botón "Cargar Datos" creado y añadido a:', container);
+          console.log('Botón "Exportar a OWL" creado y añadido a:', container);
           break;
         }
       }
@@ -5650,7 +5653,7 @@
       jsonContainer.className = 'json-example-container';
       jsonContainer.innerHTML = `
         <div class="json-example-header">
-          <h3>Datos en formato JSON</h3>
+          <h3>Exportar a OWL (formato JSON)</h3>
           <button class="close-json-btn" onclick="closeJsonExample()">×</button>
         </div>
         <pre class="json-content">Cargando...</pre>
