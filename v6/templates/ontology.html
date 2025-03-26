@@ -16,9 +16,15 @@
       min-height: 100vh;
     }
     
-    .text-container {
-      width: 80%;
-      max-width: 800px;
+    .panels-container {
+      width: 95%;
+      display: flex;
+      gap: 20px;
+      max-width: 1600px;
+    }
+    
+    .panel {
+      flex: 1;
       background-color: #ffffff;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -27,79 +33,176 @@
     
     textarea {
       width: 100%;
-      height: 300px;
+      height: 500px;
       padding: 10px;
       border: 1px solid #e2e8f0;
       border-radius: 4px;
       font-family: monospace;
       resize: vertical;
+      font-size: 14px;
+      line-height: 1.5;
     }
     
     h1 {
       color: #008a9b;
       margin-top: 0;
+      font-size: 1.5em;
+    }
+    
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .copy-button {
+      padding: 6px 12px;
+      background-color: #008a9b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background-color 0.2s;
+    }
+    
+    .copy-button:hover {
+      background-color: #006d7a;
+    }
+    
+    .update-button {
+      margin-top: 20px;
+      padding: 8px 16px;
+      background-color: #008a9b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .update-button:hover {
+      background-color: #006d7a;
+    }
+    
+    .success-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .success-message.show {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <div class="text-container">
-    <h1>Ontología</h1>
-    <textarea placeholder="Ingrese texto aquí..."></textarea>
+  <div class="panels-container">
+    <div class="panel">
+      <div class="panel-header">
+        <h1>YAML</h1>
+        <button class="copy-button" data-target="yaml">Copiar YAML</button>
+      </div>
+      <textarea id="yaml-editor" placeholder="Ingrese YAML aquí..."></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h1>JSON</h1>
+        <button class="copy-button" data-target="json">Copiar JSON</button>
+      </div>
+      <textarea id="json-editor" placeholder="JSON equivalente..." readonly></textarea>
+    </div>
   </div>
+  <button class="update-button">Actualizar desde principal</button>
+  <div class="success-message">¡Copiado al portapapeles!</div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const textarea = document.querySelector('textarea');
+      const yamlEditor = document.getElementById('yaml-editor');
+      const jsonEditor = document.getElementById('json-editor');
+      const updateButton = document.querySelector('.update-button');
+      const successMessage = document.querySelector('.success-message');
+      
+      // Función para convertir YAML a JSON
+      function updateJSON() {
+        try {
+          const yamlContent = yamlEditor.value;
+          const jsonObj = jsyaml.load(yamlContent);
+          jsonEditor.value = JSON.stringify(jsonObj, null, 2);
+        } catch (e) {
+          jsonEditor.value = '// Error al convertir YAML a JSON:\n' + e.message;
+        }
+      }
+      
+      // Función para mostrar mensaje de éxito
+      function showSuccessMessage() {
+        successMessage.classList.add('show');
+        setTimeout(() => {
+          successMessage.classList.remove('show');
+        }, 2000);
+      }
+      
+      // Función para copiar al portapapeles
+      function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+          showSuccessMessage();
+        }).catch(err => {
+          console.error('Error al copiar:', err);
+        });
+      }
+      
+      // Eventos de copia
+      document.querySelectorAll('.copy-button').forEach(button => {
+        button.addEventListener('click', () => {
+          const target = button.getAttribute('data-target');
+          const content = target === 'yaml' ? yamlEditor.value : jsonEditor.value;
+          copyToClipboard(content);
+        });
+      });
+      
+      // Evento de cambio en el YAML
+      yamlEditor.addEventListener('input', updateJSON);
       
       // Función para cargar el YAML actual desde taxonomy.html
       function loadCurrentYaml() {
-        // Obtener el YAML del elemento data-display de taxonomy.html
         const opener = window.opener;
         if (opener) {
           const yamlContent = opener.document.getElementById('data-display').value;
-          
-          // Si hay contenido, mostrarlo en el textarea
           if (yamlContent) {
-            textarea.value = yamlContent;
+            yamlEditor.value = yamlContent;
+            updateJSON();
           } else {
-            textarea.value = '# No se encontró contenido YAML';
+            yamlEditor.value = '# No se encontró contenido YAML';
           }
         } else {
-          textarea.value = '# No se pudo acceder a la ventana principal';
+          yamlEditor.value = '# No se pudo acceder a la ventana principal';
         }
       }
-
+      
       // Cargar el YAML inicial
       loadCurrentYaml();
-
+      
       // Actualizar cuando haya cambios en el panel YAML de taxonomy.html
       window.addEventListener('storage', function(e) {
         if (e.key === 'currentYaml') {
-          textarea.value = e.newValue;
+          yamlEditor.value = e.newValue;
+          updateJSON();
         }
       });
-
-      // Añadir botón de actualización
-      const updateButton = document.createElement('button');
-      updateButton.textContent = 'Actualizar';
-      updateButton.style.marginTop = '10px';
-      updateButton.style.padding = '8px 16px';
-      updateButton.style.backgroundColor = '#008a9b';
-      updateButton.style.color = 'white';
-      updateButton.style.border = 'none';
-      updateButton.style.borderRadius = '4px';
-      updateButton.style.cursor = 'pointer';
       
-      updateButton.addEventListener('mouseover', () => {
-        updateButton.style.backgroundColor = '#006d7a';
-      });
-      
-      updateButton.addEventListener('mouseout', () => {
-        updateButton.style.backgroundColor = '#008a9b';
-      });
-      
-      updateButton.onclick = loadCurrentYaml;
-      document.querySelector('.text-container').appendChild(updateButton);
+      // Evento del botón de actualización
+      updateButton.addEventListener('click', loadCurrentYaml);
     });
   </script>
 </body>
