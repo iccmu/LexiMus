@@ -1732,48 +1732,153 @@
       return jsyaml.dump(jsonObj);
     }
     
-    // Función mejorada para generar la visualización de nodos en árbol vertical
+    // Función para crear un nodo raíz fijo que siempre sea visible
+    function createFixedRootNode() {
+      const rootNodeId = "node_0_0_0"; // ID consistente para el nodo raíz
+      
+      // Crear el contenedor para el nodo raíz fijo
+      const fixedRootContainer = document.createElement('div');
+      fixedRootContainer.id = 'fixed-root-container';
+      fixedRootContainer.className = 'fixed-root-container';
+      
+      // Obtener el texto del nodo raíz original
+      const originalRootNode = document.querySelector(`.pyramid-node[data-id="${rootNodeId}"]`);
+      const rootText = originalRootNode ? originalRootNode.textContent.trim() : 'Nodo Raíz';
+      
+      // Crear el nodo raíz fijo
+      fixedRootContainer.innerHTML = `
+        <div class="fixed-root-node" data-id="${rootNodeId}">
+          <span class="root-icon">⬆</span>
+          <span class="root-text">${rootText}</span>
+        </div>
+      `;
+      
+      // Añadir evento de clic para navegar al nodo raíz
+      fixedRootContainer.querySelector('.fixed-root-node').addEventListener('click', function() {
+        const rootNode = document.querySelector(`.pyramid-node[data-id="${rootNodeId}"]`);
+        if (rootNode) {
+          rootNode.click();
+          
+          // Hacer scroll al nodo raíz
+          rootNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+      
+      // Añadir el contenedor al DOM
+      document.body.insertBefore(fixedRootContainer, document.body.firstChild);
+      
+      // Añadir estilos CSS para el nodo raíz fijo
+      const style = document.createElement('style');
+      style.textContent = `
+        .fixed-root-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          background-color: var(--primary, #65b8c4);
+          color: white;
+          z-index: 1000;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+          padding: 5px 0;
+          text-align: center;
+        }
+        
+        .fixed-root-node {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 5px 15px;
+          border-radius: 20px;
+          background-color: rgba(255, 255, 255, 0.2);
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        
+        .fixed-root-node:hover {
+          background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .root-icon {
+          margin-right: 8px;
+          font-size: 18px;
+        }
+        
+        .root-text {
+          font-weight: bold;
+          font-size: 16px;
+        }
+        
+        /* Ajustar el contenido principal para que no quede debajo del nodo raíz fijo */
+        body {
+          padding-top: 40px;
+        }
+        
+        /* Hacer que el nodo raíz fijo sea más visible cuando se está navegando */
+        .pyramid-node.focused:not([data-id="${rootNodeId}"]) ~ #fixed-root-container .fixed-root-node {
+          animation: gentle-pulse 2s infinite;
+        }
+        
+        @keyframes gentle-pulse {
+          0% { background-color: rgba(255, 255, 255, 0.2); }
+          50% { background-color: rgba(255, 255, 255, 0.4); }
+          100% { background-color: rgba(255, 255, 255, 0.2); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // Modificar la función updateNodeVisualization para asegurarse de que el nodo raíz siempre esté visible
     function updateNodeVisualization(data) {
       const nodeVisualization = document.getElementById('node-visualization');
       
       try {
         if (typeof data === 'string') {
-          // Si es YAML, convertir a JSON
           data = yamlToJson(data);
         }
         
         console.log("Datos procesados:", data);
         
-        // Obtener dinámicamente la clave principal (primer nivel)
         const rootKey = Object.keys(data)[0];
         console.log("Clave raíz detectada:", rootKey);
         
         // Generar HTML para la visualización vertical
         let html = '<div class="pyramid-container">';
         
-        // El nodo raíz
+        const rootNodeId = "node_0_0_0";
         html += `
           <div class="pyramid-level level-0">
             <div class="node-group">
-              <div class="pyramid-node main" tabindex="0" data-id="root">
+              <div class="pyramid-node main always-visible" tabindex="0" data-id="${rootNodeId}" data-parent="null">
                 ${rootKey}
               </div>
             </div>
           </div>`;
         
-        // Crear el contenedor para los hijos del nodo raíz
-        html += `<div class="children-container" id="children_root">`;
-        
-        // Procesar hijos del nodo raíz usando la función recursiva
-        html = renderNodesRecursively(data[rootKey], "root", html, 1);
-        
-        html += `</div>`; // Cerrar contenedor de hijos de raíz
-        html += '</div>'; // Cerrar pyramid-container
+        html += `<div class="children-container" id="children_${rootNodeId}">`;
+        html = renderNodesRecursively(data[rootKey], rootNodeId, html, 1);
+        html += `</div></div>`;
         
         nodeVisualization.innerHTML = html;
         
         // Mostrar automáticamente los hijos del nodo raíz
-        document.getElementById('children_root').classList.add('visible');
+        document.getElementById(`children_${rootNodeId}`).classList.add('visible');
+        
+        // Actualizar el texto del nodo raíz fijo si existe
+        const fixedRootNode = document.querySelector('.fixed-root-node');
+        if (fixedRootNode) {
+          const rootTextElement = fixedRootNode.querySelector('.root-text');
+          if (rootTextElement) {
+            rootTextElement.textContent = rootKey;
+          }
+          // Limpiar el breadcrumb al actualizar
+          const breadcrumb = fixedRootNode.querySelector('.root-breadcrumb');
+          if (breadcrumb) {
+            breadcrumb.textContent = '';
+          }
+        } else {
+          // Si no existe el nodo fijo, crearlo
+          setTimeout(createFixedRootNode, 100);
+        }
         
         // Configurar eventos para los nodos
         setupNodeEvents();
@@ -2233,12 +2338,21 @@
     function updateNodesVisualState(focusedNodeId = null) {
       // Obtener todos los nodos
       const allNodes = document.querySelectorAll('.pyramid-node');
+      const rootNodeId = "node_0_0_0"; // Usar el mismo ID consistente
       
-      // Primero, restablecer todos los nodos a su estado minimizado
+      // Primero, restablecer todos los nodos a su estado minimizado, excepto los que tienen la clase always-visible
       allNodes.forEach(node => {
         node.classList.remove('focused', 'active-child');
-        node.classList.add('minimized');
+        if (!node.classList.contains('always-visible')) {
+          node.classList.add('minimized');
+        }
       });
+      
+      // Asegurarse de que el nodo raíz siempre sea visible
+      const rootNode = document.querySelector(`.pyramid-node[data-id="${rootNodeId}"]`);
+      if (rootNode) {
+        rootNode.classList.remove('minimized');
+      }
       
       if (focusedNodeId) {
         // Obtener el nodo enfocado
@@ -2277,13 +2391,12 @@
         }
       } else {
         // Si no hay nodo enfocado, mostrar solo el nodo raíz y sus hijos directos
-        const rootNode = document.querySelector('.pyramid-node[data-id="root"]');
         if (rootNode) {
           rootNode.classList.remove('minimized');
           rootNode.classList.add('focused');
           
           // Mostrar solo los hijos directos del nodo raíz
-          const rootChildren = document.querySelectorAll('.pyramid-node[data-parent="root"]');
+          const rootChildren = document.querySelectorAll(`.pyramid-node[data-parent="${rootNodeId}"]`);
           rootChildren.forEach(child => {
             child.classList.remove('minimized');
             child.classList.add('active-child');
@@ -2730,6 +2843,7 @@
     function setupKeyboardNavigation() {
       let currentFocusedNode = null;
       const nodes = document.querySelectorAll('.pyramid-node');
+      const rootNodeId = "node_0_0_0"; // Usar el mismo ID consistente
       
       document.addEventListener('keydown', function(e) {
         if (document.activeElement === document.getElementById('data-display')) {
@@ -2751,6 +2865,16 @@
         const parentId = currentFocusedNode.getAttribute('data-parent');
         const childrenContainer = document.getElementById(`children_${nodeId}`);
         const hasChildren = childrenContainer !== null;
+        
+        // Añadir tecla Home para volver al nodo raíz desde cualquier lugar
+        if (e.key === 'Home') {
+          e.preventDefault();
+          const rootNode = document.querySelector(`.pyramid-node[data-id="${rootNodeId}"]`);
+          if (rootNode) {
+            rootNode.click();
+          }
+          return;
+        }
         
         switch (e.key) {
           case 'ArrowDown':
@@ -4661,6 +4785,11 @@
 
   // Añadir evento para abrir la ventana de ontología
   document.getElementById('open-ontology').addEventListener('click', function() {
+    // Guardar el YAML actual en localStorage
+    const currentYaml = document.getElementById('data-display').value;
+    localStorage.setItem('currentYaml', currentYaml);
+    
+    // Abrir la ventana de ontología
     window.open('ontology.html', '_blank', 'width=900,height=600');
   });
 
@@ -4834,7 +4963,7 @@
     if (!indicator) {
       indicator = document.createElement('div');
       indicator.className = 'scroll-indicator';
-      indicator.textContent = 'Puedes desplazarte libremente con la rueda';
+      indicator.textContent = 'Cargando...';
       document.body.appendChild(indicator);
     }
     
@@ -5057,5 +5186,46 @@
 
   // ... existing code ...
   </script>
+
+  <script>
+  document.addEventListener('click', function(e) {
+    // Verificar si el clic fue fuera del nodo y del panel de información
+    const clickedNode = e.target.closest('.pyramid-node');
+    const clickedInfoPanel = e.target.closest('#info-panel');
+    const clickedMetadataEditor = e.target.closest('#metadata-editor');
+    
+    // Si no se hizo clic en un nodo, en el panel de información o en el editor de metadatos
+    if (!clickedNode && !clickedInfoPanel && !clickedMetadataEditor) {
+      // Obtener el panel de información
+      const infoPanel = document.getElementById('info-panel');
+      
+      // Si el panel está expandido, retraerlo
+      if (infoPanel && infoPanel.classList.contains('expanded')) {
+        // Remover la clase focused del nodo actualmente seleccionado
+        const focusedNode = document.querySelector('.pyramid-node.focused');
+        if (focusedNode) {
+          focusedNode.classList.remove('focused');
+        }
+        
+        // Retraer el panel
+        infoPanel.classList.remove('expanded');
+        
+        // Limpiar el contenido del panel
+        document.getElementById('node-id').textContent = '-';
+        document.getElementById('node-text').textContent = '-';
+        document.getElementById('node-parent').textContent = '-';
+        document.getElementById('properties-list').innerHTML = '';
+        document.getElementById('metadata-cards').innerHTML = '';
+        
+        // Si el editor de metadatos está visible, ocultarlo
+        const metadataEditor = document.getElementById('metadata-editor');
+        if (metadataEditor && metadataEditor.classList.contains('visible')) {
+          metadataEditor.classList.remove('visible');
+        }
+      }
+    }
+  });
+  </script>
+
 </body>
 </html>

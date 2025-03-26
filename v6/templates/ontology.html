@@ -51,90 +51,54 @@
     document.addEventListener('DOMContentLoaded', function() {
       const textarea = document.querySelector('textarea');
       
-      // Función para cargar y procesar los datos de la taxonomía
-      function loadTaxonomyData() {
-        // Recuperar todos los datos del localStorage
-        const nodeMetadata = JSON.parse(localStorage.getItem('nodeMetadata') || '{}');
-        const nodeProperties = JSON.parse(localStorage.getItem('nodeProperties') || '{}');
-        const taxonomyData = JSON.parse(localStorage.getItem('taxonomyData') || '{}');
-
-        // Función recursiva para construir la estructura completa
-        function buildNodeStructure(node, nodeId) {
-          // Asegurar que tenemos un objeto de nodo válido
-          const nodeData = typeof node === 'string' ? { text: node } : node;
+      // Función para cargar el YAML actual desde taxonomy.html
+      function loadCurrentYaml() {
+        // Obtener el YAML del elemento data-display de taxonomy.html
+        const opener = window.opener;
+        if (opener) {
+          const yamlContent = opener.document.getElementById('data-display').value;
           
-          // Construir la estructura base del nodo
-          const structure = {
-            id: nodeId,
-            text: nodeData.text || nodeData,
-          };
-
-          // Añadir metadatos si existen
-          if (nodeMetadata[nodeId] && Object.keys(nodeMetadata[nodeId]).length > 0) {
-            structure.definitions = nodeMetadata[nodeId];
+          // Si hay contenido, mostrarlo en el textarea
+          if (yamlContent) {
+            textarea.value = yamlContent;
+          } else {
+            textarea.value = '# No se encontró contenido YAML';
           }
-
-          // Añadir propiedades si existen
-          if (nodeProperties[nodeId] && nodeProperties[nodeId].length > 0) {
-            structure.properties = nodeProperties[nodeId].map(prop => {
-              // Si la propiedad tiene una estructura compleja, la preservamos
-              if (typeof prop === 'object') {
-                return {
-                  id: prop.id,
-                  path: prop.path,
-                  value: prop.value
-                };
-              }
-              return prop;
-            });
-          }
-
-          // Procesar nodos hijos recursivamente
-          if (nodeData.children && nodeData.children.length > 0) {
-            structure.children = nodeData.children.map((child, index) => 
-              buildNodeStructure(child, `${nodeId}_${index}`)
-            );
-          }
-
-          return structure;
+        } else {
+          textarea.value = '# No se pudo acceder a la ventana principal';
         }
-
-        // Construir la estructura completa
-        const completeStructure = {
-          ontology: {
-            version: "1.0",
-            timestamp: new Date().toISOString(),
-            root: buildNodeStructure(taxonomyData, 'root')
-          }
-        };
-
-        // Convertir a YAML con opciones específicas para mejor legibilidad
-        const yamlOutput = jsyaml.dump(completeStructure, {
-          indent: 2,
-          lineWidth: -1,
-          noRefs: true,
-          sortKeys: false,
-          flowLevel: -1
-        });
-
-        // Mostrar en el textarea
-        textarea.value = yamlOutput;
       }
 
-      // Cargar los datos inicialmente
-      loadTaxonomyData();
+      // Cargar el YAML inicial
+      loadCurrentYaml();
 
-      // Actualizar cuando haya cambios en taxonomy.html
+      // Actualizar cuando haya cambios en el panel YAML de taxonomy.html
       window.addEventListener('storage', function(e) {
-        if (['nodeMetadata', 'nodeProperties', 'taxonomyData'].includes(e.key)) {
-          loadTaxonomyData();
+        if (e.key === 'currentYaml') {
+          textarea.value = e.newValue;
         }
       });
 
-      // Opcional: Añadir un botón para actualizar manualmente
+      // Añadir botón de actualización
       const updateButton = document.createElement('button');
-      updateButton.textContent = 'Actualizar Ontología';
-      updateButton.onclick = loadTaxonomyData;
+      updateButton.textContent = 'Actualizar';
+      updateButton.style.marginTop = '10px';
+      updateButton.style.padding = '8px 16px';
+      updateButton.style.backgroundColor = '#008a9b';
+      updateButton.style.color = 'white';
+      updateButton.style.border = 'none';
+      updateButton.style.borderRadius = '4px';
+      updateButton.style.cursor = 'pointer';
+      
+      updateButton.addEventListener('mouseover', () => {
+        updateButton.style.backgroundColor = '#006d7a';
+      });
+      
+      updateButton.addEventListener('mouseout', () => {
+        updateButton.style.backgroundColor = '#008a9b';
+      });
+      
+      updateButton.onclick = loadCurrentYaml;
       document.querySelector('.text-container').appendChild(updateButton);
     });
   </script>
