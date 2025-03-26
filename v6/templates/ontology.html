@@ -133,16 +133,156 @@
       const jsonEditor = document.getElementById('json-editor');
       const updateButton = document.querySelector('.update-button');
       const successMessage = document.querySelector('.success-message');
+      const toggleDefinitionsButton = document.createElement('button');
       
       // Función para convertir YAML a JSON
       function updateJSON() {
         try {
           const yamlContent = yamlEditor.value;
           const jsonObj = jsyaml.load(yamlContent);
+          
+          // Verificar si debemos incluir las definiciones
+          const includeDefinitions = toggleDefinitionsButton.dataset.includeDefinitions === 'true';
+          
+          if (includeDefinitions) {
+            // Función para preservar definiciones del YAML original
+            preserveDefinitionsFromYaml(yamlContent, jsonObj);
+          }
+          
           jsonEditor.value = JSON.stringify(jsonObj, null, 2);
         } catch (e) {
           jsonEditor.value = '// Error al convertir YAML a JSON:\n' + e.message;
         }
+      }
+      
+      // Función para preservar definiciones del YAML original
+      function preserveDefinitionsFromYaml(yamlContent, jsonObj) {
+        // Extraer las líneas del YAML
+        const lines = yamlContent.split('\n');
+        const metadataBlocks = [];
+        
+        // Buscar bloques de metadata en el YAML
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes('metadata:')) {
+            const indent = lines[i].indexOf('metadata:');
+            const block = {
+              nodePath: getNodePath(lines, i),
+              metadata: {}
+            };
+            
+            // Obtener todas las líneas de metadata (están más indentadas)
+            let j = i + 1;
+            while (j < lines.length && lines[j].trim() !== '' && lines[j].indexOf(lines[j].trim()) > indent) {
+              const line = lines[j].trim();
+              if (line.includes(':')) {
+                const [key, value] = line.split(':').map(s => s.trim());
+                block.metadata[key] = value;
+              }
+              j++;
+            }
+            
+            metadataBlocks.push(block);
+          }
+        }
+        
+        console.log("Bloques de metadata encontrados:", metadataBlocks);
+        
+        // Función para encontrar el camino del nodo
+        function getNodePath(lines, metadataLineIndex) {
+          const currentIndent = lines[metadataLineIndex].indexOf('metadata:');
+          let nodeLine = '';
+          
+          // Buscar la línea del nodo (es la línea anterior con menor indentación)
+          for (let i = metadataLineIndex - 1; i >= 0; i--) {
+            const line = lines[i];
+            if (line.trim() === '') continue;
+            
+            const lineIndent = line.indexOf(line.trim());
+            if (lineIndent < currentIndent) {
+              nodeLine = line;
+              break;
+            }
+          }
+          
+          // Extraer el nombre del nodo
+          let nodeName = '';
+          if (nodeLine.includes('-')) {
+            nodeName = nodeLine.split('-')[1].trim();
+            if (nodeName.endsWith(':')) {
+              nodeName = nodeName.slice(0, -1).trim();
+            }
+          } else if (nodeLine.includes(':')) {
+            nodeName = nodeLine.split(':')[0].trim();
+          }
+          
+          return nodeName;
+        }
+        
+        // Aplicar los metadatos al objeto JSON
+        function applyMetadataToJson(obj, metadataBlocks) {
+          if (!obj) return;
+          
+          // Si es un objeto
+          if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) {
+            for (const key in obj) {
+              // Buscar si hay metadata para este nodo
+              const matchingBlock = metadataBlocks.find(block => block.nodePath === key);
+              
+              if (matchingBlock) {
+                console.log(`Encontrado metadata para ${key}:`, matchingBlock.metadata);
+                
+                // Convertir el valor a un objeto con definiciones si es necesario
+                if (typeof obj[key] !== 'object' || obj[key] === null) {
+                  const originalValue = obj[key];
+                  obj[key] = { value: originalValue, definitions: {} };
+                } else if (!obj[key].definitions) {
+                  obj[key].definitions = {};
+                }
+                
+                // Añadir las definiciones
+                for (const metaKey in matchingBlock.metadata) {
+                  obj[key].definitions[metaKey] = matchingBlock.metadata[metaKey];
+                }
+              }
+              
+              // Procesar recursivamente
+              if (typeof obj[key] === 'object' && obj[key] !== null) {
+                applyMetadataToJson(obj[key], metadataBlocks);
+              }
+            }
+          } 
+          // Si es un array
+          else if (Array.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+              if (typeof obj[i] === 'string') {
+                // Buscar si hay metadata para este elemento
+                const matchingBlock = metadataBlocks.find(block => block.nodePath === obj[i]);
+                
+                if (matchingBlock) {
+                  console.log(`Encontrado metadata para ${obj[i]}:`, matchingBlock.metadata);
+                  
+                  // Convertir el string a un objeto con definiciones
+                  const newObj = { 
+                    value: obj[i],
+                    definitions: {}
+                  };
+                  
+                  // Añadir las definiciones
+                  for (const metaKey in matchingBlock.metadata) {
+                    newObj.definitions[metaKey] = matchingBlock.metadata[metaKey];
+                  }
+                  
+                  obj[i] = newObj;
+                }
+              } else if (typeof obj[i] === 'object' && obj[i] !== null) {
+                applyMetadataToJson(obj[i], metadataBlocks);
+              }
+            }
+          }
+        }
+        
+        // Aplicar los metadatos encontrados al objeto JSON
+        applyMetadataToJson(jsonObj, metadataBlocks);
       }
       
       // Función para mostrar mensaje de éxito
@@ -203,6 +343,26 @@
       
       // Evento del botón de actualización
       updateButton.addEventListener('click', loadCurrentYaml);
+      
+      // Añadir un botón para incluir/excluir definiciones
+      toggleDefinitionsButton.className = 'copy-button';
+      toggleDefinitionsButton.style.marginLeft = '10px';
+      toggleDefinitionsButton.textContent = 'Incluir definiciones';
+      toggleDefinitionsButton.dataset.includeDefinitions = 'true';
+      
+      // Insertar el botón después del botón de copiar JSON
+      const jsonHeader = document.querySelector('.panel:nth-child(2) .panel-header');
+      jsonHeader.appendChild(toggleDefinitionsButton);
+      
+      // Evento para alternar la inclusión de definiciones
+      toggleDefinitionsButton.addEventListener('click', function() {
+        const includeDefinitions = this.dataset.includeDefinitions === 'true';
+        this.dataset.includeDefinitions = !includeDefinitions;
+        this.textContent = includeDefinitions ? 'Excluir definiciones' : 'Incluir definiciones';
+        
+        // Actualizar el JSON
+        updateJSON();
+      });
     });
   </script>
 </body>

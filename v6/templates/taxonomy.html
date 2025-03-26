@@ -1626,7 +1626,7 @@
         <div id="custom-cursor">@@@@@@@@<br>@@<br>@@<br>@@<br>@@@@@@<br>@@<br>@@<br>@@<br>@@@@<br>@@@@@@@@@@</div>
       </div>
       <div class="controls">
-        <button id="load-data">Cargar Datos</button>
+        <button id="cargar-datos" class="boton-primary">Cargar Datos</button>
         <button id="open-ontology">Ontología</button>
         <select id="format-selector">
           <option value="yaml">YAML</option>
@@ -5225,6 +5225,330 @@
       }
     }
   });
+  </script>
+
+  <!-- Asegúrate de que el contenedor JSON exista en el HTML -->
+  <div id="json-example-container" class="json-example-container">
+    <div class="json-example-header">
+      <h3>Datos de ejemplo</h3>
+      <button class="close-json-btn" onclick="closeJsonExample()">×</button>
+    </div>
+    <pre class="json-content">
+{
+  "Los nombres de la música": {
+    "géneros": [
+      {
+        "nombre": "Rock",
+        "subgéneros": ["Rock alternativo", "Rock progresivo", "Hard rock"],
+        "representantes": ["The Beatles", "Queen", "Led Zeppelin"]
+      },
+      {
+        "nombre": "Jazz",
+        "subgéneros": ["Bebop", "Swing", "Fusion"],
+        "representantes": ["Miles Davis", "John Coltrane", "Ella Fitzgerald"]
+      },
+      {
+        "nombre": "Electrónica",
+        "subgéneros": ["Techno", "House", "Ambient"],
+        "representantes": ["Daft Punk", "Aphex Twin", "Brian Eno"]
+      }
+    ],
+    "instrumentos": [
+      "Guitarra", 
+      "Piano", 
+      "Batería", 
+      "Bajo", 
+      "Saxofón"
+    ]
+  }
+}
+    </pre>
+  </div>
+
+  <!-- Estilos para el contenedor JSON -->
+  <style>
+    /* Estilos para el contenedor JSON de ejemplo */
+    .json-example-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      width: 80%;
+      max-width: 800px;
+      max-height: 80vh;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .json-example-container.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .json-example-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background-color: var(--primary);
+      color: white;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+    
+    .json-example-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .close-json-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0 4px;
+      transition: transform 0.2s ease;
+    }
+    
+    .close-json-btn:hover {
+      transform: scale(1.2);
+      color: #ff9999;
+    }
+    
+    .close-json-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .json-content {
+      padding: 16px;
+      margin: 0;
+      overflow: auto;
+      background-color: var(--surface);
+      color: var(--text);
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      max-height: calc(80vh - 56px);
+    }
+  </style>
+
+  <!-- Asegúrate de que el script se ejecute después de que el DOM esté cargado -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Buscar el botón "Cargar Datos" de varias formas
+      let cargarDatosBtn = document.querySelector('.button-primary:not([id])');
+      
+      // Si no lo encontramos, intentamos otras opciones
+      if (!cargarDatosBtn) {
+        // Buscar por texto contenido
+        document.querySelectorAll('button').forEach(btn => {
+          if (btn.textContent.trim() === 'Cargar Datos') {
+            cargarDatosBtn = btn;
+          }
+        });
+      }
+      
+      // Si encontramos el botón, añadir el evento
+      if (cargarDatosBtn) {
+        console.log('Botón "Cargar Datos" encontrado', cargarDatosBtn);
+        
+        cargarDatosBtn.addEventListener('click', function() {
+          console.log('Botón "Cargar Datos" clickeado');
+          const jsonContainer = document.getElementById('json-example-container');
+          if (jsonContainer) {
+            console.log('Contenedor JSON encontrado, alternando visibilidad');
+            jsonContainer.classList.toggle('visible');
+          } else {
+            console.error('Contenedor JSON no encontrado');
+          }
+        });
+      } else {
+        console.error('No se pudo encontrar el botón "Cargar Datos"');
+        
+        // Como último recurso, añadimos listeners a todos los botones que parezcan ser el de "Cargar Datos"
+        document.querySelectorAll('button, .button, [role="button"]').forEach(btn => {
+          if (btn.textContent.includes('Cargar') || btn.textContent.includes('Datos') || 
+              btn.className.includes('cargar') || btn.className.includes('datos')) {
+            
+            btn.addEventListener('click', function() {
+              console.log('Posible botón de carga clickeado:', btn.textContent);
+              const jsonContainer = document.getElementById('json-example-container');
+              if (jsonContainer) {
+                jsonContainer.classList.toggle('visible');
+              }
+            });
+          }
+        });
+      }
+    });
+  </script>
+
+  <script>
+  // Función para cerrar el ejemplo JSON
+  function closeJsonExample() {
+    const jsonContainer = document.getElementById('json-example-container');
+    if (jsonContainer) {
+      jsonContainer.classList.remove('visible');
+    }
+  }
+
+  // También podemos cerrar al presionar Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeJsonExample();
+    }
+  });
+
+  // Cerrar al hacer clic fuera del contenedor
+  document.addEventListener('click', function(e) {
+    const jsonContainer = document.getElementById('json-example-container');
+    if (jsonContainer && jsonContainer.classList.contains('visible')) {
+      // Si el clic fue fuera del contenedor JSON
+      if (!e.target.closest('.json-example-container')) {
+        closeJsonExample();
+      }
+    }
+  });
+  </script>
+
+  <script>
+  // ... existing code ...
+
+  // Función para mostrar el ejemplo JSON
+  function showJsonExample() {
+    console.log('Intentando mostrar ejemplo JSON');
+    const jsonContainer = document.getElementById('json-example-container');
+    
+    if (!jsonContainer) {
+      console.error('Contenedor JSON no encontrado, creándolo dinámicamente');
+      // Crear el contenedor si no existe
+      const newContainer = document.createElement('div');
+      newContainer.id = 'json-example-container';
+      newContainer.className = 'json-example-container';
+      newContainer.innerHTML = `
+        <div class="json-example-header">
+          <h3>Datos de ejemplo</h3>
+          <button class="close-json-btn" onclick="closeJsonExample()">×</button>
+        </div>
+        <pre class="json-content">
+{
+  "Los nombres de la música": {
+    "géneros": [
+      {
+        "nombre": "Rock",
+        "subgéneros": ["Rock alternativo", "Rock progresivo", "Hard rock"],
+        "representantes": ["The Beatles", "Queen", "Led Zeppelin"]
+      },
+      {
+        "nombre": "Jazz",
+        "subgéneros": ["Bebop", "Swing", "Fusion"],
+        "representantes": ["Miles Davis", "John Coltrane", "Ella Fitzgerald"]
+      },
+      {
+        "nombre": "Electrónica",
+        "subgéneros": ["Techno", "House", "Ambient"],
+        "representantes": ["Daft Punk", "Aphex Twin", "Brian Eno"]
+      }
+    ],
+    "instrumentos": [
+      "Guitarra", 
+      "Piano", 
+      "Batería", 
+      "Bajo", 
+      "Saxofón"
+    ]
+  }
+}
+        </pre>
+      `;
+      document.body.appendChild(newContainer);
+      jsonContainer = newContainer;
+    }
+
+    // Asegurar que la ventana sea visible
+    requestAnimationFrame(() => {
+      jsonContainer.classList.add('visible');
+      console.log('Contenedor JSON hecho visible');
+    });
+  }
+
+  // Función para cerrar el ejemplo JSON
+  function closeJsonExample() {
+    console.log('Intentando cerrar ejemplo JSON');
+    const jsonContainer = document.getElementById('json-example-container');
+    if (jsonContainer) {
+      jsonContainer.classList.remove('visible');
+      console.log('Contenedor JSON ocultado');
+    }
+  }
+
+  // Inicializar los eventos cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando eventos');
+    
+    // Buscar el botón de varias formas
+    const possibleButtons = Array.from(document.querySelectorAll('button, .button, [role="button"]'))
+      .filter(btn => {
+        if (!btn) return false;
+        const text = (btn.textContent || '').toLowerCase().trim();
+        return text.includes('cargar') || text.includes('datos');
+      });
+
+    console.log('Botones encontrados:', possibleButtons);
+
+    if (possibleButtons.length > 0) {
+      const cargarDatosBtn = possibleButtons[0];
+      console.log('Botón "Cargar Datos" encontrado:', cargarDatosBtn);
+      
+      cargarDatosBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Botón "Cargar Datos" clickeado');
+        showJsonExample();
+      });
+    } else {
+      console.error('No se pudo encontrar el botón "Cargar Datos", creando uno nuevo');
+      
+      // Crear un nuevo botón si no se encuentra
+      const newButton = document.createElement('button');
+      newButton.textContent = 'Cargar Datos';
+      newButton.className = 'button-primary';
+      newButton.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        padding: 8px 16px;
+        background-color: var(--primary, #65b8c4);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      `;
+      
+      newButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showJsonExample();
+      });
+      
+      document.body.appendChild(newButton);
+    }
+  });
+
+  // ... rest of the existing code ...
   </script>
 
 </body>
