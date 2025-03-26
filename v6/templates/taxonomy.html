@@ -5429,89 +5429,186 @@
   // Función para mostrar el ejemplo JSON
   function showJsonExample() {
     console.log('Intentando mostrar ejemplo JSON');
-    const jsonContainer = document.getElementById('json-example-container');
+    
+    // Obtener el YAML actual del panel izquierdo
+    const dataDisplay = document.getElementById('data-display');
+    if (!dataDisplay) {
+      console.error('Elemento data-display no encontrado');
+      return;
+    }
+    
+    const yamlContent = dataDisplay.value || '';
+    console.log('YAML obtenido:', yamlContent.substring(0, 50) + '...');
+    
+    // Convertir YAML a JSON con manejo de errores robusto
+    let jsonContent = '';
+    try {
+      // Verificar que jsyaml esté disponible
+      if (typeof jsyaml === 'undefined') {
+        console.error('jsyaml no está definido');
+        throw new Error('La biblioteca js-yaml no está cargada');
+      }
+      
+      // Usar jsyaml para convertir YAML a objeto JavaScript
+      const yamlObject = jsyaml.load(yamlContent);
+      
+      // Verificar que el resultado sea un objeto válido
+      if (yamlObject === null || typeof yamlObject !== 'object') {
+        throw new Error('El YAML no se pudo convertir a un objeto válido');
+      }
+      
+      // Convertir el objeto a JSON con formato
+      jsonContent = JSON.stringify(yamlObject, null, 2);
+      console.log('YAML convertido a JSON correctamente');
+    } catch (error) {
+      console.error('Error al convertir YAML a JSON:', error);
+      jsonContent = `{\n  "error": "No se pudo convertir el YAML a JSON: ${error.message}"\n}`;
+    }
+    
+    // Buscar o crear el contenedor JSON
+    let jsonContainer = document.getElementById('json-example-container');
     
     if (!jsonContainer) {
-      console.error('Contenedor JSON no encontrado, creándolo dinámicamente');
+      console.log('Contenedor JSON no encontrado, creándolo dinámicamente');
       // Crear el contenedor si no existe
       const newContainer = document.createElement('div');
       newContainer.id = 'json-example-container';
       newContainer.className = 'json-example-container';
       newContainer.innerHTML = `
         <div class="json-example-header">
-          <h3>Datos de ejemplo</h3>
+          <h3>Datos en formato JSON</h3>
           <button class="close-json-btn" onclick="closeJsonExample()">×</button>
         </div>
-        <pre class="json-content">
-{
-  "Los nombres de la música": {
-    "géneros": [
-      {
-        "nombre": "Rock",
-        "subgéneros": ["Rock alternativo", "Rock progresivo", "Hard rock"],
-        "representantes": ["The Beatles", "Queen", "Led Zeppelin"]
-      },
-      {
-        "nombre": "Jazz",
-        "subgéneros": ["Bebop", "Swing", "Fusion"],
-        "representantes": ["Miles Davis", "John Coltrane", "Ella Fitzgerald"]
-      },
-      {
-        "nombre": "Electrónica",
-        "subgéneros": ["Techno", "House", "Ambient"],
-        "representantes": ["Daft Punk", "Aphex Twin", "Brian Eno"]
-      }
-    ],
-    "instrumentos": [
-      "Guitarra", 
-      "Piano", 
-      "Batería", 
-      "Bajo", 
-      "Saxofón"
-    ]
-  }
-}
-        </pre>
+        <pre class="json-content">${escapeHtml(jsonContent)}</pre>
       `;
       document.body.appendChild(newContainer);
       jsonContainer = newContainer;
+    } else {
+      console.log('Contenedor JSON encontrado, actualizando contenido');
+      // Actualizar el contenido JSON en el contenedor existente
+      const jsonContentElement = jsonContainer.querySelector('.json-content');
+      if (jsonContentElement) {
+        jsonContentElement.textContent = jsonContent;
+      } else {
+        console.error('Elemento .json-content no encontrado dentro del contenedor');
+        // Crear el elemento si no existe
+        const newContentElement = document.createElement('pre');
+        newContentElement.className = 'json-content';
+        newContentElement.textContent = jsonContent;
+        jsonContainer.appendChild(newContentElement);
+      }
+      
+      // Actualizar el título
+      const headerElement = jsonContainer.querySelector('.json-example-header h3');
+      if (headerElement) {
+        headerElement.textContent = 'Datos en formato JSON';
+      }
     }
 
-    // Asegurar que la ventana sea visible
-    requestAnimationFrame(() => {
+    // Asegurar que la ventana sea visible con múltiples intentos
+    try {
+      console.log('Intentando hacer visible el contenedor JSON');
+      jsonContainer.style.display = 'block';
+      jsonContainer.style.visibility = 'visible';
+      jsonContainer.style.opacity = '1';
       jsonContainer.classList.add('visible');
+      
+      // Forzar un reflow para asegurar que los cambios se apliquen
+      void jsonContainer.offsetWidth;
+      
       console.log('Contenedor JSON hecho visible');
-    });
-  }
-
-  // Función para cerrar el ejemplo JSON
-  function closeJsonExample() {
-    console.log('Intentando cerrar ejemplo JSON');
-    const jsonContainer = document.getElementById('json-example-container');
-    if (jsonContainer) {
-      jsonContainer.classList.remove('visible');
-      console.log('Contenedor JSON ocultado');
+    } catch (error) {
+      console.error('Error al hacer visible el contenedor JSON:', error);
     }
   }
 
-  // Inicializar los eventos cuando el DOM esté listo
+  // Función auxiliar para escapar HTML y prevenir inyección de código
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Función para cerrar el ejemplo JSON con manejo de errores
+  function closeJsonExample() {
+    try {
+      const jsonContainer = document.getElementById('json-example-container');
+      if (jsonContainer) {
+        jsonContainer.classList.remove('visible');
+        jsonContainer.style.opacity = '0';
+        
+        // Ocultar completamente después de la transición
+        setTimeout(() => {
+          jsonContainer.style.visibility = 'hidden';
+          jsonContainer.style.display = 'none';
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Error al cerrar el ejemplo JSON:', error);
+    }
+  }
+
+  // Configurar el botón de Cargar Datos cuando el DOM esté listo
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM cargado, inicializando eventos');
+    console.log('DOM cargado, configurando botón Cargar Datos');
     
-    // Buscar el botón de varias formas
-    const possibleButtons = Array.from(document.querySelectorAll('button, .button, [role="button"]'))
-      .filter(btn => {
-        if (!btn) return false;
-        const text = (btn.textContent || '').toLowerCase().trim();
-        return text.includes('cargar') || text.includes('datos');
+    // Intentar múltiples estrategias para encontrar el botón
+    const buttonSelectors = [
+      '.button-primary:not([id])',
+      'button:contains("Cargar Datos")',
+      '[role="button"]:contains("Cargar")',
+      '.button:contains("Datos")',
+      'button.load-data',
+      '#load-data-btn'
+    ];
+    
+    let cargarDatosBtn = null;
+    
+    // Probar cada selector
+    for (const selector of buttonSelectors) {
+      try {
+        if (selector.includes(':contains')) {
+          // Implementación manual de :contains ya que no es estándar
+          const [tagName, textToFind] = selector.split(':contains(');
+          const text = textToFind.replace(/["')]/g, '');
+          
+          document.querySelectorAll(tagName).forEach(el => {
+            if (el.textContent.includes(text) && !cargarDatosBtn) {
+              cargarDatosBtn = el;
+            }
+          });
+        } else {
+          const found = document.querySelector(selector);
+          if (found) {
+            cargarDatosBtn = found;
+            break;
+          }
+        }
+      } catch (error) {
+        console.warn(`Error con selector "${selector}":`, error);
+      }
+    }
+    
+    // Si aún no encontramos el botón, buscar por texto
+    if (!cargarDatosBtn) {
+      document.querySelectorAll('button, .button, [role="button"]').forEach(btn => {
+        const text = btn.textContent.trim().toLowerCase();
+        if (text === 'cargar datos' || text === 'cargar' || text === 'datos') {
+          cargarDatosBtn = btn;
+        }
       });
-
-    console.log('Botones encontrados:', possibleButtons);
-
-    if (possibleButtons.length > 0) {
-      const cargarDatosBtn = possibleButtons[0];
+    }
+    
+    // Si encontramos el botón, añadir el evento
+    if (cargarDatosBtn) {
       console.log('Botón "Cargar Datos" encontrado:', cargarDatosBtn);
       
+      // Eliminar eventos existentes para evitar duplicados
+      const newBtn = cargarDatosBtn.cloneNode(true);
+      cargarDatosBtn.parentNode.replaceChild(newBtn, cargarDatosBtn);
+      cargarDatosBtn = newBtn;
+      
+      // Añadir el nuevo evento
       cargarDatosBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -5521,34 +5618,72 @@
     } else {
       console.error('No se pudo encontrar el botón "Cargar Datos", creando uno nuevo');
       
-      // Crear un nuevo botón si no se encuentra
+      // Crear un botón nuevo si no se encuentra
       const newButton = document.createElement('button');
       newButton.textContent = 'Cargar Datos';
-      newButton.className = 'button-primary';
-      newButton.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1000;
-        padding: 8px 16px;
-        background-color: var(--primary, #65b8c4);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
+      newButton.className = 'button-primary load-data-btn';
+      newButton.style.margin = '10px';
+      newButton.addEventListener('click', showJsonExample);
+      
+      // Añadir el botón en un lugar visible
+      const possibleContainers = [
+        document.querySelector('.controls'),
+        document.querySelector('.toolbar'),
+        document.querySelector('header'),
+        document.querySelector('.main-content'),
+        document.body
+      ];
+      
+      for (const container of possibleContainers) {
+        if (container) {
+          container.appendChild(newButton);
+          console.log('Botón "Cargar Datos" creado y añadido a:', container);
+          break;
+        }
+      }
+    }
+    
+    // Crear el contenedor JSON si no existe
+    if (!document.getElementById('json-example-container')) {
+      const jsonContainer = document.createElement('div');
+      jsonContainer.id = 'json-example-container';
+      jsonContainer.className = 'json-example-container';
+      jsonContainer.innerHTML = `
+        <div class="json-example-header">
+          <h3>Datos en formato JSON</h3>
+          <button class="close-json-btn" onclick="closeJsonExample()">×</button>
+        </div>
+        <pre class="json-content">Cargando...</pre>
       `;
-      
-      newButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showJsonExample();
-      });
-      
-      document.body.appendChild(newButton);
+      document.body.appendChild(jsonContainer);
+      console.log('Contenedor JSON creado preventivamente');
     }
   });
 
-  // ... rest of the existing code ...
+  // También podemos cerrar al presionar Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeJsonExample();
+    }
+  });
+
+  // Cerrar al hacer clic fuera del contenedor
+  document.addEventListener('click', function(e) {
+    const jsonContainer = document.getElementById('json-example-container');
+    if (jsonContainer && 
+        (jsonContainer.classList.contains('visible') || 
+         jsonContainer.style.opacity === '1' || 
+         jsonContainer.style.display === 'block')) {
+      // Si el clic fue fuera del contenedor JSON
+      if (!e.target.closest('.json-example-container') && 
+          !e.target.closest('.load-data-btn') && 
+          !e.target.matches('button:contains("Cargar Datos")')) {
+        closeJsonExample();
+      }
+    }
+  });
+
+  // ... existing code ...
   </script>
 
 </body>
