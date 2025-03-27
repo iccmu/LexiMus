@@ -5398,33 +5398,25 @@
   <script>
   // Función para cerrar el ejemplo JSON
   function closeJsonExample() {
-    const jsonContainer = document.getElementById('json-example-container');
-    if (jsonContainer) {
-      jsonContainer.classList.remove('visible');
+    try {
+      console.log('Intentando cerrar la ventana JSON');
+      const jsonContainer = document.getElementById('json-example-container');
+      if (jsonContainer) {
+        // Primero cambiar la opacidad para la animación
+        jsonContainer.style.opacity = '0';
+        jsonContainer.classList.remove('visible');
+        
+        // Después de la transición, ocultar completamente
+        setTimeout(() => {
+          jsonContainer.style.visibility = 'hidden';
+          jsonContainer.style.display = 'none';
+          console.log('Ventana JSON cerrada');
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Error al cerrar el ejemplo JSON:', error);
     }
   }
-
-  // También podemos cerrar al presionar Escape
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeJsonExample();
-    }
-  });
-
-  // Cerrar al hacer clic fuera del contenedor
-  document.addEventListener('click', function(e) {
-    const jsonContainer = document.getElementById('json-example-container');
-    if (jsonContainer && jsonContainer.classList.contains('visible')) {
-      // Si el clic fue fuera del contenedor JSON
-      if (!e.target.closest('.json-example-container')) {
-        closeJsonExample();
-      }
-    }
-  });
-  </script>
-
-  <script>
-  // ... existing code ...
 
   // Función para mostrar el ejemplo JSON
   function showJsonExample() {
@@ -5465,6 +5457,13 @@
       jsonContent = `{\n  "error": "No se pudo convertir el YAML a JSON: ${error.message}"\n}`;
     }
     
+    // Función auxiliar para escapar HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
     // Buscar o crear el contenedor JSON
     let jsonContainer = document.getElementById('json-example-container');
     
@@ -5477,12 +5476,33 @@
       newContainer.innerHTML = `
         <div class="json-example-header">
           <h3>Exportar a OWL (formato JSON)</h3>
-          <button class="close-json-btn" onclick="closeJsonExample()">×</button>
+          <button class="close-json-btn">×</button>
         </div>
         <pre class="json-content">${escapeHtml(jsonContent)}</pre>
+        <div class="json-footer">
+          <button class="export-json-btn">CONFIRMAR</button>
+        </div>
       `;
       document.body.appendChild(newContainer);
       jsonContainer = newContainer;
+      
+      // Añadir evento al botón de cierre
+      const closeBtn = newContainer.querySelector('.close-json-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+          console.log('Botón de cierre clickeado');
+          closeJsonExample();
+        });
+      }
+      
+      // Añadir evento al botón de exportar
+      const exportBtn = newContainer.querySelector('.export-json-btn');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+          console.log('JSON exportado:', jsonContent);
+          alert('JSON exportado correctamente');
+        });
+      }
     } else {
       console.log('Contenedor JSON encontrado, actualizando contenido');
       // Actualizar el contenido JSON en el contenedor existente
@@ -5498,17 +5518,55 @@
         jsonContainer.appendChild(newContentElement);
       }
       
-      // Actualizar el título
-      const headerElement = jsonContainer.querySelector('.json-example-header h3');
-      if (headerElement) {
-        headerElement.textContent = 'Exportar a OWL (formato JSON)';
+      // Asegurar que existe el botón de cierre y su evento
+      let closeBtn = jsonContainer.querySelector('.close-json-btn');
+      if (closeBtn) {
+        // Eliminar eventos existentes
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        closeBtn = newCloseBtn;
+        
+        // Añadir el evento de cierre
+        closeBtn.addEventListener('click', function() {
+          console.log('Botón de cierre clickeado');
+          closeJsonExample();
+        });
       }
+      
+      // Asegurar que existe el footer
+      let footer = jsonContainer.querySelector('.json-footer');
+      if (!footer) {
+        footer = document.createElement('div');
+        footer.className = 'json-footer';
+        jsonContainer.appendChild(footer);
+      }
+      
+      // Asegurar que existe el botón de exportar
+      let exportBtn = jsonContainer.querySelector('.export-json-btn');
+      if (!exportBtn) {
+        exportBtn = document.createElement('button');
+        exportBtn.className = 'export-json-btn';
+        exportBtn.textContent = 'CONFIRMAR';
+        footer.appendChild(exportBtn);
+      } else {
+        // Actualizar el texto del botón existente
+        exportBtn.textContent = 'CONFIRMAR';
+      }
+      
+      // Actualizar el evento del botón
+      exportBtn.replaceWith(exportBtn.cloneNode(true));
+      exportBtn = jsonContainer.querySelector('.export-json-btn');
+      exportBtn.addEventListener('click', function() {
+        console.log('JSON exportado:', jsonContent);
+        alert('JSON exportado correctamente');
+      });
     }
 
     // Asegurar que la ventana sea visible con múltiples intentos
     try {
       console.log('Intentando hacer visible el contenedor JSON');
-      jsonContainer.style.display = 'block';
+      jsonContainer.style.display = 'flex';
+      jsonContainer.style.flexDirection = 'column';
       jsonContainer.style.visibility = 'visible';
       jsonContainer.style.opacity = '1';
       jsonContainer.classList.add('visible');
@@ -5522,43 +5580,27 @@
     }
   }
 
-  // Función auxiliar para escapar HTML y prevenir inyección de código
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // Función para cerrar el ejemplo JSON con manejo de errores
-  function closeJsonExample() {
-    try {
-      const jsonContainer = document.getElementById('json-example-container');
-      if (jsonContainer) {
-        jsonContainer.classList.remove('visible');
-        jsonContainer.style.opacity = '0';
-        
-        // Ocultar completamente después de la transición
-        setTimeout(() => {
-          jsonContainer.style.visibility = 'hidden';
-          jsonContainer.style.display = 'none';
-        }, 300);
-      }
-    } catch (error) {
-      console.error('Error al cerrar el ejemplo JSON:', error);
+  // También podemos cerrar al presionar Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeJsonExample();
     }
-  }
+  });
 
-  // Configurar el botón de Cargar Datos cuando el DOM esté listo
+  // ... existing code ...
+  </script>
+
+  <!-- Configurar el botón de Cargar Datos cuando el DOM esté listo -->
+  <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM cargado, configurando botón Cargar Datos');
     
     // Intentar múltiples estrategias para encontrar el botón
     const buttonSelectors = [
       '.button-primary:not([id])',
-      'button:contains("Cargar Datos")',
-      '[role="button"]:contains("Cargar")',
-      '.button:contains("Datos")',
-      'button.load-data',
+      'button',
+      '[role="button"]',
+      '.button',
       '#load-data-btn'
     ];
     
@@ -5567,23 +5609,16 @@
     // Probar cada selector
     for (const selector of buttonSelectors) {
       try {
-        if (selector.includes(':contains')) {
-          // Implementación manual de :contains ya que no es estándar
-          const [tagName, textToFind] = selector.split(':contains(');
-          const text = textToFind.replace(/["')]/g, '');
-          
-          document.querySelectorAll(tagName).forEach(el => {
-            if (el.textContent.includes(text) && !cargarDatosBtn) {
-              cargarDatosBtn = el;
-            }
-          });
-        } else {
-          const found = document.querySelector(selector);
-          if (found) {
-            cargarDatosBtn = found;
+        const elements = document.querySelectorAll(selector);
+        for (const el of elements) {
+          if (el.textContent.trim().includes('Cargar Datos') || 
+              el.textContent.trim().includes('Cargar') || 
+              el.textContent.trim().includes('Datos')) {
+            cargarDatosBtn = el;
             break;
           }
         }
+        if (cargarDatosBtn) break;
       } catch (error) {
         console.warn(`Error con selector "${selector}":`, error);
       }
@@ -5646,20 +5681,31 @@
       }
     }
     
-    // Crear el contenedor JSON si no existe
-    if (!document.getElementById('json-example-container')) {
-      const jsonContainer = document.createElement('div');
-      jsonContainer.id = 'json-example-container';
-      jsonContainer.className = 'json-example-container';
-      jsonContainer.innerHTML = `
-        <div class="json-example-header">
-          <h3>Exportar a OWL (formato JSON)</h3>
-          <button class="close-json-btn" onclick="closeJsonExample()">×</button>
-        </div>
-        <pre class="json-content">Cargando...</pre>
-      `;
-      document.body.appendChild(jsonContainer);
-      console.log('Contenedor JSON creado preventivamente');
+    // ... resto del código ...
+  });
+  </script>
+
+  <script>
+  // ... existing code ...
+
+  // Añadir evento para cerrar al hacer clic fuera de la ventana
+  document.addEventListener('click', function(e) {
+    const jsonContainer = document.getElementById('json-example-container');
+    
+    // Verificar si el contenedor existe y está visible
+    if (jsonContainer && 
+        (jsonContainer.classList.contains('visible') || 
+         jsonContainer.style.opacity === '1' || 
+         jsonContainer.style.display === 'flex')) {
+      
+      // Verificar si el clic fue fuera del contenedor
+      if (!jsonContainer.contains(e.target) && 
+          !e.target.closest('.load-data-btn') && 
+          !e.target.matches('button[data-action="export-owl"]')) {
+        
+        console.log('Clic detectado fuera de la ventana OWL');
+        closeJsonExample();
+      }
     }
   });
 
@@ -5667,22 +5713,6 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       closeJsonExample();
-    }
-  });
-
-  // Cerrar al hacer clic fuera del contenedor
-  document.addEventListener('click', function(e) {
-    const jsonContainer = document.getElementById('json-example-container');
-    if (jsonContainer && 
-        (jsonContainer.classList.contains('visible') || 
-         jsonContainer.style.opacity === '1' || 
-         jsonContainer.style.display === 'block')) {
-      // Si el clic fue fuera del contenedor JSON
-      if (!e.target.closest('.json-example-container') && 
-          !e.target.closest('.load-data-btn') && 
-          !e.target.matches('button:contains("Cargar Datos")')) {
-        closeJsonExample();
-      }
     }
   });
 

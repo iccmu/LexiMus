@@ -1,0 +1,621 @@
+{
+    "Los nombres de la música": {
+      "id": "node_0_Los nombres de la música",
+      "children": [
+        {
+          "La faceta eventiva de la música": {
+            "id": "node_2_Los nombres de la música_0_La faceta eventiva de la música",
+            "children": [
+              {
+                "El evento, la acción o el proceso musical": {
+                  "id": "node_4_Los nombres de la música_0_La faceta eventiva de la música_0_El evento, la acción o el proceso musical",
+                  "children": [
+                    {
+                      "value": "Verbos de acción y/o interpretación musical (generales, particulares o con carga valorativa)",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_0_El evento, la acción o el proceso musical_0"
+                    },
+                    {
+                      "value": "Verbos de percepción 9*pasiva y/o activa",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_0_El evento, la acción o el proceso musical_1"
+                    },
+                    {
+                      "value": "Verbos de manipulación",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_0_El evento, la acción o el proceso musical_2"
+                    },
+                    {
+                      "value": "Verbos de fabricación y ajuste",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_0_El evento, la acción o el proceso musical_3"
+                    },
+                    {
+                      "value": "Verbos relacionados con la música como actividad empresarial",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_0_El evento, la acción o el proceso musical_4"
+                    }
+                  ]
+                }
+              },
+              {
+                "agentes y experimentadores": {
+                  "id": "node_4_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores",
+                  "children": [
+                    {
+                      "agentes": {
+                        "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes",
+                        "children": [
+                          {
+                            "Productores": {
+                              "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores",
+                              "children": [
+                                {
+                                  "value": "Agentes creadores o poiéticos",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores_0"
+                                },
+                                {
+                                  "value": "Agentes intérpretes",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores_1"
+                                },
+                                {
+                                  "value": "Agentes creadores e intérpretes",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores_2"
+                                },
+                                {
+                                  "value": "Agentes según su función",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores_3"
+                                },
+                                {
+                                  "value": "Agentes instrumentistas",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores_4"
+                                },
+                                {
+                                  "value": "Agentes colectivos",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores_5"
+                                },
+                                {
+                                  "value": "Agentes según su habilidad creadora o interpretativa",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_0_Productores_6"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "No productores": {
+                              "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_1_No productores",
+                              "children": [
+                                {
+                                  "value": "Científicos, comentaristas y pedagogos",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_1_No productores_0"
+                                },
+                                {
+                                  "value": "Constructores",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_1_No productores_1"
+                                },
+                                {
+                                  "value": "Empresarios y gestores",
+                                  "id": "node_10_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_0_agentes_1_No productores_2"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "experimentadores",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_1_agentes y experimentadores_1"
+                    }
+                  ]
+                }
+              },
+              {
+                "value": "El resultado del evento musical",
+                "id": "node_4_Los nombres de la música_0_La faceta eventiva de la música_2"
+              },
+              {
+                "Los instrumentos y medios materiales de la acción musical": {
+                  "id": "node_4_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical",
+                  "children": [
+                    {
+                      "Familias organológicas": {
+                        "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_0_Familias organológicas",
+                        "children": [
+                          {
+                            "value": "Idiófonos (y sus componentes)",
+                            "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_0_Familias organológicas_0"
+                          },
+                          {
+                            "value": "Membranófonos (y sus componentes)",
+                            "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_0_Familias organológicas_1"
+                          },
+                          {
+                            "value": "Cordófonos (y sus componentes)",
+                            "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_0_Familias organológicas_2"
+                          },
+                          {
+                            "value": "Aerófonos (y sus componentes)",
+                            "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_0_Familias organológicas_3"
+                          },
+                          {
+                            "value": "Electrófonos (y sus componentes)",
+                            "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_0_Familias organológicas_4"
+                          },
+                          {
+                            "value": "Otros dispositivos organológicos",
+                            "id": "node_8_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_0_Familias organológicas_5"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Otros medios materiales que facilitan la actividad musical",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_1"
+                    },
+                    {
+                      "value": "Otros dispositivos empleados para la grabación y reproducción",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_3_Los instrumentos y medios materiales de la acción musical_2"
+                    }
+                  ]
+                }
+              },
+              {
+                "Las [localizaciones] donde se produce el evento musical]": {
+                  "id": "node_4_Los nombres de la música_0_La faceta eventiva de la música_4_Las [localizaciones] donde se produce el evento musical]",
+                  "children": [
+                    {
+                      "value": "Espacios de la música",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_4_Las [localizaciones] donde se produce el evento musical]_0"
+                    },
+                    {
+                      "value": "Ubicaciones espacio-temporales",
+                      "id": "node_6_Los nombres de la música_0_La faceta eventiva de la música_4_Las [localizaciones] donde se produce el evento musical]_1"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "La música como ente acústico": {
+            "id": "node_2_Los nombres de la música_1_La música como ente acústico",
+            "children": [
+              {
+                "Dimensión espacial del dato sonoro": {
+                  "id": "node_4_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro",
+                  "children": [
+                    {
+                      "value": "Alturas o notas musicales y alteraciones",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_0"
+                    },
+                    {
+                      "value": "Cualidades acústicas del dato sonoro o derivadas de la serie armónica",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_1"
+                    },
+                    {
+                      "value": "Sistemas de afinación",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_2"
+                    },
+                    {
+                      "value": "Interválica y su percepción psico auditiva",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_3"
+                    },
+                    {
+                      "value": "Escalas y grados de la escala",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_4"
+                    },
+                    {
+                      "value": "Modos",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_5"
+                    },
+                    {
+                      "Armonía": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía",
+                        "children": [
+                          {
+                            "value": "Combinaciones de dos notas/Intervalos",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_0"
+                          },
+                          {
+                            "value": "Grados del acorde",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_1"
+                          },
+                          {
+                            "Acordes": {
+                              "id": "node_8_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_2_Acordes",
+                              "children": [
+                                {
+                                  "value": "Según el número de notas",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_2_Acordes_0"
+                                },
+                                {
+                                  "value": "Según la configuración interna",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_2_Acordes_1"
+                                },
+                                {
+                                  "value": "Según su función",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_2_Acordes_2"
+                                },
+                                {
+                                  "value": "Acordes individuados",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_2_Acordes_3"
+                                },
+                                {
+                                  "value": "Inversiones y disposiciones del acorde",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_2_Acordes_4"
+                                },
+                                {
+                                  "value": "Otros acordes marcados",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_2_Acordes_5"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "value": "Tonalidades / Modos",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_3"
+                          },
+                          {
+                            "value": "Funciones o relaciones tonales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_4"
+                          },
+                          {
+                            "value": "Derivadas melódicas de las estructuras armónicas",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_5"
+                          },
+                          {
+                            "value": "Técnicas compositivas relativas a la armonía",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_6_Armonía_6"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Símbolos y convenciones gráficas de la notación musical relativos a la dimensión espacial de la música",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_7"
+                    },
+                    {
+                      "value": "Técnicas o sistemas empleados para cifrar acordes o codificar información armónica",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_8"
+                    },
+                    {
+                      "value": "Ornamentos, alteraciones o modificaciones relativas a la afinación de las alturas musicales lexicalizadas y/o convencionalizadas como indicaciones interpretativas",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_0_Dimensión espacial del dato sonoro_9"
+                    }
+                  ]
+                }
+              },
+              {
+                "Dimensión temporal del dato sonoro": {
+                  "id": "node_4_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro",
+                  "children": [
+                    {
+                      "value": "Figuras rítmicas, silencios y divisiones de las figuras rítmicas",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_0"
+                    },
+                    {
+                      "Compases": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_1_Compases",
+                        "children": [
+                          {
+                            "value": "Tipos de compases",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_1_Compases_0"
+                          },
+                          {
+                            "value": "Tiempos del compás",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_1_Compases_1"
+                          },
+                          {
+                            "value": "Fenómenos contramétricos",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_1_Compases_2"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Ornamentos, alteraciones o modificaciones relativas a las figuras musicales o el ritmo en general",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_2"
+                    },
+                    {
+                      "Combinaciones rítmicas": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_3_Combinaciones rítmicas",
+                        "children": [
+                          {
+                            "value": "Células rítmicas",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_3_Combinaciones rítmicas_0"
+                          },
+                          {
+                            "value": "Patrones y esquemas rítmicos o grooves",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_3_Combinaciones rítmicas_1"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "Tempo musical": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical",
+                        "children": [
+                          {
+                            "value": "Indicaciones metronómicas",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_0"
+                          },
+                          {
+                            "Indicaciones discursivas de tempo y agógica": {
+                              "id": "node_8_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_1_Indicaciones discursivas de tempo y agógica",
+                              "children": [
+                                {
+                                  "value": "Movimiento uniforme",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_1_Indicaciones discursivas de tempo y agógica_0"
+                                },
+                                {
+                                  "value": "Aumento o disminución progresiva del movimiento",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_1_Indicaciones discursivas de tempo y agógica_1"
+                                },
+                                {
+                                  "value": "Suspensión de la regularidad del movimiento",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_1_Indicaciones discursivas de tempo y agógica_2"
+                                },
+                                {
+                                  "value": "Breve y súbito cambio en el movimiento",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_1_Indicaciones discursivas de tempo y agógica_3"
+                                },
+                                {
+                                  "value": "Restablecimiento de la regularidad o vuelta al tiempo original",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_1_Indicaciones discursivas de tempo y agógica_4"
+                                },
+                                {
+                                  "value": "Desvíos del pulso regular",
+                                  "id": "node_10_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_4_Tempo musical_1_Indicaciones discursivas de tempo y agógica_5"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Símbolos y convenciones de la notación musical que codifican el ritmo musical",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_1_Dimensión temporal del dato sonoro_5"
+                    }
+                  ]
+                }
+              },
+              {
+                "Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto": {
+                  "id": "node_4_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto",
+                  "children": [
+                    {
+                      "value": "Denominaciones de la acústica que describen la altura y el tiempo de las señales sonoras",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_0"
+                    },
+                    {
+                      "value": "Cadencias",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_1"
+                    },
+                    {
+                      "value": "Progresiones",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_2"
+                    },
+                    {
+                      "Denominaciones relativas a la Melodía": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_3_Denominaciones relativas a la Melodía",
+                        "children": [
+                          {
+                            "value": "Tipos de melodía según su extensión",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_3_Denominaciones relativas a la Melodía_0"
+                          },
+                          {
+                            "value": "Tipos de melodía en relación con la escala o acorde",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_3_Denominaciones relativas a la Melodía_1"
+                          },
+                          {
+                            "value": "Tipos de melodía en relación con su propia estructura",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_3_Denominaciones relativas a la Melodía_2"
+                          },
+                          {
+                            "value": "Tipos de melodía en relación con elementos extramusicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_3_Denominaciones relativas a la Melodía_3"
+                          },
+                          {
+                            "value": "Ornamentos melódicos",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_3_Denominaciones relativas a la Melodía_4"
+                          },
+                          {
+                            "value": "Melodías o secuencias individuadas",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_3_Denominaciones relativas a la Melodía_5"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "Denominaciones relativas a la Textura": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_4_Denominaciones relativas a la Textura",
+                        "children": [
+                          {
+                            "value": "Las partes, voces o funciones musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_4_Denominaciones relativas a la Textura_0"
+                          },
+                          {
+                            "value": "La manera en que se relacionan las partes musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_4_Denominaciones relativas a la Textura_1"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Símbolos y convenciones gráficas de la notación musical relativas a la dimension espacio-temporal del dato sonoro",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_2_Dimensión espacio-temporal del dato sonoro del dato sonoro aislado o en contexto_5"
+                    }
+                  ]
+                }
+              },
+              {
+                "Otras dimensiones del dato sonoro aislado o en contexto": {
+                  "id": "node_4_Los nombres de la música_1_La música como ente acústico_3_Otras dimensiones del dato sonoro aislado o en contexto",
+                  "children": [
+                    {
+                      "value": "Intensidad",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_3_Otras dimensiones del dato sonoro aislado o en contexto_0"
+                    },
+                    {
+                      "value": "Timbre",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_3_Otras dimensiones del dato sonoro aislado o en contexto_1"
+                    },
+                    {
+                      "Carácter": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_3_Otras dimensiones del dato sonoro aislado o en contexto_2_Carácter",
+                        "children": [
+                          {
+                            "value": "Denominaciones relativas al carácter general de una obra o pasaje",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_3_Otras dimensiones del dato sonoro aislado o en contexto_2_Carácter_0"
+                          },
+                          {
+                            "value": "Denominaciones relativas al fraseo o la articulación musical",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_3_Otras dimensiones del dato sonoro aislado o en contexto_2_Carácter_1"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Símbolos y convenciones gráficas relativas a otras dimensiones del dato sonoro",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_3_Otras dimensiones del dato sonoro aislado o en contexto_3"
+                    }
+                  ]
+                }
+              },
+              {
+                "Estilos musicales": {
+                  "id": "node_4_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales",
+                  "children": [
+                    {
+                      "Variables en el diseño semántico de los términos relativos a los estilos musicales": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales_0_Variables en el diseño semántico de los términos relativos a los estilos musicales",
+                        "children": [
+                          {
+                            "value": "La dimensión espacial (armonía)",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales_0_Variables en el diseño semántico de los términos relativos a los estilos musicales_0"
+                          },
+                          {
+                            "value": "La dimensión temporal (ritmo y tempo)",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales_0_Variables en el diseño semántico de los términos relativos a los estilos musicales_1"
+                          },
+                          {
+                            "value": "La dimensión espacio-temporal (melodía, ritmo armónico y textura)",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales_0_Variables en el diseño semántico de los términos relativos a los estilos musicales_2"
+                          },
+                          {
+                            "value": "Otras dimensiones (timbre)",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales_0_Variables en el diseño semántico de los términos relativos a los estilos musicales_3"
+                          },
+                          {
+                            "value": "La forma",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales_0_Variables en el diseño semántico de los términos relativos a los estilos musicales_4"
+                          },
+                          {
+                            "value": "Lo extramusical",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_4_Estilos musicales_0_Variables en el diseño semántico de los términos relativos a los estilos musicales_5"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "Continentes de la expresión musical": {
+                  "id": "node_4_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical",
+                  "children": [
+                    {
+                      "Continentes con morfología especificada o formas musicales estructuradas": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_0_Continentes con morfología especificada o formas musicales estructuradas",
+                        "children": [
+                          {
+                            "value": "La dimensión espacial en las formas musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_0_Continentes con morfología especificada o formas musicales estructuradas_0"
+                          },
+                          {
+                            "value": "La dimensión temporal en las formas musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_0_Continentes con morfología especificada o formas musicales estructuradas_1"
+                          },
+                          {
+                            "value": "La dimensión espacio-temporal en las formas musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_0_Continentes con morfología especificada o formas musicales estructuradas_2"
+                          },
+                          {
+                            "value": "Lo extramusical en las formas musicales (elementos textuales, coreográficos, etc.)",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_0_Continentes con morfología especificada o formas musicales estructuradas_3"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "Continentes sin morfología especificada o unidades musicales": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_1_Continentes sin morfología especificada o unidades musicales",
+                        "children": [
+                          {
+                            "value": "Unidades musicales según efectivos musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_1_Continentes sin morfología especificada o unidades musicales_0"
+                          },
+                          {
+                            "value": "Unidades musicales según su extensión o disposición interna",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_1_Continentes sin morfología especificada o unidades musicales_1"
+                          },
+                          {
+                            "value": "Lo extramusical en las unidades musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_1_Continentes sin morfología especificada o unidades musicales_2"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Unidades musicales banalizadas",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_2"
+                    },
+                    {
+                      "value": "Segmentaciones de los continentes musicales",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_3"
+                    },
+                    {
+                      "value": "Símbolos y convenciones gráficas de la notación musical relativas a la segmentación de los continentes",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_5_Continentes de la expresión musical_4"
+                    }
+                  ]
+                }
+              },
+              {
+                "Géneros musicales": {
+                  "id": "node_4_Los nombres de la música_1_La música como ente acústico_6_Géneros musicales",
+                  "children": [
+                    {
+                      "value": "Los géneros como entidades multidimensionales",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_6_Géneros musicales_0"
+                    },
+                    {
+                      "Género como término comodín": {
+                        "id": "node_6_Los nombres de la música_1_La música como ente acústico_6_Géneros musicales_1_Género como término comodín",
+                        "children": [
+                          {
+                            "value": "Intercambiable con estilo",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_6_Géneros musicales_1_Género como término comodín_0"
+                          },
+                          {
+                            "value": "Intercambiable con forma/continente",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_6_Géneros musicales_1_Género como término comodín_1"
+                          },
+                          {
+                            "value": "Intercambiable con plantilla/medios musicales",
+                            "id": "node_8_Los nombres de la música_1_La música como ente acústico_6_Géneros musicales_1_Género como término comodín_2"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "value": "Género como término superordinado",
+                      "id": "node_6_Los nombres de la música_1_La música como ente acústico_6_Géneros musicales_2"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
