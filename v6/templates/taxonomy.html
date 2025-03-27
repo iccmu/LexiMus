@@ -5500,7 +5500,8 @@
       if (exportBtn) {
         exportBtn.addEventListener('click', function() {
           console.log('JSON exportado:', jsonContent);
-          alert('JSON exportado correctamente');
+          // Enviar el JSON al servidor
+          sendJsonToServer(jsonContent);
         });
       }
     } else {
@@ -5558,7 +5559,8 @@
       exportBtn = jsonContainer.querySelector('.export-json-btn');
       exportBtn.addEventListener('click', function() {
         console.log('JSON exportado:', jsonContent);
-        alert('JSON exportado correctamente');
+        // Enviar el JSON al servidor
+        sendJsonToServer(jsonContent);
       });
     }
 
@@ -5717,6 +5719,491 @@
   });
 
   // ... existing code ...
+  </script>
+
+  <!-- Función para enviar el JSON al servidor cuando se hace clic en CONFIRMAR -->
+  <script>
+  // Definir la función sendJsonToServer en el ámbito global
+  window.sendJsonToServer = function(jsonContent) {
+    console.log('Función sendJsonToServer ejecutada con:', jsonContent.substring(0, 100) + '...');
+    
+    // URL del endpoint
+    const apiUrl = 'http://localhost:8000/api/owl';
+    
+    // Preparar los datos para enviar
+    const data = {
+      content: jsonContent,
+      ontology_type: "taxonomy",
+      properties: {} // Puedes añadir propiedades específicas si es necesario
+    };
+    
+    // Mostrar indicador de carga
+    const exportBtn = document.querySelector('.export-json-btn');
+    if (!exportBtn) {
+      console.error('No se encontró el botón de exportar');
+      return;
+    }
+    
+    const originalText = exportBtn.textContent;
+    exportBtn.textContent = 'Enviando...';
+    exportBtn.disabled = true;
+    
+    // Enviar la petición al servidor
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+      return response.json();
+    })
+    .then(responseData => {
+      console.log('Respuesta del servidor:', responseData);
+      
+      // Mostrar mensaje de éxito
+      exportBtn.textContent = '¡Enviado!';
+      setTimeout(() => {
+        exportBtn.textContent = originalText;
+        exportBtn.disabled = false;
+        
+        // Cerrar la ventana después de enviar
+        if (typeof closeJsonExample === 'function') {
+          closeJsonExample();
+        }
+        
+        // Mostrar notificación de éxito
+        alert('Datos enviados correctamente al servidor');
+      }, 1500);
+    })
+    .catch(error => {
+      console.error('Error al enviar datos:', error);
+      
+      // Mostrar mensaje de error
+      exportBtn.textContent = 'Error';
+      setTimeout(() => {
+        exportBtn.textContent = originalText;
+        exportBtn.disabled = false;
+        
+        // Mostrar notificación de error
+        alert('Error al enviar datos: ' + error.message);
+      }, 1500);
+    });
+  };
+
+  // Modificar la función que maneja el botón CONFIRMAR
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Configurando manejador para botón CONFIRMAR');
+    
+    // Buscar el botón existente o esperar a que se cree
+    function setupExportButton() {
+      const exportBtn = document.querySelector('.export-json-btn');
+      if (exportBtn) {
+        console.log('Botón CONFIRMAR encontrado, configurando evento');
+        
+        // Eliminar eventos existentes
+        const newBtn = exportBtn.cloneNode(true);
+        if (exportBtn.parentNode) {
+          exportBtn.parentNode.replaceChild(newBtn, exportBtn);
+        }
+        
+        // Añadir nuevo evento
+        newBtn.addEventListener('click', function() {
+          console.log('Botón CONFIRMAR clickeado');
+          
+          // Obtener el contenido JSON actual
+          const jsonContent = document.querySelector('.json-content');
+          if (jsonContent) {
+            console.log('Contenido JSON encontrado');
+            window.sendJsonToServer(jsonContent.textContent);
+          } else {
+            console.error('No se encontró el contenido JSON');
+            alert('Error: No se pudo encontrar el contenido JSON');
+          }
+        });
+      } else {
+        // Si no se encuentra, intentar de nuevo en 500ms
+        setTimeout(setupExportButton, 500);
+      }
+    }
+    
+    // Iniciar la búsqueda del botón
+    setupExportButton();
+  });
+  </script>
+
+  <!-- Función para mostrar notificaciones -->
+  <script>
+  // Función para mostrar notificaciones
+  function showNotification(message, type = 'info') {
+    // Crear elemento de notificación si no existe
+    let notification = document.getElementById('notification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'notification';
+      document.body.appendChild(notification);
+    }
+    
+    // Establecer clase según el tipo
+    notification.className = 'notification ' + type;
+    notification.textContent = message;
+    
+    // Mostrar notificación
+    notification.classList.add('visible');
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+      notification.classList.remove('visible');
+    }, 3000);
+  }
+  </script>
+
+  <!-- Función para enviar el JSON al servidor cuando se hace clic en CONFIRMAR -->
+  <script>
+  // URL del endpoint
+  const apiUrl = 'http://localhost:8000/api/owl';
+  
+  // Preparar los datos para enviar
+  const data = {
+    content: jsonContent,
+    ontology_type: "taxonomy",
+    properties: {} // Puedes añadir propiedades específicas si es necesario
+  };
+  
+  // Mostrar indicador de carga
+  const exportBtn = document.querySelector('.export-json-btn');
+  const originalText = exportBtn.textContent;
+  exportBtn.textContent = 'Enviando...';
+  exportBtn.disabled = true;
+  
+  // Enviar la petición al servidor
+  fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Error en la respuesta del servidor');
+    }
+    return response.json();
+  })
+  .then(responseData => {
+    console.log('Respuesta del servidor:', responseData);
+    
+    // Mostrar mensaje de éxito
+    exportBtn.textContent = '¡Enviado!';
+    setTimeout(() => {
+      exportBtn.textContent = originalText;
+      exportBtn.disabled = false;
+      
+      // Cerrar la ventana después de enviar
+      closeJsonExample();
+      
+      // Mostrar notificación de éxito
+      showNotification('Datos enviados correctamente al servidor', 'success');
+    }, 1500);
+  })
+  .catch(error => {
+    console.error('Error al enviar datos:', error);
+    
+    // Mostrar mensaje de error
+    exportBtn.textContent = 'Error';
+    setTimeout(() => {
+      exportBtn.textContent = originalText;
+      exportBtn.disabled = false;
+      
+      // Mostrar notificación de error
+      showNotification('Error al enviar datos: ' + error.message, 'error');
+    }, 1500);
+  });
+  </script>
+
+  <!-- Función para mostrar notificaciones -->
+  <script>
+  // Función para mostrar notificaciones
+  function showNotification(message, type = 'info') {
+    // Crear elemento de notificación si no existe
+    let notification = document.getElementById('notification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'notification';
+      document.body.appendChild(notification);
+    }
+    
+    // Establecer clase según el tipo
+    notification.className = 'notification ' + type;
+    notification.textContent = message;
+    
+    // Mostrar notificación
+    notification.classList.add('visible');
+    
+    // Ocultar después de 3 segundos
+    setTimeout(() => {
+      notification.classList.remove('visible');
+    }, 3000);
+  }
+  </script>
+
+  <!-- Modificar la función showJsonExample para conectar el botón CONFIRMAR con la función de envío -->
+  <script>
+  // ... existing code ...
+
+  // Modificar la función showJsonExample para conectar el botón CONFIRMAR con la función de envío
+  function showJsonExample() {
+    console.log('Intentando mostrar ejemplo JSON');
+    
+    // Obtener el YAML actual del panel izquierdo
+    const dataDisplay = document.getElementById('data-display');
+    if (!dataDisplay) {
+      console.error('Elemento data-display no encontrado');
+      return;
+    }
+    
+    const yamlContent = dataDisplay.value || '';
+    console.log('YAML obtenido:', yamlContent.substring(0, 50) + '...');
+    
+    // Convertir YAML a JSON con manejo de errores robusto
+    let jsonContent = '';
+    try {
+      // Verificar que jsyaml esté disponible
+      if (typeof jsyaml === 'undefined') {
+        console.error('jsyaml no está definido');
+        throw new Error('La biblioteca js-yaml no está cargada');
+      }
+      
+      // Usar jsyaml para convertir YAML a objeto JavaScript
+      const yamlObject = jsyaml.load(yamlContent);
+      
+      // Verificar que el resultado sea un objeto válido
+      if (yamlObject === null || typeof yamlObject !== 'object') {
+        throw new Error('El YAML no se pudo convertir a un objeto válido');
+      }
+      
+      // Convertir el objeto a JSON con formato
+      jsonContent = JSON.stringify(yamlObject, null, 2);
+      console.log('YAML convertido a JSON correctamente');
+    } catch (error) {
+      console.error('Error al convertir YAML a JSON:', error);
+      jsonContent = `{\n  "error": "No se pudo convertir el YAML a JSON: ${error.message}"\n}`;
+    }
+    
+    // Función auxiliar para escapar HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    // Buscar o crear el contenedor JSON
+    let jsonContainer = document.getElementById('json-example-container');
+    
+    if (!jsonContainer) {
+      console.log('Contenedor JSON no encontrado, creándolo dinámicamente');
+      // Crear el contenedor si no existe
+      const newContainer = document.createElement('div');
+      newContainer.id = 'json-example-container';
+      newContainer.className = 'json-example-container';
+      newContainer.innerHTML = `
+        <div class="json-example-header">
+          <h3>Exportar a OWL (formato JSON)</h3>
+          <button class="close-json-btn">×</button>
+        </div>
+        <pre class="json-content">${escapeHtml(jsonContent)}</pre>
+        <div class="json-footer">
+          <button class="export-json-btn">CONFIRMAR</button>
+        </div>
+      `;
+      document.body.appendChild(newContainer);
+      jsonContainer = newContainer;
+      
+      // Añadir evento al botón de cierre
+      const closeBtn = newContainer.querySelector('.close-json-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+          console.log('Botón de cierre clickeado');
+          closeJsonExample();
+        });
+      }
+      
+      // Añadir evento al botón de exportar
+      const exportBtn = newContainer.querySelector('.export-json-btn');
+      if (exportBtn) {
+        // Usar una función anónima que captura jsonContent en su ámbito
+        const finalJsonContent = jsonContent; // Capturar el valor actual
+        exportBtn.addEventListener('click', function() {
+          console.log('JSON exportado:', finalJsonContent);
+          // Enviar el JSON al servidor
+          sendJsonToServer(finalJsonContent);
+        });
+      }
+    } else {
+      console.log('Contenedor JSON encontrado, actualizando contenido');
+      // Actualizar el contenido JSON en el contenedor existente
+      const jsonContentElement = jsonContainer.querySelector('.json-content');
+      if (jsonContentElement) {
+        jsonContentElement.textContent = jsonContent;
+      } else {
+        console.error('Elemento .json-content no encontrado dentro del contenedor');
+        // Crear el elemento si no existe
+        const newContentElement = document.createElement('pre');
+        newContentElement.className = 'json-content';
+        newContentElement.textContent = jsonContent;
+        jsonContainer.appendChild(newContentElement);
+      }
+      
+      // Asegurar que existe el botón de cierre y su evento
+      let closeBtn = jsonContainer.querySelector('.close-json-btn');
+      if (closeBtn) {
+        // Eliminar eventos existentes
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        closeBtn = newCloseBtn;
+        
+        // Añadir el evento de cierre
+        closeBtn.addEventListener('click', function() {
+          console.log('Botón de cierre clickeado');
+          closeJsonExample();
+        });
+      }
+      
+      // Asegurar que existe el footer
+      let footer = jsonContainer.querySelector('.json-footer');
+      if (!footer) {
+        footer = document.createElement('div');
+        footer.className = 'json-footer';
+        jsonContainer.appendChild(footer);
+      }
+      
+      // Asegurar que existe el botón de exportar
+      let exportBtn = jsonContainer.querySelector('.export-json-btn');
+      if (!exportBtn) {
+        exportBtn = document.createElement('button');
+        exportBtn.className = 'export-json-btn';
+        exportBtn.textContent = 'CONFIRMAR';
+        footer.appendChild(exportBtn);
+      } else {
+        // Actualizar el texto del botón existente
+        exportBtn.textContent = 'CONFIRMAR';
+      }
+      
+      // Actualizar el evento del botón
+      exportBtn.replaceWith(exportBtn.cloneNode(true));
+      exportBtn = jsonContainer.querySelector('.export-json-btn');
+      
+      // Usar una función anónima que captura jsonContent en su ámbito
+      const finalJsonContent = jsonContent; // Capturar el valor actual
+      exportBtn.addEventListener('click', function() {
+        console.log('JSON exportado:', finalJsonContent);
+        // Enviar el JSON al servidor
+        sendJsonToServer(finalJsonContent);
+      });
+    }
+
+    // Asegurar que la ventana sea visible con múltiples intentos
+    try {
+      console.log('Intentando hacer visible el contenedor JSON');
+      jsonContainer.style.display = 'flex';
+      jsonContainer.style.flexDirection = 'column';
+      jsonContainer.style.visibility = 'visible';
+      jsonContainer.style.opacity = '1';
+      jsonContainer.classList.add('visible');
+      
+      // Forzar un reflow para asegurar que los cambios se apliquen
+      void jsonContainer.offsetWidth;
+      
+      console.log('Contenedor JSON hecho visible');
+    } catch (error) {
+      console.error('Error al hacer visible el contenedor JSON:', error);
+    }
+  }
+
+  // Añadir estilos para las notificaciones
+  const notificationStyles = `
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 4px;
+      color: white;
+      font-size: 14px;
+      z-index: 1100;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      max-width: 300px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .notification.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .notification.success {
+      background-color: #4CAF50;
+    }
+    
+    .notification.error {
+      background-color: #F44336;
+    }
+    
+    .notification.info {
+      background-color: #2196F3;
+    }
+    
+    .json-footer {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: flex-end;
+      background-color: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+    
+    .export-json-btn {
+      padding: 8px 16px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s ease;
+    }
+    
+    .export-json-btn:hover {
+      background-color: #4a8f99;
+    }
+    
+    .export-json-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+  `;
+
+  // Aplicar los estilos para las notificaciones
+  document.addEventListener('DOMContentLoaded', function() {
+    // Añadir estilos para las notificaciones
+    let styleElement = document.getElementById('notification-styles');
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'notification-styles';
+      styleElement.textContent = notificationStyles;
+      document.head.appendChild(styleElement);
+    }
+  });
+
+  // Asegurarse de que las funciones estén disponibles globalmente
+  window.sendJsonToServer = sendJsonToServer;
+  window.showNotification = showNotification;
+  window.showJsonExample = showJsonExample;
   </script>
 
 </body>

@@ -1,70 +1,48 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import json
-import os
-from typing import Dict, Any, Optional
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
 # Configurar CORS para permitir peticiones desde el frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, limitar a tu dominio
+    allow_origins=["*"],  # En producción, especifica los orígenes permitidos
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-class OntologyData(BaseModel):
-    """Modelo para los datos de la ontología en formato JSON"""
-    # Este modelo debe adaptarse a la estructura de tu JSON
-    # Aquí usamos Dict[str, Any] para aceptar cualquier estructura JSON
-    __root__: Dict[str, Any]
+# Modelo para el mensaje JSON-OWL
+class OwlMessage(BaseModel):
+    content: str
+    # Puedes añadir más campos específicos para JSON-OWL si es necesario
+    ontology_type: str = None
+    properties: dict = None
 
-@app.post("/convert-to-owl")
-async def convert_to_owl(data: Dict[str, Any]):
-    try:
-        # Aquí iría tu lógica para convertir el JSON a OWL
-        # Por ejemplo, usando owlready2, rdflib u otra biblioteca
-        
-        # Ejemplo simplificado:
-        filename = "ontology.owl"
-        output_path = f"./static/{filename}"
-        
-        # Guardar el JSON recibido (para depuración)
-        with open("received_data.json", "w") as f:
-            json.dump(data, f, indent=2)
-        
-        # Aquí implementarías la conversión real a OWL
-        # ...
-        
-        # Simular la creación de un archivo OWL
-        with open(output_path, "w") as f:
-            f.write("<!-- Archivo OWL generado desde JSON -->")
-        
-        # Devolver la URL para descargar el archivo
-        download_url = f"/static/{filename}"
-        
-        return JSONResponse({
-            "status": "success",
-            "message": "Ontología OWL generada correctamente",
-            "filename": filename,
-            "download_url": download_url
-        })
+@app.post("/api/owl")
+async def receive_owl_message(message: OwlMessage):
+    # Procesar el mensaje JSON-OWL
+    print(f"Mensaje OWL recibido: {message.content}")
+    print(f"Tipo de ontología: {message.ontology_type}")
+    print(f"Propiedades: {message.properties}")
     
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al convertir a OWL: {str(e)}")
+    # Aquí puedes implementar la lógica para procesar la ontología
+    
+    # Devolver una respuesta
+    return {
+        "status": "success", 
+        "message": f"Mensaje OWL procesado: {message.content}",
+        "processed_data": {
+            "ontology_type": message.ontology_type,
+            "properties_count": len(message.properties) if message.properties else 0
+        }
+    }
 
-# Para servir archivos estáticos (como los OWL generados)
-from fastapi.staticfiles import StaticFiles
-
-# Crear directorio static si no existe
-os.makedirs("./static", exist_ok=True)
-
-# Montar el directorio static
-app.mount("/static", StaticFiles(directory="static"), name="static")
+@app.get("/")
+async def root():
+    return {"message": "API JSON-OWL funcionando correctamente"}
 
 if __name__ == "__main__":
     import uvicorn
