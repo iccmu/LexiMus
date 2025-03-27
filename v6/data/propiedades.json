@@ -1,151 +1,342 @@
 {
-    "id": "root-props-123",
-    "propiedades": {
-      "id": "emotional-props-456",
-      "Intensidad": {
-        "id": "intensity-789",
+  "id": "root-music-general-123",
+  "propiedades": {
+    "id": "general-props-456",
+    "FunciónSocial": {
+      "id": "social-function-789",
+      "Utilidad": {
+        "id": "utility-abc",
+        "Ceremonial": {
+          "id": "ceremonial-def",
+          "value": null
+        },
+        "Entretenimiento": {
+          "id": "entertainment-ghi",
+          "value": null
+        },
+        "Educativa": {
+          "id": "educational-jkl",
+          "value": null
+        }
+      },
+      "Audiencia": {
+        "id": "audience-mno",
+        "Especializada": {
+          "id": "specialized-pqr",
+          "value": null
+        },
+        "General": {
+          "id": "general-stu",
+          "value": null
+        },
+        "Minoritaria": {
+          "id": "minority-vwx",
+          "value": null
+        }
+      },
+      "Impacto": {
+        "id": "impact-yza",
+        "Local": {
+          "id": "local-bcd",
+          "value": null
+        },
+        "Nacional": {
+          "id": "national-efg",
+          "value": null
+        },
+        "Internacional": {
+          "id": "international-hij",
+          "value": null
+        }
+      }
+    },
+    "ContextoHistórico": {
+      "id": "historical-klm",
+      "Época": {
+        "id": "era-nop",
+        "Tradicional": {
+          "id": "traditional-qrs",
+          "value": null
+        },
+        "Moderna": {
+          "id": "modern-tuv",
+          "value": null
+        },
+        "Contemporánea": {
+          "id": "contemporary-wxy",
+          "value": null
+        }
+      },
+      "Evolución": {
+        "id": "evolution-zab",
+        "Conservadora": {
+          "id": "conservative-cde",
+          "value": null
+        },
+        "Progresiva": {
+          "id": "progressive-fgh",
+          "value": null
+        },
+        "Rupturista": {
+          "id": "disruptive-ijk",
+          "value": null
+        }
+      },
+      "Influencia": {
+        "id": "influence-lmn",
+        "Generadora": {
+          "id": "generating-opq",
+          "value": null
+        },
+        "Integradora": {
+          "id": "integrating-rst",
+          "value": null
+        },
+        "Derivativa": {
+          "id": "derivative-uvw",
+          "value": null
+        }
+      }
+    },
+    "CaracterísticasTécnicas": {
+      "id": "technical-xyz",
+      "Complejidad": {
+        "id": "complexity-123",
         "Alta": {
-          "id": "high-intensity-abc",
+          "id": "high-complexity-456",
           "value": null
         },
         "Media": {
-          "id": "medium-intensity-def",
+          "id": "medium-complexity-789",
           "value": null
         },
         "Baja": {
-          "id": "low-intensity-ghi",
+          "id": "low-complexity-012",
           "value": null
         }
       },
-      "Valencia": {
-        "id": "valence-jkl",
-        "Positiva": {
-          "id": "positive-mno",
+      "Innovación": {
+        "id": "innovation-345",
+        "Pionera": {
+          "id": "pioneering-678",
           "value": null
         },
-        "Negativa": {
-          "id": "negative-pqr",
+        "Adaptativa": {
+          "id": "adaptive-901",
           "value": null
         },
-        "Ambivalente": {
-          "id": "ambivalent-stu",
+        "Convencional": {
+          "id": "conventional-234",
           "value": null
         }
       },
-      "ExpresiónFísica": {
-        "id": "physical-vwx",
-        "Facial": {
-          "id": "facial-yza",
-          "Sonrisa": {
-            "id": "smile-bcd",
-            "value": null
-          },
-          "Ceño": {
-            "id": "frown-efg",
-            "value": null
-          },
-          "Ojos": {
-            "id": "eyes-hij",
-            "value": null
-          }
+      "Accesibilidad": {
+        "id": "accessibility-567",
+        "Especializada": {
+          "id": "specialized-access-890",
+          "value": null
         },
-        "Corporal": {
-          "id": "body-klm",
-          "Postura": {
-            "id": "posture-nop",
-            "value": null
-          },
-          "Gestos": {
-            "id": "gestures-qrs",
-            "value": null
-          },
-          "Tensión": {
-            "id": "tension-tuv",
-            "value": null
-          }
+        "Semiespecializada": {
+          "id": "semi-specialized-123a",
+          "value": null
+        },
+        "Universal": {
+          "id": "universal-456b",
+          "value": null
         }
-      },
-      "Duración": {
-        "id": "duration-wxy",
-        "Momentánea": {
-          "id": "momentary-zab",
+      }
+    },
+    "ContextoEspacial": {
+      "id": "spatial-789c",
+      "Acústica": {
+        "id": "acoustics-012d",
+        "Óptima": {
+          "id": "optimal-345e",
           "value": null
         },
-        "Prolongada": {
-          "id": "prolonged-cde",
+        "Adecuada": {
+          "id": "adequate-678f",
           "value": null
         },
-        "Crónica": {
-          "id": "chronic-fgh",
+        "Deficiente": {
+          "id": "deficient-901g",
           "value": null
         }
       },
-      "ContextoSocial": {
-        "id": "social-context-ijk",
+      "Escala": {
+        "id": "scale-234h",
+        "Íntima": {
+          "id": "intimate-567i",
+          "value": null
+        },
+        "Media": {
+          "id": "medium-scale-890j",
+          "value": null
+        },
+        "Masiva": {
+          "id": "massive-123k",
+          "value": null
+        }
+      },
+      "Formalidad": {
+        "id": "formality-456l",
+        "Institucional": {
+          "id": "institutional-789m",
+          "value": null
+        },
+        "Semiestructurada": {
+          "id": "semi-structured-012n",
+          "value": null
+        },
+        "Informal": {
+          "id": "informal-345o",
+          "value": null
+        }
+      }
+    },
+    "AspectosProductivos": {
+      "id": "productive-678p",
+      "Profesionalización": {
+        "id": "professionalization-901q",
+        "Profesional": {
+          "id": "professional-234r",
+          "value": null
+        },
+        "Semiprofesional": {
+          "id": "semi-professional-567s",
+          "value": null
+        },
+        "Amateur": {
+          "id": "amateur-890t",
+          "value": null
+        }
+      },
+      "Financiación": {
+        "id": "financing-123u",
+        "Pública": {
+          "id": "public-456v",
+          "value": null
+        },
+        "Privada": {
+          "id": "private-789w",
+          "value": null
+        },
+        "Independiente": {
+          "id": "independent-012x",
+          "value": null
+        }
+      },
+      "Distribución": {
+        "id": "distribution-345y",
+        "Comercial": {
+          "id": "commercial-678z",
+          "value": null
+        },
+        "Alternativa": {
+          "id": "alternative-901a1",
+          "value": null
+        },
+        "Académica": {
+          "id": "academic-234b1",
+          "value": null
+        }
+      }
+    },
+    "RelacionesSociales": {
+      "id": "social-567c1",
+      "Jerarquía": {
+        "id": "hierarchy-890d1",
+        "Horizontal": {
+          "id": "horizontal-123e1",
+          "value": null
+        },
+        "Piramidal": {
+          "id": "pyramidal-456f1",
+          "value": null
+        },
+        "Mixta": {
+          "id": "mixed-789g1",
+          "value": null
+        }
+      },
+      "Colaboración": {
+        "id": "collaboration-012h1",
         "Individual": {
-          "id": "individual-lmn",
-          "value": null
-        },
-        "Interpersonal": {
-          "id": "interpersonal-opq",
+          "id": "individual-345i1",
           "value": null
         },
         "Grupal": {
-          "id": "group-rst",
+          "id": "group-678j1",
+          "value": null
+        },
+        "Comunal": {
+          "id": "communal-901k1",
           "value": null
         }
       },
-      "ComponenteCognitivo": {
-        "id": "cognitive-uvw",
-        "Evaluaciones": {
-          "id": "appraisals-xyz",
-          "Amenaza": {
-            "id": "threat-123",
-            "value": null
-          },
-          "Pérdida": {
-            "id": "loss-456",
-            "value": null
-          },
-          "Recompensa": {
-            "id": "reward-789",
-            "value": null
-          }
+      "Reconocimiento": {
+        "id": "recognition-234l1",
+        "Alto": {
+          "id": "high-recognition-567m1",
+          "value": null
         },
-        "Creencias": {
-          "id": "beliefs-012",
-          "Controlabilidad": {
-            "id": "controllability-345",
-            "value": null
-          },
-          "Certeza": {
-            "id": "certainty-678",
-            "value": null
-          },
-          "Responsabilidad": {
-            "id": "responsibility-901",
-            "value": null
-          }
+        "Medio": {
+          "id": "medium-recognition-890n1",
+          "value": null
+        },
+        "Bajo": {
+          "id": "low-recognition-123o1",
+          "value": null
+        }
+      }
+    },
+    "MediaciónTecnológica": {
+      "id": "technological-456p1",
+      "Dependencia": {
+        "id": "dependence-789q1",
+        "Analógica": {
+          "id": "analog-012r1",
+          "value": null
+        },
+        "Híbrida": {
+          "id": "hybrid-345s1",
+          "value": null
+        },
+        "Digital": {
+          "id": "digital-678t1",
+          "value": null
         }
       },
-      "FunciónAdaptativa": {
-        "id": "adaptive-234",
-        "Supervivencia": {
-          "id": "survival-567",
+      "Accesibilidad": {
+        "id": "tech-access-901u1",
+        "Básica": {
+          "id": "basic-234v1",
           "value": null
         },
-        "Vinculación": {
-          "id": "bonding-890",
+        "Intermedia": {
+          "id": "intermediate-567w1",
           "value": null
         },
-        "Comunicación": {
-          "id": "communication-123a",
+        "Avanzada": {
+          "id": "advanced-890x1",
+          "value": null
+        }
+      },
+      "Innovación": {
+        "id": "tech-innovation-123y1",
+        "Tradicional": {
+          "id": "traditional-tech-456z1",
           "value": null
         },
-        "Motivación": {
-          "id": "motivation-456b",
+        "Convencional": {
+          "id": "conventional-tech-789a2",
+          "value": null
+        },
+        "Experimental": {
+          "id": "experimental-tech-012b2",
           "value": null
         }
       }
     }
+  }
 }

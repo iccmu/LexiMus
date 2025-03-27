@@ -1,0 +1,151 @@
+{
+    "id": "root-props-123",
+    "propiedades": {
+      "id": "emotional-props-456",
+      "Intensidad": {
+        "id": "intensity-789",
+        "Alta": {
+          "id": "high-intensity-abc",
+          "value": null
+        },
+        "Media": {
+          "id": "medium-intensity-def",
+          "value": null
+        },
+        "Baja": {
+          "id": "low-intensity-ghi",
+          "value": null
+        }
+      },
+      "Valencia": {
+        "id": "valence-jkl",
+        "Positiva": {
+          "id": "positive-mno",
+          "value": null
+        },
+        "Negativa": {
+          "id": "negative-pqr",
+          "value": null
+        },
+        "Ambivalente": {
+          "id": "ambivalent-stu",
+          "value": null
+        }
+      },
+      "ExpresiónFísica": {
+        "id": "physical-vwx",
+        "Facial": {
+          "id": "facial-yza",
+          "Sonrisa": {
+            "id": "smile-bcd",
+            "value": null
+          },
+          "Ceño": {
+            "id": "frown-efg",
+            "value": null
+          },
+          "Ojos": {
+            "id": "eyes-hij",
+            "value": null
+          }
+        },
+        "Corporal": {
+          "id": "body-klm",
+          "Postura": {
+            "id": "posture-nop",
+            "value": null
+          },
+          "Gestos": {
+            "id": "gestures-qrs",
+            "value": null
+          },
+          "Tensión": {
+            "id": "tension-tuv",
+            "value": null
+          }
+        }
+      },
+      "Duración": {
+        "id": "duration-wxy",
+        "Momentánea": {
+          "id": "momentary-zab",
+          "value": null
+        },
+        "Prolongada": {
+          "id": "prolonged-cde",
+          "value": null
+        },
+        "Crónica": {
+          "id": "chronic-fgh",
+          "value": null
+        }
+      },
+      "ContextoSocial": {
+        "id": "social-context-ijk",
+        "Individual": {
+          "id": "individual-lmn",
+          "value": null
+        },
+        "Interpersonal": {
+          "id": "interpersonal-opq",
+          "value": null
+        },
+        "Grupal": {
+          "id": "group-rst",
+          "value": null
+        }
+      },
+      "ComponenteCognitivo": {
+        "id": "cognitive-uvw",
+        "Evaluaciones": {
+          "id": "appraisals-xyz",
+          "Amenaza": {
+            "id": "threat-123",
+            "value": null
+          },
+          "Pérdida": {
+            "id": "loss-456",
+            "value": null
+          },
+          "Recompensa": {
+            "id": "reward-789",
+            "value": null
+          }
+        },
+        "Creencias": {
+          "id": "beliefs-012",
+          "Controlabilidad": {
+            "id": "controllability-345",
+            "value": null
+          },
+          "Certeza": {
+            "id": "certainty-678",
+            "value": null
+          },
+          "Responsabilidad": {
+            "id": "responsibility-901",
+            "value": null
+          }
+        }
+      },
+      "FunciónAdaptativa": {
+        "id": "adaptive-234",
+        "Supervivencia": {
+          "id": "survival-567",
+          "value": null
+        },
+        "Vinculación": {
+          "id": "bonding-890",
+          "value": null
+        },
+        "Comunicación": {
+          "id": "communication-123a",
+          "value": null
+        },
+        "Motivación": {
+          "id": "motivation-456b",
+          "value": null
+        }
+      }
+    }
+}
